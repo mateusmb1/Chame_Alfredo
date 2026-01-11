@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Chame Alfredo - Soluções em Manutenção Predial, Segurança Eletrônica, Portões Automáticos e Antenas Coletivas. Atendimento 24h.">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Configuração de Cores Personalizadas -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: '#F97316', // Laranja vibrante (Camisa)
+                            dark: '#1e293b',   // Azul Marinho (Boné/Macacão)
+                            green: '#84cc16',  // Verde Ação
+                            skin: '#ffdbac',   // Pele do mascote
+                            light: '#fff7ed'   // Fundo suave
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Favicon Gerado via SVG (Base64) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%231e293b'/><circle cx='50' cy='55' r='30' fill='%23ffdbac'/><path d='M20 55 Q50 20 80 55' fill='%231e293b'/><rect x='35' y='45' width='30' height='10' rx='2' fill='%23334155'/></svg>">
+
+    <title>Chame Alfredo | Manutenção e Segurança</title>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hero-bg {
+            background-image: linear-gradient(rgba(30, 41, 59, 0.85), rgba(30, 41, 59, 0.8)), url('https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        .smooth-scroll { scroll-behavior: smooth; }
+        
+        /* Animação suave para o mascote */
+        .mascot-hover:hover {
+            transform: scale(1.05) rotate(2deg);
+        }
+    </style>
+</head>
+<body class="text-gray-700 bg-gray-50 smooth-scroll">
+
+    <!-- DEFINIÇÃO DO SVG DO MASCOTE (Reutilizável) -->
+    <svg style="display: none;">
+        <symbol id="mascot-alfredo" viewBox="0 0 200 200">
+            <!-- Fundo Círculo (Opcional, usado em ícones) -->
+            <circle cx="100" cy="100" r="95" fill="white" stroke="#F97316" stroke-width="0"/>
+            
+            <!-- Corpo/Camisa -->
+            <path d="M50 160 Q100 180 150 160 L150 200 L50 200 Z" fill="#F97316"/>
+            <path d="M50 160 Q100 180 150 160" fill="none" stroke="#c2410c" stroke-width="2"/>
+            
+            <!-- Pescoço -->
+            <rect x="85" y="130" width="30" height="40" fill="#ffdbac"/>
+            
+            <!-- Gola da Camisa -->
+            <path d="M85 160 L100 170 L115 160" fill="none" stroke="#c2410c" stroke-width="3"/>
+
+            <!-- Cabeça -->
+            <circle cx="100" cy="100" r="45" fill="#ffdbac"/>
+            
+            <!-- Orelhas -->
+            <circle cx="58" cy="105" r="8" fill="#ffdbac"/>
+            <circle cx="142" cy="105" r="8" fill="#ffdbac"/>
+
+            <!-- Rosto -->
+            <g fill="#1e293b">
+                <!-- Olhos -->
+                <circle cx="85" cy="95" r="4"/>
+                <circle cx="115" cy="95" r="4"/>
+                <!-- Sobrancelhas -->
+                <path d="M80 88 Q85 85 90 88" stroke="#1e293b" stroke-width="2" fill="none"/>
+                <path d="M110 88 Q115 85 120 88" stroke="#1e293b" stroke-width="2" fill="none"/>
+                <!-- Sorriso -->
+                <path d="M85 115 Q100 125 115 115" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/>
+            </g>
+
+            <!-- Boné -->
+            <path d="M55 85 Q100 40 145 85" fill="#1e293b"/> <!-- Copa do boné -->
+            <path d="M50 85 Q100 70 150 85 L155 90 Q100 75 45 90 Z" fill="#334155"/> <!-- Aba do boné -->
+            <rect x="90" y="60" width="20" height="15" rx="2" fill="#F97316"/> <!-- Logo no boné -->
+        </symbol>
+    </svg>
+
+    <!-- Top Bar -->
+    <div class="bg-brand-dark text-white py-2 text-sm hidden md:block border-b border-gray-700">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-6">
+                <span class="flex items-center"><i data-lucide="map-pin" class="w-4 h-4 mr-2 text-brand-orange"></i> Atendendo Recife e Região</span>
+                <span class="flex items-center"><i data-lucide="clock" class="w-4 h-4 mr-2 text-brand-orange"></i> Suporte 24 Horas</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="mailto:Chamealfredo@gmail.com" class="hover:text-brand-orange transition">Chamealfredo@gmail.com</a>
+                <a href="https://instagram.com/chamealfredo" target="_blank" class="hover:text-brand-orange transition"><i data-lucide="instagram" class="w-4 h-4"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <!-- Logo Composto -->
+            <a href="#" class="flex items-center space-x-3 group">
+                <div class="relative w-14 h-14 bg-brand-light rounded-full border-2 border-brand-orange flex items-center justify-center overflow-hidden transition-transform transform group-hover:rotate-6">
+                    <!-- SVG do Mascote Inline -->
+                    <svg class="w-12 h-12 mt-2" viewBox="0 0 200 200">
+                        <use href="#mascot-alfredo"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-brand-orange leading-none tracking-tight">Chame <span class="text-brand-dark">ALFREDO!</span></h1>
+                    <p class="text-[10px] text-gray-500 font-bold tracking-[0.2em] uppercase mt-0.5">Soluções Prediais</p>
+                </div>
+            </a>
+
+            <!-- Menu Desktop -->
+            <nav class="hidden md:flex space-x-8 font-medium text-brand-dark">
+                <a href="#home" class="hover:text-brand-orange transition">Início</a>
+                <a href="#servicos" class="hover:text-brand-orange transition">Serviços</a>
+                <a href="#sobre" class="hover:text-brand-orange transition">Sobre Nós</a>
+                <a href="#design-system" class="hover:text-brand-orange transition">Guia de Estilo</a>
+            </nav>
+
+            <!-- CTA Button -->
+            <a href="https://wa.me/5581988417003" class="hidden md:flex items-center bg-brand-green hover:bg-green-600 text-white px-5 py-2 rounded-full font-bold transition shadow-lg transform hover:-translate-y-0.5">
+                <i data-lucide="phone-call" class="w-4 h-4 mr-2"></i> (81) 9 8841-7003
+            </a>
+
+            <!-- Mobile Menu Button -->
+            <button onclick="toggleMenu()" class="md:hidden text-brand-dark focus:outline-none">
+                <i data-lucide="menu" class="w-8 h-8"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t p-4 space-y-3 shadow-lg">
+            <a href="#home" class="block text-brand-dark font-medium">Início</a>
+            <a href="#servicos" class="block text-brand-dark font-medium">Serviços</a>
+            <a href="#sobre" class="block text-brand-dark font-medium">Sobre Nós</a>
+            <a href="#design-system" class="block text-brand-dark font-medium">Guia de Estilo</a>
+            <a href="https://wa.me/5581988417003" class="block bg-brand-green text-white text-center py-2 rounded font-bold">Ligar Agora</a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero-bg text-white py-20 md:py-32 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-brand-dark/90 to-transparent z-0"></div>
+        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center relative z-10">
+            <div class="md:w-1/2 mb-10 md:mb-0 text-center md:text-left">
+                <div class="inline-flex items-center bg-brand-orange/20 border border-brand-orange/50 rounded-full px-4 py-1 mb-6 backdrop-blur-sm">
+                    <span class="w-2 h-2 bg-brand-orange rounded-full mr-2 animate-pulse"></span>
+                    <span class="text-brand-orange text-xs font-bold uppercase tracking-wide">Atendimento em Recife e Região</span>
+                </div>
+                <h2 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
+                    Facilitando sua vida com <span class="text-brand-orange">Técnica e Confiança</span>
+                </h2>
+                <p class="text-lg text-gray-200 mb-8 max-w-lg mx-auto md:mx-0 font-light">
+                    Manutenção predial, portões automáticos e segurança eletrônica. O Alfredo resolve o que você precisa, na hora que você precisa.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                    <a href="https://wa.me/5581988417003" class="bg-brand-green hover:bg-green-600 text-white text-lg font-bold px-8 py-3 rounded-lg shadow-xl hover:shadow-2xl transition transform hover:-translate-y-1 flex items-center justify-center">
+                        <i data-lucide="message-circle" class="mr-2"></i> Chamar o Alfredo
+                    </a>
+                    <a href="#servicos" class="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold px-8 py-3 rounded-lg transition text-center">
+                        Nossos Serviços
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Formulário -->
+            <div class="md:w-1/2 md:pl-12 w-full">
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl max-w-md mx-auto border-t-8 border-brand-orange">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-brand-light rounded-full flex items-center justify-center mr-4 border border-brand-orange">
+                            <svg class="w-10 h-10 mt-2" viewBox="0 0 200 200"><use href="#mascot-alfredo"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Orçamento Rápido</h3>
+                            <p class="text-xs text-gray-500">Respostar em até 30 minutos</p>
+                        </div>
+                    </div>
+                    <form onsubmit="event.preventDefault(); alert('Mensagem enviada! Alfredo entrará em contato.');">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 text-xs font-bold mb-1 uppercase">Seu Nome</label>
+                                <input type="text" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="Ex: João Silva">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-xs font-bold mb-1 uppercase">WhatsApp</label>
+                                <input type="tel" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition" placeholder="(81) 9...">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-xs font-bold mb-1 uppercase">Serviço</label>
+                                <select class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange outline-none">
+                                    <option>Manutenção Geral</option>
+                                    <option>Portão Automático</option>
+                                    <option>Câmeras / Segurança</option>
+                                    <option>Antena Coletiva</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full bg-brand-dark hover:bg-gray-800 text-white font-bold py-3 rounded-lg transition shadow-lg flex justify-center items-center group">
+                                Solicitar Agora <i data-lucide="arrow-right" class="ml-2 w-4 h-4 group-hover:translate-x-1 transition"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof / Logos -->
+    <section class="bg-gray-100 py-6 border-b border-gray-200">
+        <div class="container mx-auto px-4">
+            <p class="text-center text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Trabalhamos com as melhores marcas</p>
+            <div class="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+                <span class="font-bold text-xl flex items-center gap-2"><i data-lucide="shield-check"></i> INTELBRAS</span>
+                <span class="font-bold text-xl flex items-center gap-2"><i data-lucide="video"></i> HIKVISION</span>
+                <span class="font-bold text-xl flex items-center gap-2"><i data-lucide="zap"></i> PPA</span>
+                <span class="font-bold text-xl flex items-center gap-2"><i data-lucide="lock"></i> GAREN</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Serviços -->
+    <section id="servicos" class="py-20 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-brand-orange font-bold text-sm uppercase tracking-wider">O que fazemos</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-brand-dark mt-2 mb-4">Soluções completas para seu condomínio</h2>
+                <div class="w-20 h-1.5 bg-brand-orange mx-auto rounded-full"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Cards de Serviços com Ícones Lucide -->
+                <div class="p-6 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-xl hover:border-brand-orange transition duration-300 group">
+                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-brand-orange transition duration-300">
+                        <i data-lucide="wrench" class="w-7 h-7 text-brand-orange group-hover:text-white transition"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Manutenção Predial</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">Reparos elétricos, hidráulicos e estruturais. Mantenha seu patrimônio valorizado e seguro.</p>
+                </div>
+
+                <div class="p-6 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-xl hover:border-brand-orange transition duration-300 group">
+                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-brand-orange transition duration-300">
+                        <i data-lucide="camera" class="w-7 h-7 text-brand-orange group-hover:text-white transition"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Segurança Eletrônica</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">Instalação e manutenção de CFTV, câmeras IP e sistemas de monitoramento de última geração.</p>
+                </div>
+
+                <div class="p-6 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-xl hover:border-brand-orange transition duration-300 group">
+                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-brand-orange transition duration-300">
+                        <i data-lucide="door-open" class="w-7 h-7 text-brand-orange group-hover:text-white transition"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Portões Automáticos</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">Motores rápidos e seguros. Manutenção preventiva para evitar que você fique preso.</p>
+                </div>
+                
+                <div class="p-6 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-xl hover:border-brand-orange transition duration-300 group">
+                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-brand-orange transition duration-300">
+                        <i data-lucide="tv" class="w-7 h-7 text-brand-orange group-hover:text-white transition"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Antena Coletiva</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">Sinal digital limpo para todos os apartamentos. Cabeamento estruturado e conversores.</p>
+                </div>
+
+                <div class="p-6 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-xl hover:border-brand-orange transition duration-300 group">
+                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-brand-orange transition duration-300">
+                        <i data-lucide="phone" class="w-7 h-7 text-brand-orange group-hover:text-white transition"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Interfonia e PABX</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">Comunicação eficiente entre portaria e apartamentos. Centrais digitais e manutenção.</p>
+                </div>
+
+                <!-- Card de Suporte Destacado -->
+                <div class="p-6 rounded-2xl bg-brand-dark text-white shadow-lg relative overflow-hidden group cursor-pointer hover:bg-gray-800 transition">
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center mb-6 backdrop-blur">
+                            <i data-lucide="life-buoy" class="w-7 h-7 text-brand-orange"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3 text-brand-orange">Precisa de Ajuda Urgente?</h3>
+                        <p class="text-gray-300 text-sm mb-4">Plantão 24h para emergências em portões e segurança.</p>
+                        <span class="inline-flex items-center text-sm font-bold text-white hover:text-brand-orange transition">Falar no WhatsApp <i data-lucide="arrow-right" class="ml-2 w-4 h-4"></i></span>
+                    </div>
+                    <div class="absolute -right-6 -bottom-6 opacity-10 transform group-hover:scale-110 transition duration-500">
+                        <i data-lucide="settings" class="w-32 h-32"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sobre Nós com Mascote em Destaque -->
+    <section id="sobre" class="py-20 bg-brand-light relative">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center gap-12">
+            <div class="md:w-1/2 flex justify-center">
+                <!-- Mascote Vetorial Grande -->
+                <div class="relative w-72 h-72 md:w-96 md:h-96 mascot-hover transition-transform duration-500">
+                    <div class="absolute inset-0 bg-brand-orange rounded-full opacity-20 blur-2xl animate-pulse"></div>
+                    <svg class="w-full h-full drop-shadow-2xl" viewBox="0 0 200 200">
+                        <use href="#mascot-alfredo"/>
+                    </svg>
+                    <!-- Balão de Fala -->
+                    <div class="absolute top-0 right-0 bg-white p-4 rounded-tl-2xl rounded-tr-2xl rounded-br-2xl shadow-xl transform translate-x-4 -translate-y-4">
+                        <p class="text-brand-dark font-bold text-sm">"Deixa com o Alfredo!"</p>
+                    </div>
+                </div>
+            </div>
+            <div class="md:w-1/2">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-brand-dark mb-6">Mais que um técnico, um <span class="text-brand-orange">Parceiro de Confiança</span></h2>
+                <p class="text-gray-600 text-lg mb-6 leading-relaxed">
+                    A "Chame Alfredo" nasceu da necessidade de oferecer um serviço humanizado e tecnicamente impecável. Com mais de 20 anos de experiência, entendemos que entrar na sua casa ou empresa exige confiança.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center text-gray-700 font-medium">
+                        <i data-lucide="check-circle-2" class="text-green-500 w-6 h-6 mr-3"></i> Equipe uniformizada e identificada
+                    </li>
+                    <li class="flex items-center text-gray-700 font-medium">
+                        <i data-lucide="check-circle-2" class="text-green-500 w-6 h-6 mr-3"></i> Garantia em todos os serviços
+                    </li>
+                    <li class="flex items-center text-gray-700 font-medium">
+                        <i data-lucide="check-circle-2" class="text-green-500 w-6 h-6 mr-3"></i> Pagamento facilitado
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- DESIGN SYSTEM SECTION (NOVO PEDIDO) -->
+    <section id="design-system" class="py-20 bg-white border-t border-gray-200">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <span class="bg-gray-100 text-gray-500 px-3 py-1 rounded text-xs font-bold uppercase tracking-widest">Identidade Visual</span>
+                <h2 class="text-3xl font-bold text-brand-dark mt-4">Design System & Marca</h2>
+                <p class="text-gray-500 mt-2">Guia de referência visual para a marca Chame Alfredo.</p>
+            </div>
+
+            <!-- Grid do Design System -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+                
+                <!-- 1. O Mascote e Logo -->
+                <div class="bg-gray-50 p-8 rounded-2xl border border-gray-100">
+                    <h3 class="text-lg font-bold text-gray-800 mb-6 border-b pb-2">Variações de Logo</h3>
+                    <div class="space-y-8">
+                        <!-- Horizontal -->
+                        <div class="flex items-center space-x-3 bg-white p-4 rounded-lg shadow-sm">
+                            <svg class="w-10 h-10" viewBox="0 0 200 200"><use href="#mascot-alfredo"/></svg>
+                            <div>
+                                <h4 class="font-bold text-brand-orange text-lg leading-none">Chame <span class="text-brand-dark">ALFREDO!</span></h4>
+                            </div>
+                        </div>
+                        <!-- Ícone App -->
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 bg-brand-orange rounded-xl flex items-center justify-center shadow-md">
+                                <svg class="w-12 h-12" viewBox="0 0 200 200"><use href="#mascot-alfredo"/></svg>
+                            </div>
+                            <span class="text-sm text-gray-500 font-mono">App Icon / Favicon</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Paleta de Cores -->
+                <div class="bg-gray-50 p-8 rounded-2xl border border-gray-100">
+                    <h3 class="text-lg font-bold text-gray-800 mb-6 border-b pb-2">Paleta de Cores</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center group cursor-pointer">
+                            <div class="w-16 h-16 bg-brand-orange rounded-lg shadow-md mr-4 group-hover:scale-105 transition"></div>
+                            <div>
+                                <p class="font-bold text-gray-800">Alfredo Orange</p>
+                                <p class="font-mono text-xs text-gray-500">#F97316</p>
+                                <p class="text-xs text-gray-400">Energia, Atenção, Obra</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center group cursor-pointer">
+                            <div class="w-16 h-16 bg-brand-dark rounded-lg shadow-md mr-4 group-hover:scale-105 transition"></div>
+                            <div>
+                                <p class="font-bold text-gray-800">Deep Navy</p>
+                                <p class="font-mono text-xs text-gray-500">#1E293B</p>
+                                <p class="text-xs text-gray-400">Confiança, Profissionalismo</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center group cursor-pointer">
+                            <div class="w-16 h-16 bg-brand-green rounded-lg shadow-md mr-4 group-hover:scale-105 transition"></div>
+                            <div>
+                                <p class="font-bold text-gray-800">Action Green</p>
+                                <p class="font-mono text-xs text-gray-500">#84CC16</p>
+                                <p class="text-xs text-gray-400">Sucesso, WhatsApp, Ligue</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Tipografia -->
+                <div class="bg-gray-50 p-8 rounded-2xl border border-gray-100">
+                    <h3 class="text-lg font-bold text-gray-800 mb-6 border-b pb-2">Tipografia</h3>
+                    <div>
+                        <p class="text-6xl font-black text-brand-dark mb-2">Aa</p>
+                        <p class="font-bold text-brand-orange text-xl mb-4">Inter Font Family</p>
+                        <div class="space-y-2 text-sm text-gray-600">
+                            <p class="font-light">Inter Light (300) - Textos de apoio</p>
+                            <p class="font-normal">Inter Regular (400) - Corpo de texto</p>
+                            <p class="font-bold">Inter Bold (700) - Títulos e Botões</p>
+                            <p class="font-black">Inter Black (900) - Destaques</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-brand-dark text-white pt-16 pb-8 border-t border-gray-800">
+        <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+            <div class="col-span-1 md:col-span-2">
+                <div class="flex items-center space-x-3 mb-6">
+                    <svg class="w-10 h-10" viewBox="0 0 200 200"><use href="#mascot-alfredo"/></svg>
+                    <span class="text-2xl font-bold text-white">Chame Alfredo</span>
+                </div>
+                <p class="text-gray-400 max-w-sm mb-6">A solução completa para manutenção do seu patrimônio. Atendimento ágil, preço justo e garantia de serviço.</p>
+                <div class="flex space-x-4">
+                    <a href="#" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-brand-orange transition"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+                    <a href="#" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-brand-orange transition"><i data-lucide="facebook" class="w-5 h-5"></i></a>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-bold text-lg mb-6 text-brand-orange">Contato</h4>
+                <ul class="space-y-3 text-gray-300 text-sm">
+                    <li class="flex items-center"><i data-lucide="phone" class="w-4 h-4 mr-2 text-brand-green"></i> (81) 9 8841-7003</li>
+                    <li class="flex items-center"><i data-lucide="mail" class="w-4 h-4 mr-2 text-brand-green"></i> Chamealfredo@gmail.com</li>
+                    <li class="flex items-center"><i data-lucide="map-pin" class="w-4 h-4 mr-2 text-brand-green"></i> Recife - PE</li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="font-bold text-lg mb-6 text-brand-orange">Menu</h4>
+                <ul class="space-y-2 text-gray-300 text-sm">
+                    <li><a href="#home" class="hover:text-white transition">Início</a></li>
+                    <li><a href="#servicos" class="hover:text-white transition">Serviços</a></li>
+                    <li><a href="#sobre" class="hover:text-white transition">Sobre Nós</a></li>
+                    <li><a href="#design-system" class="hover:text-white transition">Design System</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="container mx-auto px-4 pt-8 border-t border-gray-800 text-center text-gray-500 text-xs">
+            <p>&copy; 2024 Chame Alfredo Soluções. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Botão WhatsApp Flutuante -->
+    <a href="https://wa.me/5581988417003" class="fixed bottom-6 right-6 bg-brand-green hover:bg-green-500 text-white p-4 rounded-full shadow-2xl z-50 transition transform hover:scale-110 flex items-center justify-center animate-bounce group">
+        <i data-lucide="message-circle" class="w-8 h-8"></i>
+        <span class="absolute right-full mr-4 bg-white text-gray-800 px-3 py-1 rounded shadow text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition">Falar Agora</span>
+    </a>
+
+    <script>
+        lucide.createIcons();
+        function toggleMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
