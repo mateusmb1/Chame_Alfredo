@@ -61,7 +61,8 @@ Ferramenta poderosa para a produtividade da equipe em campo.
 Utilize as credenciais abaixo para testar todas as funcionalidades do sistema.
 
 ### 🖥️ Acesso Web (Admin)
-*   **URL**: `http://localhost:3000`
+*   **Produção**: [https://chamealfredo.vercel.app](https://chamealfredo.vercel.app)
+*   **Local**: `http://localhost:3000`
 *   **Email**: `admin@admin.com` (Autenticação simulada)
 *   **Senha**: `admin` (ou qualquer senha para teste)
 
