@@ -78,8 +78,38 @@ const Clients: React.FC = () => {
       setFormData(prev => ({
         ...prev,
         name: data.razao_social || data.nome_fantasia || prev.name,
-        phone: data.ddd_telefone_1 ? `(${data.ddd_telefone_1}) ${data.telefone_1}` : prev.phone,
-        address: `${data.logradouro}, ${data.numero} - ${data.bairro}, ${data.municipio} - ${data.uf}${data.complemento ? ` (${data.complemento})` : ''}`,
+        name: data.razao_social || data.nome_fantasia || prev.name,
+        phone: (() => {
+          // Normalize fields
+          const ddd = String(data.ddd_telefone_1 || '').trim();
+          const num = String(data.telefone_1 || '').trim();
+
+          // Scenario 1: DDD field has the full number (e.g., "8188417003") and num is empty
+          if (ddd.length > 2 && !num) {
+            const cleanFull = ddd.replace(/\D/g, '');
+            if (cleanFull.length >= 10) {
+              const area = cleanFull.substring(0, 2);
+              const mainNum = cleanFull.substring(2);
+              // Format as (XX) XXXXX-XXXX or (XX) XXXX-XXXX
+              const formattedNum = mainNum.length === 9
+                ? `${mainNum.substring(0, 5)}-${mainNum.substring(5)}`
+                : `${mainNum.substring(0, 4)}-${mainNum.substring(4)}`;
+              return `(${area}) ${formattedNum}`;
+            }
+          }
+
+          // Scenario 2: Standard case (DDD="81", Num="88417003")
+          if (ddd && num) {
+            const cleanNum = num.replace(/\D/g, '');
+            const formattedNum = cleanNum.length === 9
+              ? `${cleanNum.substring(0, 5)}-${cleanNum.substring(5)}`
+              : `${cleanNum.substring(0, 4)}-${cleanNum.substring(4)}`;
+            return `(${ddd}) ${formattedNum}`;
+          }
+
+          // Fallback
+          return prev.phone;
+        })(),
         email: data.email || prev.email
       }));
 
