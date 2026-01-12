@@ -105,7 +105,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ]);
 
             if (clientsData) setClients(clientsData.map(mapClientFromDB));
-            if (ordersData) setOrders(ordersData as any); // Order mapping if needed
+            if (ordersData) setOrders(ordersData.map(mapOrderFromDB));
             if (techniciansData) setTechnicians(techniciansData as any);
             if (inventoryData) setInventory(inventoryData.map(mapInventoryFromDB));
             if (quotesData) setQuotes(quotesData.map(mapQuoteFromDB));
@@ -119,7 +119,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Real-time subscriptions
         const channels = [
             supabase.channel('clients_all').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, payload => handleRealtimeUpdate(payload, setClients, mapClientFromDB)).subscribe(),
-            supabase.channel('orders_all_sub').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => handleRealtimeUpdate(payload, setOrders, (x) => x as any)).subscribe(),
+            supabase.channel('orders_all_sub').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => handleRealtimeUpdate(payload, setOrders, mapOrderFromDB)).subscribe(),
             supabase.channel('techs_all').on('postgres_changes', { event: '*', schema: 'public', table: 'technicians' }, payload => handleRealtimeUpdate(payload, setTechnicians, (x) => x as any)).subscribe(),
             supabase.channel('inv_all').on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, payload => handleRealtimeUpdate(payload, setInventory, mapInventoryFromDB)).subscribe(),
             supabase.channel('quotes_all').on('postgres_changes', { event: '*', schema: 'public', table: 'quotes' }, payload => handleRealtimeUpdate(payload, setQuotes, mapQuoteFromDB)).subscribe(),
@@ -297,49 +297,55 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         };
     };
 
+    // Order mappers
+    const mapOrderFromDB = (data: any): Order => ({
+        ...data,
+        clientId: data.client_id,
+        clientName: data.client_name,
+        serviceType: data.service_type,
+        scheduledDate: data.scheduled_date,
+        completedDate: data.completed_date,
+        technicianId: data.technician_id,
+        technicianName: data.technician_name,
+        projectId: data.project_id,
+        projectName: data.project_name,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
+    });
+
+    const mapOrderToDB = (order: Partial<Order>) => {
+        const { clientId, clientName, serviceType, scheduledDate, completedDate,
+            technicianId, technicianName, projectId, projectName, createdAt, updatedAt, ...rest } = order;
+        return {
+            ...rest,
+            ...(clientId !== undefined && { client_id: clientId }),
+            ...(clientName !== undefined && { client_name: clientName }),
+            ...(serviceType !== undefined && { service_type: serviceType }),
+            ...(scheduledDate !== undefined && { scheduled_date: scheduledDate }),
+            ...(completedDate !== undefined && { completed_date: completedDate }),
+            ...(technicianId !== undefined && { technician_id: technicianId }),
+            ...(technicianName !== undefined && { technician_name: technicianName }),
+            ...(projectId !== undefined && { project_id: projectId }),
+            ...(projectName !== undefined && { project_name: projectName }),
+            ...(createdAt !== undefined && { created_at: createdAt }),
+            ...(updatedAt !== undefined && { updated_at: updatedAt }),
+        };
+    };
+
     // Client operations (Mapping already added)
 
     // Order operations
     const addOrder = async (order: Omit<Order, 'id' | 'status' | 'createdAt'>) => {
-        const { error } = await supabase.from('orders').insert([{
+        const dbOrder = mapOrderToDB({
             ...order,
             status: 'nova'
-        }]);
+        });
+        const { error } = await supabase.from('orders').insert([dbOrder]);
         if (error) console.error('Error adding order:', error);
     };
 
     const updateOrder = async (id: string, updatedOrder: Partial<Order>) => {
-        // Convert camelCase to snake_case for DB if needed, but we used matching names in SQL if careful
-        // Actually our SQL uses camelCase column names? No, SQL usually uses snake_case, but JS uses camelCase.
-        // Supabase JS client automatically handles mapping if setup, BUT by default it expects column names to match.
-        // My migration used snake_case (e.g. client_id). The JS types use camelCase (clientId).
-        // I need to map these or update the TS interfaces to match DB.
-        // To be safe and quick, I will map manually here for the critical fields.
-
-        const dbUpdate: any = { ...updatedOrder };
-        // Mapping common fields that might differ. 
-        // Ideally we'd have a transform layer, but for now:
-        if (updatedOrder.clientId) dbUpdate.client_id = updatedOrder.clientId;
-        if (updatedOrder.clientName) dbUpdate.client_name = updatedOrder.clientName;
-        if (updatedOrder.serviceType) dbUpdate.service_type = updatedOrder.serviceType;
-        if (updatedOrder.scheduledDate) dbUpdate.scheduled_date = updatedOrder.scheduledDate;
-        if (updatedOrder.completedDate) dbUpdate.completed_date = updatedOrder.completedDate;
-        if (updatedOrder.technicianId) dbUpdate.technician_id = updatedOrder.technicianId;
-        if (updatedOrder.technicianName) dbUpdate.technician_name = updatedOrder.technicianName;
-        if (updatedOrder.projectId) dbUpdate.project_id = updatedOrder.projectId;
-        if (updatedOrder.projectName) dbUpdate.project_name = updatedOrder.projectName;
-
-        // Remove camelCase keys to avoid errors if they don't exist in DB
-        delete dbUpdate.clientId;
-        delete dbUpdate.clientName;
-        delete dbUpdate.serviceType;
-        delete dbUpdate.scheduledDate;
-        delete dbUpdate.completedDate;
-        delete dbUpdate.technicianId;
-        delete dbUpdate.technicianName;
-        delete dbUpdate.projectId;
-        delete dbUpdate.projectName;
-
+        const dbUpdate = mapOrderToDB(updatedOrder);
         const { error } = await supabase.from('orders').update(dbUpdate).eq('id', id);
         if (error) console.error('Error updating order:', error);
     };
