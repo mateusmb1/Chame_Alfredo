@@ -7,7 +7,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
     console.warn('Supabase URL or Anon Key missing in environment variables');
 }
 
-export const supabase = createClient(
-    supabaseUrl || '',
-    supabaseAnonKey || ''
-);
+// Fallback to prevent app crash if keys are missing (allows debugging)
+const url = supabaseUrl || 'https://placeholder.supabase.co';
+const key = supabaseAnonKey || 'placeholder';
+
+export const supabase = createClient(url, key);

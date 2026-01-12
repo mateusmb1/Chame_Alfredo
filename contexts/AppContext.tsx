@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../src/lib/supabase';
 import { Client } from '../types/client';
 import { Order } from '../types/order';
 import { InventoryItem } from '../types/inventory';
