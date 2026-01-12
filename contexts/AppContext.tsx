@@ -188,12 +188,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const updateClient = async (id: string, updatedClient: Partial<Client>) => {
         const dbUpdate = mapClientToDB(updatedClient);
-        const { error } = await supabase.from('Clients').update(dbUpdate).eq('id', id);
+        const { error } = await supabase.from('clients').update(dbUpdate).eq('id', id);
         if (error) console.error('Error updating client:', error);
     };
 
     const deleteClient = async (id: string) => {
-        const { error } = await supabase.from('Clients').delete().eq('id', id);
+        const { error } = await supabase.from('clients').delete().eq('id', id);
         if (error) console.error('Error deleting client:', error);
     };
 
