@@ -225,7 +225,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Fetch initial data
         const fetchData = async () => {
             const { data: clientsData, error: clientsError } = await supabase.from('clients').select('*');
-            if (clientsData) setClients(clientsData as any);
+            if (clientsData) setClients(clientsData.map(mapClientFromDB));
             if (clientsError) console.error('Error fetching clients:', clientsError);
 
             const { data: ordersData, error: ordersError } = await supabase.from('orders').select('*');
@@ -244,9 +244,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             .channel('clients_channel')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, (payload) => {
                 if (payload.eventType === 'INSERT') {
-                    setClients(prev => [...prev, payload.new as any]);
+                    setClients(prev => [...prev, mapClientFromDB(payload.new)]);
                 } else if (payload.eventType === 'UPDATE') {
-                    setClients(prev => prev.map(c => c.id === payload.new.id ? payload.new as any : c));
+                    setClients(prev => prev.map(c => c.id === payload.new.id ? mapClientFromDB(payload.new) : c));
                 } else if (payload.eventType === 'DELETE') {
                     setClients(prev => prev.filter(c => c.id !== payload.old.id));
                 }
@@ -286,17 +286,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         };
     }, []);
 
+    // Helper to map DB client to App client
+    const mapClientFromDB = (data: any): Client => ({
+        ...data,
+        cpfCnpj: data.cpf_cnpj,
+        serviceHistory: data.service_history || [],
+        createdAt: data.created_at,
+        // Ensure arrays are initialized
+        contracts: data.contracts || [],
+    });
+
+    // Helper to map App client to DB client
+    const mapClientToDB = (client: Partial<Client>) => {
+        const { cpfCnpj, serviceHistory, createdAt, ...rest } = client;
+        return {
+            ...rest,
+            ...(cpfCnpj !== undefined && { cpf_cnpj: cpfCnpj }),
+            ...(serviceHistory !== undefined && { service_history: serviceHistory }),
+            // createdAt is usually handled by DB default, but if passed:
+            ...(createdAt !== undefined && { created_at: createdAt }),
+        };
+    };
+
     // Client operations
     const addClient = async (client: Omit<Client, 'id' | 'status' | 'createdAt'>) => {
-        const { error } = await supabase.from('clients').insert([{
+        const dbUser = mapClientToDB({
             ...client,
-            status: 'active'
-        }]);
+            status: 'active',
+            serviceHistory: [],
+            contracts: []
+        });
+
+        const { error } = await supabase.from('clients').insert([dbUser]);
         if (error) console.error('Error adding client:', error);
     };
 
     const updateClient = async (id: string, updatedClient: Partial<Client>) => {
-        const { error } = await supabase.from('clients').update(updatedClient).eq('id', id);
+        const dbUpdate = mapClientToDB(updatedClient);
+        const { error } = await supabase.from('clients').update(dbUpdate).eq('id', id);
         if (error) console.error('Error updating client:', error);
     };
 
