@@ -71,9 +71,14 @@ const Landing: React.FC = () => {
             <a href="#sobre" className="hover:text-[#F97316] transition">Sobre Nós</a>
           </nav>
           <div className="hidden md:flex items-center gap-3">
-            <a href="/dashboard" className="flex items-center border border-gray-200 bg-white text-[#1e293b] hover:bg-gray-100 px-5 py-2 rounded-full font-bold transition shadow-sm">
-              <User className="w-4 h-4 mr-2" /> Entrar
-            </a>
+            <div className="flex items-center gap-2">
+              <a href="/mobile/login" className="hidden md:flex items-center border border-gray-200 bg-white text-[#1e293b] hover:bg-gray-50 px-4 py-2 rounded-full font-bold transition shadow-sm text-sm">
+                <Wrench className="w-4 h-4 mr-2" /> Sou Técnico
+              </a>
+              <a href="/dashboard" className="hidden md:flex items-center bg-[#1e293b] text-white hover:bg-gray-800 px-4 py-2 rounded-full font-bold transition shadow-sm text-sm">
+                <User className="w-4 h-4 mr-2" /> Área Admin
+              </a>
+            </div>
             <a href="https://wa.me/5581988417003" className="flex items-center bg-[#84cc16] hover:bg-green-600 text-white px-5 py-2 rounded-full font-bold transition shadow-lg">
               <PhoneCall className="w-4 h-4 mr-2" /> (81) 9 8841-7003
             </a>
@@ -87,13 +92,14 @@ const Landing: React.FC = () => {
             <a href="#home" className="block text-[#1e293b] font-medium">Início</a>
             <a href="#servicos" className="block text-[#1e293b] font-medium">Serviços</a>
             <a href="#sobre" className="block text-[#1e293b] font-medium">Sobre Nós</a>
-            <a href="/dashboard" className="block border border-gray-200 text-center py-2 rounded font-bold flex items-center justify-center gap-2"><User className="w-4 h-4" /> Entrar</a>
+            <a href="/dashboard" className="block border border-gray-200 text-center py-2 rounded font-bold flex items-center justify-center gap-2"><User className="w-4 h-4" /> Área Admin</a>
+            <a href="/mobile/login" className="block border border-gray-200 text-center py-2 rounded font-bold flex items-center justify-center gap-2 text-gray-600"><Wrench className="w-4 h-4" /> Sou Técnico</a>
             <a href="https://wa.me/5581988417003" className="block bg-[#84cc16] text-white text-center py-2 rounded font-bold">Ligar Agora</a>
           </div>
         )}
       </header>
 
-      <section id="home" className="relative overflow-hidden text-white py-20 md:py-32" style={{backgroundImage:'linear-gradient(rgba(30,41,59,0.85), rgba(30,41,59,0.8)), url(https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=1950&q=80)', backgroundSize:'cover', backgroundPosition:'center'}}>
+      <section id="home" className="relative overflow-hidden text-white py-20 md:py-32" style={{ backgroundImage: 'linear-gradient(rgba(30,41,59,0.85), rgba(30,41,59,0.8)), url(https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=1950&q=80)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
         <div className="absolute inset-0 bg-gradient-to-r from-[#1e293b]/90 to-transparent"></div>
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center relative z-10">
           <div className="md:w-1/2 mb-10 md:mb-0 text-center md:text-left">
@@ -108,7 +114,8 @@ const Landing: React.FC = () => {
                 <MessageCircle className="mr-2" /> Chamar o Alfredo
               </a>
               <a href="#servicos" className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold px-8 py-3 rounded-lg text-center">Nossos Serviços</a>
-              <a href="/dashboard" className="bg-white text-[#1e293b] hover:bg-gray-100 border border-white/30 font-bold px-8 py-3 rounded-lg text-center">Entrar</a>
+              <a href="/dashboard" className="bg-white text-[#1e293b] hover:bg-gray-100 border border-white/30 font-bold px-6 py-3 rounded-lg text-center flex items-center justify-center"><User className="w-4 h-4 mr-2" /> Admin</a>
+              <a href="/mobile/login" className="bg-white/90 text-[#1e293b] hover:bg-white border border-white/30 font-bold px-6 py-3 rounded-lg text-center flex items-center justify-center"><Wrench className="w-4 h-4 mr-2" /> Técnico</a>
             </div>
           </div>
           <div className="md:w-1/2 md:pl-12 w-full">
@@ -124,7 +131,7 @@ const Landing: React.FC = () => {
                   <p className="text-xs text-gray-500">Responder em até 30 minutos</p>
                 </div>
               </div>
-              <form onSubmit={(e)=>{e.preventDefault(); alert('Mensagem enviada! Alfredo entrará em contato.')}}>
+              <form onSubmit={(e) => { e.preventDefault(); alert('Mensagem enviada! Alfredo entrará em contato.') }}>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-gray-700 text-xs font-bold mb-1 uppercase">Seu Nome</label>
