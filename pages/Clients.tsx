@@ -48,18 +48,33 @@ const Clients: React.FC = () => {
   };
 
   const handleCnpjBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-    if (formData.type !== 'pj') return;
+    // Remove non-digits
+    const value = e.target.value.replace(/\D/g, '');
 
-    const cnpj = e.target.value.replace(/\D/g, '');
-    if (cnpj.length !== 14) return;
+    // Auto-detect PF/PJ based on length (11=CPF, 14=CNPJ)
+    if (value.length === 14) {
+      if (formData.type !== 'pj') {
+        setFormData(prev => ({ ...prev, type: 'pj' }));
+      }
+    } else if (value.length === 11) {
+      if (formData.type !== 'pf') {
+        setFormData(prev => ({ ...prev, type: 'pf' }));
+      }
+      return; // Don't fetch for CPF
+    } else {
+      return; // Invalid length
+    }
+
+    // Only fetch if it looks like a CNPJ (14 digits)
+    if (value.length !== 14) return;
 
     setIsLoadingCNPJ(true);
     try {
-      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${value}`);
       if (!response.ok) throw new Error('Falha ao buscar CNPJ');
-      
+
       const data = await response.json();
-      
+
       setFormData(prev => ({
         ...prev,
         name: data.razao_social || data.nome_fantasia || prev.name,
@@ -67,7 +82,7 @@ const Clients: React.FC = () => {
         address: `${data.logradouro}, ${data.numero} - ${data.bairro}, ${data.municipio} - ${data.uf}${data.complemento ? ` (${data.complemento})` : ''}`,
         email: data.email || prev.email
       }));
-      
+
       showToast('success', 'Dados do CNPJ carregados com sucesso!');
     } catch (error) {
       console.error('Erro ao buscar CNPJ:', error);
@@ -200,9 +215,9 @@ const Clients: React.FC = () => {
                 required
               />
               {isLoadingCNPJ && (
-                  <div class="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div class="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                  </div>
+                <div class="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div class="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                </div>
               )}
             </div>
             {formData.type === 'pj' && <p class="mt-1 text-xs text-gray-500">Digite o CNPJ para preencher os dados automaticamente.</p>}

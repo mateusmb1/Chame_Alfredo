@@ -20,7 +20,7 @@ const CreateOrder: React.FC = () => {
           <button onClick={handleSubmit} class="flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-primary px-4 text-sm font-medium text-white shadow-sm hover:bg-primary/90">Salvar Ordem</button>
         </div>
       </header>
-      
+
       <div class="flex-1 overflow-y-auto p-8">
         <div class="mx-auto max-w-4xl">
           <div class="flex flex-col gap-8">
@@ -40,7 +40,10 @@ const CreateOrder: React.FC = () => {
                   </div>
                 </div>
                 <div class="col-span-1 flex items-end">
-                  <button class="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-primary bg-primary/10 px-4 text-sm font-medium text-primary hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30">
+                  <button
+                    onClick={() => navigate('/clients')}
+                    class="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-primary bg-primary/10 px-4 text-sm font-medium text-primary hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30"
+                  >
                     <span class="material-symbols-outlined text-base">add</span>
                     <span>Adicionar Novo Cliente</span>
                   </button>
