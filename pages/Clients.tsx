@@ -240,6 +240,12 @@ const Clients: React.FC = () => {
                 value={formData.cpfCnpj || ''}
                 onChange={(e) => setFormData({ ...formData, cpfCnpj: e.target.value })}
                 onBlur={handleCnpjBlur}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent form submission
+                    handleCnpjBlur(e as any); // Trigger existing logic
+                  }
+                }}
                 class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 placeholder={formData.type === 'pf' ? '000.000.000-00' : '00.000.000/0000-00'}
                 required
