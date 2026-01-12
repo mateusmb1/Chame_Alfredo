@@ -78,13 +78,25 @@ Utilize as credenciais abaixo para testar todas as funcionalidades do sistema.
 ## 🛠️ Tecnologias Utilizadas
 
 *   **Frontend**: React 18, TypeScript, Vite
+*   **Backend & Database**: Supabase (PostgreSQL, Real-time, Auth)
 *   **Estilização**: Tailwind CSS (Design System Premium)
 *   **Gráficos**: Recharts
 *   **Ícones**: Material Symbols & Lucide React
 *   **Roteamento**: React Router DOM
 *   **Gerenciamento de Estado**: React Context API
+*   **APIs Externas**: BrasilAPI (Consulta CNPJ)
 
 ---
+
+## ✨ Recursos Recentes
+
+*   **🔄 Sincronização em Tempo Real**: Todos os dados (clientes, ordens, projetos) sincronizam automaticamente entre dispositivos usando Supabase Realtime.
+*   **🏢 Autofill de CNPJ**: Ao cadastrar clientes PJ, digite o CNPJ e pressione Enter - os dados da empresa são preenchidos automaticamente via BrasilAPI.
+*   **💾 Persistência Completa**: Todos os dados agora são salvos no banco de dados Supabase, substituindo o mock local.
+*   **📊 Gestão de Projetos**: Sistema completo de gerenciamento de projetos com timeline, equipe e atividades.
+*   **📦 Inventário & Contratos**: Controle de estoque e contratos recorrentes totalmente integrados.
+
+
 
 ## 📸 Galeria de Telas
 
@@ -108,19 +120,46 @@ Detalhes da ordem, checklist, fotos e assinatura.
 
 ## 🚀 Como Rodar o Projeto
 
+### Pré-requisitos
+
+*   Node.js 18+ instalado
+*   Conta no [Supabase](https://supabase.com) (gratuita)
+
+### Configuração
+
 1.  **Instalar dependências**:
     ```bash
     npm install
     ```
 
-2.  **Rodar servidor de desenvolvimento**:
+2.  **Configurar variáveis de ambiente**:
+    
+    Crie um arquivo `.env.local` na raiz do projeto com suas credenciais do Supabase:
+    
+    ```env
+    VITE_SUPABASE_URL=sua_url_do_supabase
+    VITE_SUPABASE_ANON_KEY=sua_chave_anonima
+    ```
+    
+    > **Como obter**: Acesse seu projeto no Supabase → Settings → API → Project URL e anon/public key.
+
+3.  **Configurar banco de dados**:
+    
+    Execute as migrações SQL no Supabase SQL Editor (encontradas em `/migrations`):
+    
+    ```bash
+    # Ou use o arquivo de migração disponível
+    migrations/20260112010000_create_remaining_tables.sql
+    ```
+
+4.  **Rodar servidor de desenvolvimento**:
     ```bash
     npm run dev
     ```
 
-3.  **Acessar no navegador**:
+5.  **Acessar no navegador**:
     *   Abra `http://localhost:3000`
 
----
+
 
 Desenvolvido com ❤️ por **Antigravity** para **Chame Alfredo**.

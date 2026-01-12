@@ -119,7 +119,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Real-time subscriptions
         const channels = [
             supabase.channel('clients_all').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, payload => handleRealtimeUpdate(payload, setClients, mapClientFromDB)).subscribe(),
-            supabase.channel('orders_all').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => handleRealtimeUpdate(payload, setOrders, (x) => x as any)).subscribe(),
+            supabase.channel('orders_all_sub').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => handleRealtimeUpdate(payload, setOrders, (x) => x as any)).subscribe(),
             supabase.channel('techs_all').on('postgres_changes', { event: '*', schema: 'public', table: 'technicians' }, payload => handleRealtimeUpdate(payload, setTechnicians, (x) => x as any)).subscribe(),
             supabase.channel('inv_all').on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, payload => handleRealtimeUpdate(payload, setInventory, mapInventoryFromDB)).subscribe(),
             supabase.channel('quotes_all').on('postgres_changes', { event: '*', schema: 'public', table: 'quotes' }, payload => handleRealtimeUpdate(payload, setQuotes, mapQuoteFromDB)).subscribe(),
@@ -188,12 +188,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const updateClient = async (id: string, updatedClient: Partial<Client>) => {
         const dbUpdate = mapClientToDB(updatedClient);
-        const { error } = await supabase.from('clients').update(dbUpdate).eq('id', id);
+        const { error } = await supabase.from('Clients').update(dbUpdate).eq('id', id);
         if (error) console.error('Error updating client:', error);
     };
 
     const deleteClient = async (id: string) => {
-        const { error } = await supabase.from('clients').delete().eq('id', id);
+        const { error } = await supabase.from('Clients').delete().eq('id', id);
         if (error) console.error('Error deleting client:', error);
     };
 
