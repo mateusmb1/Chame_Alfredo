@@ -136,7 +136,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Generic Realtime Handler
     const handleRealtimeUpdate = (payload: any, setter: React.Dispatch<React.SetStateAction<any[]>>, mapper: (data: any) => any) => {
         if (payload.eventType === 'INSERT') {
-            setter(prev => [...prev, mapper(payload.new)]);
+            setter(prev => {
+                if (prev.some(item => item.id === payload.new.id)) return prev;
+                return [...prev, mapper(payload.new)];
+            });
         } else if (payload.eventType === 'UPDATE') {
             setter(prev => prev.map(item => item.id === payload.new.id ? mapper(payload.new) : item));
         } else if (payload.eventType === 'DELETE') {
@@ -175,8 +178,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             contracts: []
         });
 
-        const { error } = await supabase.from('clients').insert([dbUser]);
-        if (error) console.error('Error adding client:', error);
+        const { data, error } = await supabase.from('clients').insert([dbUser]).select().single();
+        if (error) {
+            console.error('Error adding client:', error);
+        } else if (data) {
+            setClients(prev => [...prev, mapClientFromDB(data)]);
+        }
     };
 
     const updateClient = async (id: string, updatedClient: Partial<Client>) => {

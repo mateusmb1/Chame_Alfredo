@@ -13,7 +13,14 @@ const Clients: React.FC = () => {
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(clients[0] || null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+  // Auto-select first client if none selected
+  React.useEffect(() => {
+    if (!selectedClient && clients.length > 0) {
+      setSelectedClient(clients[0]);
+    }
+  }, [clients, selectedClient]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -412,83 +419,91 @@ const Clients: React.FC = () => {
           </div>
 
           <aside class="flex w-full lg:max-w-[400px] shrink-0 flex-col rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-[#18202F]">
-            <div class="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 px-6 dark:border-gray-800">
-              <div class="flex items-center gap-4">
-                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuC_kS9NbS_537o4T0GvOB4UR8sJbcY2IFm6Q8cJQZbhAuC2sIybzrlgnDi21xhb7RCfKdQ2fcXvFRcUGU0b1bLYlXYg11VDBs6XI2OAiJGT0W1Jb3QfGg0lxBrMWHEqn_GDSDuFA_LRk2NebP9j0LJHqovDq1941O89aWytxP0QmB0g9u_hjWy1AIEhRFa6VFcdg_UZUGA_gy0q28GyrgKRucivdzINe6ma9uNqE12KNIwN3h1X9s32zTw8I9AMehxaAFWJ1_YKoRGl")' }}></div>
-                <div>
-                  <h3 class="text-base font-semibold text-gray-900 dark:text-white">Cliente Corp S.A.</h3>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">ID #1001</p>
+            {selectedClient ? (
+              <>
+                <div class="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 px-6 dark:border-gray-800">
+                  <div class="flex items-center gap-4">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-blue-600 text-lg font-bold text-white">
+                      {selectedClient.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 class="text-base font-semibold text-gray-900 dark:text-white">{selectedClient.name}</h3>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">ID #{selectedClient.id.substring(0, 8)}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button
+                      onClick={() => handleOpenEditModal(selectedClient)}
+                      class="flex size-8 items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+                    >
+                      <span class="material-symbols-outlined text-base">edit</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <button class="flex size-8 items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700">
-                  <span class="material-symbols-outlined text-base">edit</span>
-                </button>
-              </div>
-            </div>
-            <div class="flex-1 overflow-y-auto p-6">
-              <div class="space-y-6">
-                <div>
-                  <h4 class="mb-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Informações de Contato</h4>
-                  <div class="space-y-2 text-sm">
-                    <div class="flex items-center gap-3">
-                      <span class="material-symbols-outlined text-base text-gray-400">phone</span>
-                      <span class="text-gray-700 dark:text-gray-300">(11) 98765-4321</span>
+                <div class="flex-1 overflow-y-auto p-6">
+                  <div class="space-y-6">
+                    <div>
+                      <h4 class="mb-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Informações de Contato</h4>
+                      <div class="space-y-2 text-sm">
+                        <div class="flex items-center gap-3">
+                          <span class="material-symbols-outlined text-base text-gray-400">phone</span>
+                          <span class="text-gray-700 dark:text-gray-300">{selectedClient.phone || 'N/A'}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                          <span class="material-symbols-outlined text-base text-gray-400">mail</span>
+                          <span class="text-gray-700 dark:text-gray-300">{selectedClient.email || 'N/A'}</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                          <span class="material-symbols-outlined mt-0.5 text-base text-gray-400">location_on</span>
+                          <span class="text-gray-700 dark:text-gray-300">{selectedClient.address || 'Endereço não informado'}</span>
+                        </div>
+                        <div class="flex items-start gap-3">
+                          <span class="material-symbols-outlined mt-0.5 text-base text-gray-400">badge</span>
+                          <span class="text-gray-700 dark:text-gray-300">{selectedClient.cpfCnpj || 'CPF/CNPJ não informado'}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                      <span class="material-symbols-outlined text-base text-gray-400">mail</span>
-                      <span class="text-gray-700 dark:text-gray-300">contato@clientecorp.com</span>
-                    </div>
-                    <div class="flex items-start gap-3">
-                      <span class="material-symbols-outlined mt-0.5 text-base text-gray-400">location_on</span>
-                      <span class="text-gray-700 dark:text-gray-300">Av. Paulista, 1000, São Paulo, SP</span>
+                    {/* Service History - Dynamic if available, else generic placeholder message */}
+                    <div>
+                      <h4 class="mb-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Histórico de Serviços</h4>
+                      {selectedClient.serviceHistory && selectedClient.serviceHistory.length > 0 ? (
+                        <div class="flow-root">
+                          <ul class="-mb-4">
+                            {selectedClient.serviceHistory.map((service, idx) => (
+                              <li key={idx}>
+                                <div class="relative pb-4">
+                                  {idx !== selectedClient.serviceHistory!.length - 1 && <span class="absolute left-2.5 top-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700" aria-hidden="true"></span>}
+                                  <div class="relative flex items-start space-x-3">
+                                    <div class="relative px-1">
+                                      <div class="flex h-5 w-5 items-center justify-center rounded-full bg-green-500 ring-4 ring-white dark:ring-[#18202F]">
+                                        <span class="material-symbols-outlined text-xs text-white">check</span>
+                                      </div>
+                                    </div>
+                                    <div class="min-w-0 flex-1 py-0">
+                                      <div class="text-sm text-gray-500 dark:text-gray-400">
+                                        <span class="font-medium text-gray-900 dark:text-white">{service.description}</span>
+                                        <div class="text-xs">{service.date}</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : (
+                        <p class="text-sm text-gray-500 italic">Nenhum serviço registrado.</p>
+                      )}
                     </div>
                   </div>
                 </div>
-                <div>
-                  <h4 class="mb-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Histórico de Serviços</h4>
-                  <div class="flow-root">
-                    <ul class="-mb-4">
-                      <li>
-                        <div class="relative pb-4">
-                          <span class="absolute left-2.5 top-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700" aria-hidden="true"></span>
-                          <div class="relative flex items-start space-x-3">
-                            <div class="relative px-1">
-                              <div class="flex h-5 w-5 items-center justify-center rounded-full bg-green-500 ring-4 ring-white dark:ring-[#18202F]">
-                                <span class="material-symbols-outlined text-xs text-white">check</span>
-                              </div>
-                            </div>
-                            <div class="min-w-0 flex-1 py-0">
-                              <div class="text-sm text-gray-500 dark:text-gray-400">
-                                <span class="font-medium text-gray-900 dark:text-white">OS #2024-152</span>
-                                <div class="text-xs">Manutenção Preventiva - 15/07/2024</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div class="relative pb-4">
-                          <div class="relative flex items-start space-x-3">
-                            <div class="relative px-1">
-                              <div class="flex h-5 w-5 items-center justify-center rounded-full bg-green-500 ring-4 ring-white dark:ring-[#18202F]">
-                                <span class="material-symbols-outlined text-xs text-white">check</span>
-                              </div>
-                            </div>
-                            <div class="min-w-0 flex-1 py-0">
-                              <div class="text-sm text-gray-500 dark:text-gray-400">
-                                <span class="font-medium text-gray-900 dark:text-white">OS #2024-089</span>
-                                <div class="text-xs">Instalação - 20/04/2024</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
+              </>
+            ) : (
+              <div class="flex h-full flex-col items-center justify-center p-8 text-center text-gray-500">
+                <span class="material-symbols-outlined mb-2 text-4xl opacity-50">person_off</span>
+                <p>Nenhum cliente selecionado</p>
               </div>
-            </div>
+            )}
           </aside>
         </div>
       </div>
