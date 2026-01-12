@@ -94,13 +94,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 { data: projectsData },
                 { data: activitiesData }
             ] = await Promise.all([
-                supabase.from('Clientes').select('*'),
+                supabase.from('clients').select('*'),
                 supabase.from('orders').select('*'),
                 supabase.from('technicians').select('*'),
                 supabase.from('inventory').select('*'),
-                supabase.from('quotes').select('*, client:Clientes(name)'),
-                supabase.from('contracts').select('*, client:Clientes(name)'),
-                supabase.from('projects').select('*, client:Clientes(name), responsible:technicians(name)'),
+                supabase.from('quotes').select('*, client:clients(name)'),
+                supabase.from('contracts').select('*, client:clients(name)'),
+                supabase.from('projects').select('*, client:clients(name), responsible:technicians(name)'),
                 supabase.from('project_activities').select('*')
             ]);
 
@@ -118,7 +118,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         // Real-time subscriptions
         const channels = [
-            supabase.channel('clients_all').on('postgres_changes', { event: '*', schema: 'public', table: 'Clientes' }, payload => handleRealtimeUpdate(payload, setClients, mapClientFromDB)).subscribe(),
+            supabase.channel('clients_all').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, payload => handleRealtimeUpdate(payload, setClients, mapClientFromDB)).subscribe(),
             supabase.channel('orders_all_sub').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => handleRealtimeUpdate(payload, setOrders, (x) => x as any)).subscribe(),
             supabase.channel('techs_all').on('postgres_changes', { event: '*', schema: 'public', table: 'technicians' }, payload => handleRealtimeUpdate(payload, setTechnicians, (x) => x as any)).subscribe(),
             supabase.channel('inv_all').on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, payload => handleRealtimeUpdate(payload, setInventory, mapInventoryFromDB)).subscribe(),
@@ -178,7 +178,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             contracts: []
         });
 
-        const { data, error } = await supabase.from('Clientes').insert([dbUser]).select().single();
+        const { data, error } = await supabase.from('clients').insert([dbUser]).select().single();
         if (error) {
             console.error('Error adding client:', error);
         } else if (data) {
@@ -188,12 +188,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const updateClient = async (id: string, updatedClient: Partial<Client>) => {
         const dbUpdate = mapClientToDB(updatedClient);
-        const { error } = await supabase.from('Clientes').update(dbUpdate).eq('id', id);
+        const { error } = await supabase.from('clients').update(dbUpdate).eq('id', id);
         if (error) console.error('Error updating client:', error);
     };
 
     const deleteClient = async (id: string) => {
-        const { error } = await supabase.from('Clientes').delete().eq('id', id);
+        const { error } = await supabase.from('clients').delete().eq('id', id);
         if (error) console.error('Error deleting client:', error);
     };
 
