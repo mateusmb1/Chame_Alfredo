@@ -250,33 +250,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         };
     };
 
-    // Client operations
-    const addClient = async (client: Omit<Client, 'id' | 'status' | 'createdAt'>) => {
-        const dbUser = mapClientToDB({
-            ...client,
-            status: 'active',
-            serviceHistory: [],
-            contracts: []
-        });
-
-        const { data, error } = await supabase.from('clients').insert([dbUser]).select().single();
-        if (error) {
-            console.error('Error adding client:', error);
-        } else if (data) {
-            setClients(prev => [...prev, mapClientFromDB(data)]);
-        }
-    };
-
-    const updateClient = async (id: string, updatedClient: Partial<Client>) => {
-        const dbUpdate = mapClientToDB(updatedClient);
-        const { error } = await supabase.from('clients').update(dbUpdate).eq('id', id);
-        if (error) console.error('Error updating client:', error);
-    };
-
-    const deleteClient = async (id: string) => {
-        const { error } = await supabase.from('clients').delete().eq('id', id);
-        if (error) console.error('Error deleting client:', error);
-    };
 
     // Mappers
     const mapInventoryFromDB = (d: any): InventoryItem => ({
@@ -415,112 +388,150 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Client operations (Mapping already added)
 
-    // Order operations
-    const addOrder = async (order: Omit<Order, 'id' | 'status' | 'createdAt'>) => {
+
+    // Memoize operations to prevent unnecessary re-renders
+    const addClient = React.useCallback(async (client: Omit<Client, 'id' | 'status' | 'createdAt'>) => {
+        const dbUser = mapClientToDB({
+            ...client,
+            status: 'active',
+            serviceHistory: [],
+            contracts: []
+        });
+
+        const { data, error } = await supabase.from('clients').insert([dbUser]).select().single();
+        if (error) {
+            console.error('Error adding client:', error);
+        } else if (data) {
+            setClients(prev => [...prev, mapClientFromDB(data)]);
+        }
+    }, [setClients, mapClientToDB, mapClientFromDB, supabase]);
+
+    const updateClient = React.useCallback(async (id: string, updatedClient: Partial<Client>) => {
+        const dbUpdate = mapClientToDB(updatedClient);
+        const { error } = await supabase.from('clients').update(dbUpdate).eq('id', id);
+        if (error) console.error('Error updating client:', error);
+    }, [mapClientToDB, supabase]);
+
+    const deleteClient = React.useCallback(async (id: string) => {
+        const { error } = await supabase.from('clients').delete().eq('id', id);
+        if (error) console.error('Error deleting client:', error);
+    }, [supabase]);
+
+    const addOrder = React.useCallback(async (order: Omit<Order, 'id' | 'status' | 'createdAt'>) => {
         const dbOrder = mapOrderToDB({
             ...order,
             status: 'nova'
         });
-        const { error } = await supabase.from('orders').insert([dbOrder]);
-        if (error) console.error('Error adding order:', error);
-    };
+        const { data, error } = await supabase.from('orders').insert([dbOrder]).select().single();
+        if (error) {
+            console.error('Error adding order:', error);
+        } else if (data) {
+            setOrders(prev => [...prev, mapOrderFromDB(data)]);
+        }
+    }, [setOrders, mapOrderToDB, mapOrderFromDB, supabase]);
 
-    const updateOrder = async (id: string, updatedOrder: Partial<Order>) => {
+    const updateOrder = React.useCallback(async (id: string, updatedOrder: Partial<Order>) => {
         const dbUpdate = mapOrderToDB(updatedOrder);
         const { error } = await supabase.from('orders').update(dbUpdate).eq('id', id);
         if (error) console.error('Error updating order:', error);
-    };
+    }, [mapOrderToDB, supabase]);
 
-    const deleteOrder = async (id: string) => {
+    const deleteOrder = React.useCallback(async (id: string) => {
         const { error } = await supabase.from('orders').delete().eq('id', id);
         if (error) console.error('Error deleting order:', error);
-    };
+    }, [supabase]);
 
-    // Inventory operations
-    const addInventoryItem = async (item: Omit<InventoryItem, 'id'>) => {
+    const addInventoryItem = React.useCallback(async (item: Omit<InventoryItem, 'id'>) => {
         const dbItem = mapInventoryToDB(item);
         const { error } = await supabase.from('inventory').insert([dbItem]);
         if (error) console.error('Error adding inventory:', error);
-    };
+    }, [mapInventoryToDB, supabase]);
 
-    const updateInventoryItem = async (id: string, updates: Partial<InventoryItem>) => {
+    const updateInventoryItem = React.useCallback(async (id: string, updates: Partial<InventoryItem>) => {
         const dbUpdate = mapInventoryToDB(updates);
         // Clean undefineds
         Object.keys(dbUpdate).forEach(key => (dbUpdate as any)[key] === undefined && delete (dbUpdate as any)[key]);
         const { error } = await supabase.from('inventory').update(dbUpdate).eq('id', id);
         if (error) console.error('Error updating inventory:', error);
-    };
+    }, [mapInventoryToDB, supabase]);
 
-    const deleteInventoryItem = async (id: string) => {
+    const deleteInventoryItem = React.useCallback(async (id: string) => {
         const { error } = await supabase.from('inventory').delete().eq('id', id);
         if (error) console.error('Error deleting inventory:', error);
-    };
+    }, [supabase]);
 
     // Quote operations
-    const addQuote = async (quote: Omit<Quote, 'id' | 'createdAt'>) => {
+    const addQuote = React.useCallback(async (quote: Omit<Quote, 'id' | 'createdAt'>) => {
         const dbQuote = mapQuoteToDB(quote);
         const { error } = await supabase.from('quotes').insert([{ ...dbQuote, status: 'draft' }]); // Default status
         if (error) console.error('Error adding quote:', error);
-    };
+    }, [mapQuoteToDB, supabase]);
 
-    const updateQuote = async (id: string, updates: Partial<Quote>) => {
+    const updateQuote = React.useCallback(async (id: string, updates: Partial<Quote>) => {
         const dbUpdate = mapQuoteToDB(updates);
         Object.keys(dbUpdate).forEach(key => (dbUpdate as any)[key] === undefined && delete (dbUpdate as any)[key]);
         const { error } = await supabase.from('quotes').update(dbUpdate).eq('id', id);
         if (error) console.error('Error updating quote:', error);
-    };
+    }, [mapQuoteToDB, supabase]);
 
-    const deleteQuote = async (id: string) => {
+    const deleteQuote = React.useCallback(async (id: string) => {
         const { error } = await supabase.from('quotes').delete().eq('id', id);
         if (error) console.error('Error deleting quote:', error);
-    };
+    }, [supabase]);
 
     // Contract operations
-    const addContract = async (contract: Omit<Contract, 'id' | 'createdAt'>) => {
+    const addContract = React.useCallback(async (contract: Omit<Contract, 'id' | 'createdAt'>) => {
         const dbContract = mapContractToDB(contract);
         const { error } = await supabase.from('contracts').insert([dbContract]);
         if (error) console.error('Error adding contract:', error);
-    };
+    }, [mapContractToDB, supabase]);
 
-    const updateContract = async (id: string, updates: Partial<Contract>) => {
+    const updateContract = React.useCallback(async (id: string, updates: Partial<Contract>) => {
         const dbUpdate = mapContractToDB(updates);
         Object.keys(dbUpdate).forEach(key => (dbUpdate as any)[key] === undefined && delete (dbUpdate as any)[key]);
         const { error } = await supabase.from('contracts').update(dbUpdate).eq('id', id);
         if (error) console.error('Error updating contract:', error);
-    };
+    }, [mapContractToDB, supabase]);
 
-    const deleteContract = async (id: string) => {
+    const deleteContract = React.useCallback(async (id: string) => {
         const { error } = await supabase.from('contracts').delete().eq('id', id);
         if (error) console.error('Error deleting contract:', error);
-    };
+    }, [supabase]);
 
     // Technician operations
-    const addTechnician = async (technician: Omit<Technician, 'id' | 'createdAt'>) => {
+    const addTechnician = React.useCallback(async (technician: Omit<Technician, 'id' | 'createdAt'>) => {
         const { error } = await supabase.from('technicians').insert([{
             ...technician,
             status: 'ativo'
         }]);
         if (error) console.error('Error adding technician:', error);
-    };
+    }, [supabase]);
 
-    const updateTechnician = async (id: string, updates: Partial<Technician>) => {
+    const updateTechnician = React.useCallback(async (id: string, updates: Partial<Technician>) => {
         const { error } = await supabase.from('technicians').update(updates).eq('id', id);
         if (error) console.error('Error updating technician:', error);
-    };
+    }, [supabase]);
 
-    const deleteTechnician = async (id: string) => {
+    const deleteTechnician = React.useCallback(async (id: string) => {
         const { error } = await supabase.from('technicians').delete().eq('id', id);
         if (error) console.error('Error deleting technician:', error);
-    };
+    }, [supabase]);
 
-    const authenticateTechnician = (username: string, password: string): Technician | null => {
+    const authenticateTechnician = React.useCallback((username: string, password: string): Technician | null => {
         // Now checks against the state which is populated from DB
         const tech = technicians.find(t => t.username === username && t.password === password);
         return tech || null;
-    };
+    }, [technicians]);
+
+    // Project Activity operations
+    const addProjectActivity = React.useCallback(async (activity: Omit<ProjectActivity, 'id'>) => {
+        const dbActivity = mapActivityToDB(activity);
+        const { error } = await supabase.from('project_activities').insert([dbActivity]);
+        if (error) console.error('Error adding activity:', error);
+    }, [mapActivityToDB, supabase]);
 
     // Project operations
-    const addProject = async (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const addProject = React.useCallback(async (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => {
         const dbProject = mapProjectToDB(project);
         const { data, error } = await supabase.from('projects').insert([dbProject]).select().single();
         if (error) {
@@ -540,9 +551,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             });
 
         }
-    };
+    }, [mapProjectToDB, supabase, addProjectActivity]);
 
-    const updateProject = async (id: string, updates: Partial<Project>) => {
+    const updateProject = React.useCallback(async (id: string, updates: Partial<Project>) => {
         const dbUpdate = mapProjectToDB(updates);
         Object.keys(dbUpdate).forEach(key => (dbUpdate as any)[key] === undefined && delete (dbUpdate as any)[key]);
         const { error } = await supabase.from('projects').update(dbUpdate).eq('id', id);
@@ -559,39 +570,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 timestamp: new Date().toISOString()
             });
         }
-    };
+    }, [mapProjectToDB, supabase, addProjectActivity]);
 
-    const archiveProject = async (id: string) => {
+    const archiveProject = React.useCallback(async (id: string) => {
         updateProject(id, { status: 'arquivado', archivedAt: new Date().toISOString() });
-    };
+    }, [updateProject]);
 
-    const unarchiveProject = async (id: string) => {
+    const unarchiveProject = React.useCallback(async (id: string) => {
         // We need to explicitly handle unsetting archivedAt. 
         // Supabase update with null works.
         const { error } = await supabase.from('projects').update({ status: 'planejamento', archived_at: null }).eq('id', id);
         if (error) console.error('Error unarchiving:', error);
-    };
+    }, [supabase]);
 
-    const deleteProject = async (id: string) => {
+    const deleteProject = React.useCallback(async (id: string) => {
         const { error } = await supabase.from('projects').delete().eq('id', id);
         if (error) console.error('Error deleting project:', error);
-    };
+    }, [supabase]);
 
-    // Project Activity operations
-    const addProjectActivity = async (activity: Omit<ProjectActivity, 'id'>) => {
-        const dbActivity = mapActivityToDB(activity);
-        const { error } = await supabase.from('project_activities').insert([dbActivity]);
-        if (error) console.error('Error adding activity:', error);
-    };
 
-    const getProjectActivities = (projectId: string): ProjectActivity[] => {
+    const getProjectActivities = React.useCallback((projectId: string): ProjectActivity[] => {
         return projectActivities
             .filter(activity => activity.projectId === projectId)
             .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    };
+    }, [projectActivities]);
 
     // Project Link operations
-    const linkOrderToProject = (orderId: string, projectId: string) => {
+    const linkOrderToProject = React.useCallback((orderId: string, projectId: string) => {
         // Needs update to support DB orders
         const project = projects.find(p => p.id === projectId);
         if (project) {
@@ -600,9 +605,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 relatedOrders: [...project.relatedOrders, orderId]
             });
         }
-    };
+    }, [projects, updateOrder, updateProject]);
 
-    const unlinkOrderFromProject = (orderId: string, projectId: string) => {
+    const unlinkOrderFromProject = React.useCallback((orderId: string, projectId: string) => {
         const project = projects.find(p => p.id === projectId);
         if (project) {
             updateOrder(orderId, { projectId: undefined, projectName: undefined });
@@ -610,9 +615,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 relatedOrders: project.relatedOrders.filter(id => id !== orderId)
             });
         }
-    };
+    }, [projects, updateOrder, updateProject]);
 
-    const value: AppContextType = {
+    const setOnNewOrder = React.useCallback((callback: (order: Order) => void) => {
+        setOnNewOrderCallback(() => callback);
+    }, [setOnNewOrderCallback]);
+
+    const value: AppContextType = React.useMemo(() => ({
         clients,
         orders,
         inventory,
@@ -621,6 +630,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         technicians,
         projects,
         projectActivities,
+        products,
+        invoices,
+        appointments,
+        conversations,
+        messages,
 
         // Client operations
         addClient,
@@ -670,15 +684,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         // Notification callbacks
         onNewOrder: onNewOrderCallback,
-        setOnNewOrder: (callback: (order: Order) => void) => setOnNewOrderCallback(() => callback),
-
-        // New tables (basic - no operations yet)
-        products,
-        invoices,
-        appointments,
-        conversations,
-        messages
-    };
+        setOnNewOrder,
+    }), [
+        clients, orders, inventory, quotes, contracts, technicians, projects, projectActivities,
+        products, invoices, appointments, conversations, messages, onNewOrderCallback,
+        addClient, updateClient, deleteClient, addOrder, updateOrder, deleteOrder,
+        addInventoryItem, updateInventoryItem, deleteInventoryItem, addQuote, updateQuote, deleteQuote,
+        addContract, updateContract, deleteContract, addTechnician, updateTechnician, deleteTechnician,
+        authenticateTechnician, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
+        addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder
+    ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

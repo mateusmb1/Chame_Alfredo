@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { useApp, Client } from '../contexts/AppContext';
+import { useApp } from '../contexts/AppContext';
+import { Client } from '../types/client';
 import { useToast } from '../contexts/ToastContext';
 
 const Clients: React.FC = () => {
@@ -84,7 +85,6 @@ const Clients: React.FC = () => {
 
       setFormData(prev => ({
         ...prev,
-        name: data.razao_social || data.nome_fantasia || prev.name,
         name: data.razao_social || data.nome_fantasia || prev.name,
         phone: (() => {
           // Normalize fields
