@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApp, Technician } from '../contexts/AppContext';
+import { useApp } from '../contexts/AppContext';
+import { supabase } from '../src/lib/supabase';
+
+interface Technician {
+    id: string;
+    name: string;
+    phone: string;
+}
 
 interface Notification {
     id: string;
@@ -27,61 +34,92 @@ const MobileNotifications: React.FC = () => {
             return;
         }
 
-        setTechnician(JSON.parse(storedTech));
+        const tech = JSON.parse(storedTech);
+        setTechnician(tech);
 
-        // Mock notifications
-        const mockNotifications: Notification[] = [
-            {
-                id: '1',
-                type: 'new_order',
-                title: 'Nova Ordem de Serviço',
-                message: 'Você foi designado para a OS-003 - Manutenção Preventiva',
-                timestamp: new Date().toISOString(),
-                read: false,
-                orderId: 'OS-003'
-            },
-            {
-                id: '2',
-                type: 'order_update',
-                title: 'Ordem Atualizada',
-                message: 'A prioridade da OS-002 foi alterada para ALTA',
-                timestamp: new Date(Date.now() - 3600000).toISOString(),
-                read: false,
-                orderId: 'OS-002'
-            },
-            {
-                id: '3',
-                type: 'message',
-                title: 'Mensagem da Administração',
-                message: 'Lembrete: Reunião de equipe amanhã às 9h',
-                timestamp: new Date(Date.now() - 7200000).toISOString(),
-                read: true
-            },
-            {
-                id: '4',
-                type: 'system',
-                title: 'Atualização do Sistema',
-                message: 'Nova versão disponível com melhorias de performance',
-                timestamp: new Date(Date.now() - 86400000).toISOString(),
-                read: true
-            }
-        ];
+        // Fetch real notifications from Supabase
+        fetchNotifications(tech.id);
 
-        setNotifications(mockNotifications);
+        // Subscribe to real-time updates
+        const channel = supabase
+            .channel('notifications_updates')
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'notifications',
+                filter: `technician_id=eq.${tech.id}`
+            }, (payload) => {
+                if (payload.eventType === 'INSERT') {
+                    const newNotif: Notification = {
+                        id: payload.new.id,
+                        type: payload.new.type,
+                        title: payload.new.title,
+                        message: payload.new.message,
+                        timestamp: payload.new.created_at,
+                        read: payload.new.read,
+                        orderId: payload.new.order_id
+                    };
+                    setNotifications(prev => [newNotif, ...prev]);
+                } else if (payload.eventType === 'UPDATE') {
+                    setNotifications(prev => prev.map(n =>
+                        n.id === payload.new.id
+                            ? { ...n, read: payload.new.read }
+                            : n
+                    ));
+                } else if (payload.eventType === 'DELETE') {
+                    setNotifications(prev => prev.filter(n => n.id !== payload.old.id));
+                }
+            })
+            .subscribe();
+
+        return () => {
+            channel.unsubscribe();
+        };
     }, [navigate]);
 
-    const markAsRead = (notificationId: string) => {
-        setNotifications(notifications.map(n =>
-            n.id === notificationId ? { ...n, read: true } : n
-        ));
+    const fetchNotifications = async (techId: string) => {
+        const { data, error } = await supabase
+            .from('notifications')
+            .select('*')
+            .eq('technician_id', techId)
+            .order('created_at', { ascending: false });
+
+        if (data && !error) {
+            setNotifications(data.map(n => ({
+                id: n.id,
+                type: n.type,
+                title: n.title,
+                message: n.message,
+                timestamp: n.created_at,
+                read: n.read,
+                orderId: n.order_id
+            })));
+        }
     };
 
-    const markAllAsRead = () => {
+    const markAsRead = async (notificationId: string) => {
+        await supabase
+            .from('notifications')
+            .update({ read: true })
+            .eq('id', notificationId);
+    };
+
+    const markAllAsRead = async () => {
+        if (!technician) return;
+
+        await supabase
+            .from('notifications')
+            .update({ read: true })
+            .eq('technician_id', technician.id);
+
         setNotifications(notifications.map(n => ({ ...n, read: true })));
     };
 
-    const deleteNotification = (notificationId: string) => {
-        setNotifications(notifications.filter(n => n.id !== notificationId));
+    const deleteNotification = async (notificationId: string) => {
+        await supabase
+            .from('notifications')
+            .delete()
+            .eq('id', notificationId);
     };
 
     const handleNotificationClick = (notification: Notification) => {
@@ -169,8 +207,8 @@ const MobileNotifications: React.FC = () => {
                     <button
                         onClick={() => setFilter('all')}
                         class={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${filter === 'all'
-                                ? 'bg-white text-primary'
-                                : 'bg-white/20 text-white hover:bg-white/30'
+                            ? 'bg-white text-primary'
+                            : 'bg-white/20 text-white hover:bg-white/30'
                             }`}
                     >
                         Todas ({notifications.length})
@@ -178,8 +216,8 @@ const MobileNotifications: React.FC = () => {
                     <button
                         onClick={() => setFilter('unread')}
                         class={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${filter === 'unread'
-                                ? 'bg-white text-primary'
-                                : 'bg-white/20 text-white hover:bg-white/30'
+                            ? 'bg-white text-primary'
+                            : 'bg-white/20 text-white hover:bg-white/30'
                             }`}
                     >
                         Não Lidas ({unreadCount})

@@ -7,6 +7,10 @@ import { Quote } from '../types/quote';
 import { Contract } from '../types/contract';
 import { Technician } from '../types/technician';
 import { Project, ProjectActivity } from '../types/project';
+import { ProductService } from '../types/productService';
+import { Invoice } from '../types/invoice';
+import { Appointment } from '../types/appointment';
+import { Conversation, Message } from '../types/communication';
 
 interface AppContextType {
     clients: Client[];
@@ -17,6 +21,11 @@ interface AppContextType {
     technicians: Technician[];
     projects: Project[];
     projectActivities: ProjectActivity[];
+    products: ProductService[];
+    invoices: Invoice[];
+    appointments: Appointment[];
+    conversations: Conversation[];
+    messages: Message[];
 
     // Client operations
     addClient: (client: Omit<Client, 'id' | 'status' | 'createdAt'>) => Promise<void>;
@@ -63,6 +72,10 @@ interface AppContextType {
     // Project Link operations
     linkOrderToProject: (orderId: string, projectId: string) => void;
     unlinkOrderFromProject: (orderId: string, projectId: string) => void;
+
+    // Notification callbacks
+    onNewOrder?: (order: Order) => void;
+    setOnNewOrder: (callback: (order: Order) => void) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -80,6 +93,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [projects, setProjects] = useState<Project[]>([]);
     const [projectActivities, setProjectActivities] = useState<ProjectActivity[]>([]);
 
+    // New tables
+    const [products, setProducts] = useState<ProductService[]>([]);
+    const [invoices, setInvoices] = useState<Invoice[]>([]);
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [messages, setMessages] = useState<Message[]>([]);
+
+    // Notification callbacks
+    const [onNewOrderCallback, setOnNewOrderCallback] = useState<((order: Order) => void) | undefined>(undefined);
+
     // Initial Fetch & Real-time Subscriptions
     useEffect(() => {
         const fetchData = async () => {
@@ -92,7 +115,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 { data: quotesData },
                 { data: contractsData },
                 { data: projectsData },
-                { data: activitiesData }
+                { data: activitiesData },
+                { data: productsData },
+                { data: invoicesData },
+                { data: appointmentsData },
+                { data: conversationsData },
+                { data: messagesData }
             ] = await Promise.all([
                 supabase.from('clients').select('*'),
                 supabase.from('orders').select('*'),
@@ -101,7 +129,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 supabase.from('quotes').select('*, client:clients(name)'),
                 supabase.from('contracts').select('*, client:clients(name)'),
                 supabase.from('projects').select('*, client:clients(name), responsible:technicians(name)'),
-                supabase.from('project_activities').select('*')
+                supabase.from('project_activities').select('*'),
+                supabase.from('products_services').select('*'),
+                supabase.from('invoices').select('*'),
+                supabase.from('appointments').select('*'),
+                supabase.from('conversations').select('*'),
+                supabase.from('messages').select('*')
             ]);
 
             if (clientsData) setClients(clientsData.map(mapClientFromDB));
@@ -112,6 +145,47 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             if (contractsData) setContracts(contractsData.map(mapContractFromDB));
             if (projectsData) setProjects(projectsData.map(mapProjectFromDB));
             if (activitiesData) setProjectActivities(activitiesData.map(mapActivityFromDB));
+
+            // New tables (simple mapping for now)
+            if (productsData) setProducts(productsData.map((p: any) => ({
+                ...p,
+                createdAt: p.created_at,
+                updatedAt: p.updated_at
+            })));
+            if (invoicesData) setInvoices(invoicesData.map((i: any) => ({
+                ...i,
+                invoiceNumber: i.invoice_number,
+                clientId: i.client_id,
+                orderId: i.order_id,
+                issueDate: i.issue_date,
+                dueDate: i.due_date,
+                paidDate: i.paid_date,
+                paymentMethod: i.payment_method,
+                createdAt: i.created_at,
+                updatedAt: i.updated_at
+            })));
+            if (appointmentsData) setAppointments(appointmentsData.map((a: any) => ({
+                ...a,
+                startTime: a.start_time,
+                endTime: a.end_time,
+                orderId: a.order_id,
+                clientId: a.client_id,
+                technicianId: a.technician_id,
+                createdAt: a.created_at,
+                updatedAt: a.updated_at
+            })));
+            if (conversationsData) setConversations(conversationsData.map((c: any) => ({
+                ...c,
+                lastMessageAt: c.last_message_at,
+                createdAt: c.created_at
+            })));
+            if (messagesData) setMessages(messagesData.map((m: any) => ({
+                ...m,
+                conversationId: m.conversation_id,
+                senderId: m.sender_id,
+                senderType: m.sender_type,
+                createdAt: m.created_at
+            })));
         };
 
         fetchData();
@@ -119,7 +193,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Real-time subscriptions
         const channels = [
             supabase.channel('clients_all').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, payload => handleRealtimeUpdate(payload, setClients, mapClientFromDB)).subscribe(),
-            supabase.channel('orders_all_sub').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => handleRealtimeUpdate(payload, setOrders, mapOrderFromDB)).subscribe(),
+            supabase.channel('orders_all_sub').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => handleRealtimeUpdate(payload, setOrders, mapOrderFromDB, 'orders')).subscribe(),
             supabase.channel('techs_all').on('postgres_changes', { event: '*', schema: 'public', table: 'technicians' }, payload => handleRealtimeUpdate(payload, setTechnicians, (x) => x as any)).subscribe(),
             supabase.channel('inv_all').on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, payload => handleRealtimeUpdate(payload, setInventory, mapInventoryFromDB)).subscribe(),
             supabase.channel('quotes_all').on('postgres_changes', { event: '*', schema: 'public', table: 'quotes' }, payload => handleRealtimeUpdate(payload, setQuotes, mapQuoteFromDB)).subscribe(),
@@ -134,11 +208,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, []);
 
     // Generic Realtime Handler
-    const handleRealtimeUpdate = (payload: any, setter: React.Dispatch<React.SetStateAction<any[]>>, mapper: (data: any) => any) => {
+    const handleRealtimeUpdate = (payload: any, setter: React.Dispatch<React.SetStateAction<any[]>>, mapper: (data: any) => any, tableName?: string) => {
         if (payload.eventType === 'INSERT') {
             setter(prev => {
                 if (prev.some(item => item.id === payload.new.id)) return prev;
-                return [...prev, mapper(payload.new)];
+                const newItem = mapper(payload.new);
+
+                // Trigger notification for new orders
+                if (tableName === 'orders' && onNewOrderCallback) {
+                    onNewOrderCallback(newItem as Order);
+                }
+
+                return [...prev, newItem];
             });
         } else if (payload.eventType === 'UPDATE') {
             setter(prev => prev.map(item => item.id === payload.new.id ? mapper(payload.new) : item));
@@ -585,7 +666,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         // Project Link operations
         linkOrderToProject,
-        unlinkOrderFromProject
+        unlinkOrderFromProject,
+
+        // Notification callbacks
+        onNewOrder: onNewOrderCallback,
+        setOnNewOrder: (callback: (order: Order) => void) => setOnNewOrderCallback(() => callback),
+
+        // New tables (basic - no operations yet)
+        products,
+        invoices,
+        appointments,
+        conversations,
+        messages
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

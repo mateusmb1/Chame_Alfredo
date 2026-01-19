@@ -1,11 +1,28 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
+import { useToast } from '../contexts/ToastContext';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie, Legend } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { orders, clients, contracts, inventory } = useApp();
+  const { orders, clients, contracts, inventory, setOnNewOrder } = useApp();
+  const { showToast } = useToast();
+
+  // Set up notification for new orders
+  useEffect(() => {
+    setOnNewOrder((newOrder) => {
+      showToast('success', `🔔 Nova Ordem Recebida: ${newOrder.clientName} - ${newOrder.serviceType}`, 5000);
+
+      // Optional: Audio notification
+      try {
+        const audio = new Audio('/notification.mp3');
+        audio.play().catch(() => console.log('Audio playback failed'));
+      } catch (e) {
+        console.log('Audio notification not available');
+      }
+    });
+  }, [setOnNewOrder, showToast]);
 
   // Calculate metrics
   const metrics = useMemo(() => {
@@ -358,12 +375,12 @@ const Dashboard: React.FC = () => {
             <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => navigate(`/orders/${order.id}`)}>
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${order.status === 'concluida' ? 'bg-green-100' :
-                    order.status === 'em_andamento' ? 'bg-blue-100' :
-                      'bg-yellow-100'
+                  order.status === 'em_andamento' ? 'bg-blue-100' :
+                    'bg-yellow-100'
                   }`}>
                   <span className={`material-symbols-outlined ${order.status === 'concluida' ? 'text-green-600' :
-                      order.status === 'em_andamento' ? 'text-blue-600' :
-                        'text-yellow-600'
+                    order.status === 'em_andamento' ? 'text-blue-600' :
+                      'text-yellow-600'
                     }`}>
                     {order.status === 'concluida' ? 'check_circle' : 'pending'}
                   </span>
@@ -375,8 +392,8 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="text-right">
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${order.status === 'concluida' ? 'bg-green-100 text-green-700' :
-                    order.status === 'em_andamento' ? 'bg-blue-100 text-blue-700' :
-                      'bg-yellow-100 text-yellow-700'
+                  order.status === 'em_andamento' ? 'bg-blue-100 text-blue-700' :
+                    'bg-yellow-100 text-yellow-700'
                   }`}>
                   {order.status === 'concluida' ? 'Concluída' :
                     order.status === 'em_andamento' ? 'Em Andamento' :

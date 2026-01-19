@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   User
 } from 'lucide-react'
+import { supabase } from '../src/lib/supabase'
 
 const Mascot: React.FC<{ className?: string }> = ({ className }) => {
   const [sourceIndex, setSourceIndex] = useState(0)
@@ -39,6 +40,101 @@ const Mascot: React.FC<{ className?: string }> = ({ className }) => {
 
 const Landing: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+
+  // Form state
+  const [formData, setFormData] = useState({
+    name: '',
+    whatsapp: '',
+    service: ''
+  })
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+
+    try {
+      // 1. Check if client exists by phone
+      const cleanPhone = formData.whatsapp.replace(/\D/g, '')
+      let clientId = null
+
+      const { data: existingClients } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('phone', cleanPhone)
+        .limit(1)
+
+      if (existingClients && existingClients.length > 0) {
+        clientId = existingClients[0].id
+      } else {
+        // 2. Create new client
+        const { data: newClient, error: clientError } = await supabase
+          .from('clients')
+          .insert([{
+            name: formData.name,
+            phone: cleanPhone,
+            type: 'pf',
+            status: 'active'
+          }])
+          .select()
+          .single()
+
+        if (clientError) throw clientError
+        clientId = newClient.id
+      }
+
+      // 3. Map service to priority and description
+      const servicePriorityMap: Record<string, { priority: string; serviceType: string }> = {
+        'manutencao': { priority: 'media', serviceType: 'Manutenção Geral' },
+        'portao': { priority: 'alta', serviceType: 'Portão Automático' },
+        'seguranca': { priority: 'alta', serviceType: 'Câmeras / Segurança' },
+        'antena': { priority: 'media', serviceType: 'Antena Coletiva' }
+      }
+
+      const serviceInfo = servicePriorityMap[formData.service] || { priority: 'baixa', serviceType: formData.service }
+
+      // 4. Create order
+      const { data: newOrder, error: orderError } = await supabase
+        .from('orders')
+        .insert([{
+          client_id: clientId,
+          client_name: formData.name,
+          service_type: serviceInfo.serviceType,
+          description: `Solicitação via site - ${serviceInfo.serviceType}`,
+          status: 'nova',
+          priority: serviceInfo.priority,
+          value: 0
+        }])
+        .select()
+        .single()
+
+      if (orderError) throw orderError
+
+      // 5. Show success message
+      setShowSuccessMessage(true)
+      setFormData({ name: '', whatsapp: '', service: '' })
+
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        setShowSuccessMessage(false)
+      }, 5000)
+
+    } catch (error) {
+      console.error('Erro ao enviar solicitação:', error)
+      alert('Erro ao enviar solicitação. Por favor, tente novamente ou entre em contato via WhatsApp.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="text-gray-700 bg-gray-50">
       <div className="bg-[#1e293b] text-white py-2 text-sm hidden md:block border-b border-gray-700">
@@ -131,15 +227,30 @@ const Landing: React.FC = () => {
                   <p className="text-xs text-gray-500">Responder em até 30 minutos</p>
                 </div>
               </div>
-              <form onSubmit={(e) => { e.preventDefault(); alert('Mensagem enviada! Alfredo entrará em contato.') }}>
+
+              {showSuccessMessage && (
+                <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg">
+                  <div className="flex items-center">
+                    <CheckCircle2 className="text-green-500 w-5 h-5 mr-2" />
+                    <p className="text-green-800 font-semibold text-sm">
+                      Solicitação enviada com sucesso! Alfredo entrará em contato em breve.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleFormSubmit}>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-gray-700 text-xs font-bold mb-1 uppercase">Seu Nome</label>
                     <input
                       type="text"
                       name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400"
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400 disabled:opacity-50"
                       placeholder="Ex: João Silva"
                     />
                   </div>
@@ -148,8 +259,11 @@ const Landing: React.FC = () => {
                     <input
                       type="tel"
                       name="whatsapp"
+                      value={formData.whatsapp}
+                      onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400"
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400 disabled:opacity-50"
                       placeholder="(81) 9 8841-7003"
                     />
                   </div>
@@ -157,11 +271,13 @@ const Landing: React.FC = () => {
                     <label className="block text-gray-700 text-xs font-bold mb-1 uppercase">Serviço</label>
                     <select
                       name="service"
+                      value={formData.service}
+                      onChange={handleInputChange}
                       required
-                      defaultValue=""
-                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none text-gray-900"
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none text-gray-900 disabled:opacity-50"
                     >
-                      <option value="" disabled hidden>
+                      <option value="" disabled>
                         Selecione um serviço
                       </option>
                       <option value="manutencao">Manutenção Geral</option>
@@ -170,8 +286,21 @@ const Landing: React.FC = () => {
                       <option value="antena">Antena Coletiva</option>
                     </select>
                   </div>
-                  <button type="submit" className="w-full bg-[#1e293b] hover:bg-gray-800 text-white font-bold py-3 rounded-lg transition shadow-lg flex justify-center items-center">
-                    Solicitar Agora <ArrowRight className="ml-2 w-4 h-4" />
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-[#1e293b] hover:bg-gray-800 text-white font-bold py-3 rounded-lg transition shadow-lg flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        Solicitar Agora <ArrowRight className="ml-2 w-4 h-4" />
+                      </>
+                    )}
                   </button>
                 </div>
               </form>

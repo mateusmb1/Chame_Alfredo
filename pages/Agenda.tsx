@@ -1,15 +1,36 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useApp } from '../contexts/AppContext';
 
 const Agenda: React.FC = () => {
-  // Simple mock data for calendar generation
-  const days = Array.from({ length: 30 }, (_, i) => i + 1);
-  const events = [
-    { day: 3, title: 'OS-1023: Instalação Fibra', person: 'Ana Costa', color: 'bg-[#FFD700]' },
-    { day: 5, title: 'OS-1021: Reparo Roteador', person: 'Pedro Martins', color: 'bg-[#77DD77]' },
-    { day: 5, title: 'OS-1019: Manutenção', person: 'Ricardo Souza', color: 'bg-[#FF6961] text-white' },
-    { day: 10, title: 'OS-1025: Visita Técnica', person: 'Fernanda Lima', color: 'bg-[#AEC6CF]' },
-    { day: 11, title: 'OS-1028: Instalação Fibra', person: 'Lucas Andrade', color: 'bg-[#AEC6CF]' },
-  ];
+  const { appointments } = useApp();
+
+  // Get current month and year
+  const [currentDate] = useState(new Date());
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+
+  // Calculate days in current month
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+  // Map appointments to calendar days
+  const getEventsForDay = (day: number) => {
+    return appointments.filter(apt => {
+      const aptDate = new Date(apt.startTime);
+      return aptDate.getDate() === day &&
+        aptDate.getMonth() === currentMonth &&
+        aptDate.getFullYear() === currentYear;
+    }).map(apt => ({
+      id: apt.id,
+      title: apt.title,
+      person: apt.location || 'Não especificado',
+      color: apt.status === 'agendado' ? 'bg-[#AEC6CF]' :
+        apt.status === 'confirmado' ? 'bg-[#FFD700]' :
+          apt.status === 'concluido' ? 'bg-[#77DD77]' :
+            'bg-[#FF6961] text-white',
+      appointment: apt
+    }));
+  };
 
   return (
     <div class="flex h-full flex-col overflow-hidden">
@@ -127,50 +148,34 @@ const Agenda: React.FC = () => {
                 {day}
               </div>
             ))}
-            
+
             {/* Days */}
             {days.map(day => {
-              const dayEvents = events.filter(e => e.day === day);
-              return (
-                <div key={day} class={`min-h-24 sm:min-h-28 md:min-h-32 bg-white dark:bg-[#18202F] p-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative ${day === 11 ? 'ring-2 ring-inset ring-primary z-10' : ''}`}>
-                  <span class={`text-sm font-medium ${day === 11 ? 'bg-primary text-white w-6 h-6 flex items-center justify-center rounded-full' : 'text-gray-800 dark:text-gray-200'}`}>{day}</span>
-                  
-                  {/* Event Popover Simulation for Day 11 */}
-                  {day === 11 && (
-                    <div class="absolute left-1/2 top-10 z-20 w-72 -translate-x-1/2 transform rounded-xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-[#18202F]">
-                      <h3 class="text-lg font-bold text-gray-900 dark:text-white">OS-1028: Instalação Fibra</h3>
-                      <div class="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                        <p><strong class="font-medium text-gray-800 dark:text-gray-100">Cliente:</strong> Lucas Andrade</p>
-                        <p><strong class="font-medium text-gray-800 dark:text-gray-100">Endereço:</strong> Rua das Flores, 123, São Paulo</p>
-                        <p><strong class="font-medium text-gray-800 dark:text-gray-100">Técnico:</strong> João Silva</p>
-                        <p><strong class="font-medium text-gray-800 dark:text-gray-100">Status:</strong> Agendado</p>
-                        <p><strong class="font-medium text-gray-800 dark:text-gray-100">Notas:</strong> Cliente solicitou instalação no período da manhã.</p>
-                      </div>
-                      <div class="mt-4 flex justify-end space-x-2">
-                        <button class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">Cancelar</button>
-                        <button class="rounded-lg bg-primary/20 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/30">Editar</button>
-                        <button class="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary/90">Concluir</button>
-                      </div>
-                    </div>
-                  )}
+              const dayEvents = getEventsForDay(day);
+              const today = new Date().getDate();
+              const isToday = day === today && currentMonth === new Date().getMonth();
 
-                  <div class="mt-1 space-y-1">
+              return (
+                <div key={day} className={`min-h-24 sm:min-h-28 md:min-h-32 bg-white dark:bg-[#18202F] p-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative ${isToday ? 'ring-2 ring-inset ring-primary z-10' : ''}`}>
+                  <span className={`text-sm font-medium ${isToday ? 'bg-primary text-white w-6 h-6 flex items-center justify-center rounded-full' : 'text-gray-800 dark:text-gray-200'}`}>{day}</span>
+
+                  <div className="mt-1 space-y-1">
                     {dayEvents.map((evt, idx) => (
-                      <div key={idx} class={`cursor-pointer rounded-md ${evt.color} p-1 text-xs text-gray-800 shadow-sm`}>
-                        <p class="font-bold truncate">{evt.title}</p>
-                        <p class="truncate opacity-90">{evt.person}</p>
+                      <div key={idx} className={`cursor-pointer rounded-md ${evt.color} p-1 text-xs text-gray-800 shadow-sm`}>
+                        <p className="font-bold truncate">{evt.title}</p>
+                        <p className="truncate opacity-90">{evt.person}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               );
             })}
-            
+
             {/* Empty cells filler for grid */}
             {Array.from({ length: 5 }).map((_, i) => (
-                <div key={`empty-${i}`} class="min-h-24 sm:min-h-28 md:min-h-32 bg-gray-50/50 dark:bg-gray-800/50 p-2">
-                    <span class="text-sm font-medium text-gray-400 dark:text-gray-600">{i + 1}</span>
-                </div>
+              <div key={`empty-${i}`} class="min-h-24 sm:min-h-28 md:min-h-32 bg-gray-50/50 dark:bg-gray-800/50 p-2">
+                <span class="text-sm font-medium text-gray-400 dark:text-gray-600">{i + 1}</span>
+              </div>
             ))}
           </div>
         </div>
