@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { supabase } from '../src/lib/supabase';
 import { Client } from '../types/client';
 import { Order } from '../types/order';
@@ -111,9 +111,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
 
-    // Notification callbacks
-    const [onNewOrderCallback, setOnNewOrderCallback] = useState<((order: Order) => void) | undefined>(undefined);
-    const [onNewMessageCallback, setOnNewMessageCallback] = useState<((message: Message) => void) | undefined>(undefined);
+    // Notification callbacks (using refs to avoid stale closures in realtime handlers)
+    const onNewOrderRef = useRef<((order: Order) => void) | undefined>(undefined);
+    const onNewMessageRef = useRef<((message: Message) => void) | undefined>(undefined);
 
     // Initial Fetch & Real-time Subscriptions
     useEffect(() => {
@@ -219,11 +219,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 const newItem = mapper(payload.new);
 
                 // Trigger notification for new orders
-                if (tableName === 'orders' && onNewOrderCallback) {
-                    onNewOrderCallback(newItem as Order);
+                if (tableName === 'orders' && onNewOrderRef.current) {
+                    onNewOrderRef.current(newItem as Order);
                 }
-                if (tableName === 'messages' && onNewMessageCallback) {
-                    onNewMessageCallback(newItem as Message);
+                if (tableName === 'messages' && onNewMessageRef.current) {
+                    onNewMessageRef.current(newItem as Message);
                 }
 
                 return [...prev, newItem];
@@ -687,12 +687,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [projects, updateOrder, updateProject]);
 
     const setOnNewOrder = React.useCallback((callback: (order: Order) => void) => {
-        setOnNewOrderCallback(() => callback);
-    }, [setOnNewOrderCallback]);
+        onNewOrderRef.current = callback;
+    }, []);
 
     const setOnNewMessage = React.useCallback((callback: (message: Message) => void) => {
-        setOnNewMessageCallback(() => callback);
-    }, [setOnNewMessageCallback]);
+        onNewMessageRef.current = callback;
+    }, []);
 
     // Communication operations
     const sendMessage = React.useCallback(async (conversationId: string, senderId: string, senderType: 'admin' | 'technician' | 'client', content: string, attachmentUrl?: string, attachmentType?: 'image' | 'file') => {
@@ -946,8 +946,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         unlinkOrderFromProject,
 
         // Notification callbacks
-        onNewOrder: onNewOrderCallback,
+        onNewOrder: onNewOrderRef.current,
         setOnNewOrder,
+        onNewMessage: onNewMessageRef.current,
+        setOnNewMessage,
 
         // Communication operations
         sendMessage,
@@ -957,12 +959,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         generateMonthlyInvoices,
     }), [
         clients, orders, inventory, quotes, contracts, technicians, projects, projectActivities,
-        products, invoices, appointments, conversations, messages, onNewOrderCallback,
+        products, invoices, appointments, conversations, messages,
         addClient, updateClient, deleteClient, authenticateClient, addOrder, updateOrder, deleteOrder,
         addInventoryItem, updateInventoryItem, deleteInventoryItem, addQuote, updateQuote, deleteQuote, saveQuoteSignature,
         addContract, updateContract, deleteContract, addTechnician, updateTechnician, deleteTechnician,
         authenticateTechnician, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
-        addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder,
+        addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder, setOnNewMessage,
         sendMessage, getOrCreateConversation, uploadChatFile, uploadFile, generateMonthlyInvoices
     ]);
 
