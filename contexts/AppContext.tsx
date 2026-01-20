@@ -262,11 +262,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         minQuantity: d.min_quantity,
         lastRestockDate: d.last_restock_date
     });
-    const mapInventoryToDB = (i: Partial<InventoryItem>) => ({
-        ...i,
-        min_quantity: i.minQuantity,
-        last_restock_date: i.lastRestockDate,
-    }); // Remove camelCase props if strictly needed, but Supabase ignores extras usually. Better to be clean.
+    const mapInventoryToDB = (i: Partial<InventoryItem>) => {
+        const { minQuantity, lastRestockDate, ...rest } = i;
+        return {
+            ...rest,
+            ...(minQuantity !== undefined && { min_quantity: minQuantity }),
+            ...(lastRestockDate !== undefined && { last_restock_date: lastRestockDate }),
+        };
+    };
 
     const mapQuoteFromDB = (d: any): Quote => ({
         ...d,
@@ -277,12 +280,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updatedAt: d.updated_at
     });
     const mapQuoteToDB = (q: Partial<Quote>) => {
-        const { clientId, clientName, validityDate, createdAt, updatedAt, ...rest } = q;
+        const {
+            clientId, clientName, validityDate, paymentTerms, signatureData,
+            createdAt, updatedAt, ...rest
+        } = q;
+
         return {
             ...rest,
             ...(clientId && { client_id: clientId }),
             ...(clientName && { client_name: clientName }),
             ...(validityDate && { validity_date: validityDate }),
+            ...(paymentTerms && { payment_terms: paymentTerms }),
+            ...(signatureData && { signature_data: signatureData }),
+            ...(createdAt && { created_at: createdAt }),
+            ...(updatedAt && { updated_at: updatedAt }),
         };
     };
 
@@ -398,8 +409,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
 
     const mapOrderToDB = (order: Partial<Order>) => {
-        const { clientId, clientName, serviceType, scheduledDate, completedDate,
-            technicianId, technicianName, projectId, projectName, createdAt, updatedAt, ...rest } = order;
+        // Strict destructuring: remove ALL camelCase fields that don't belong in DB
+        const {
+            clientId, clientName, serviceType, scheduledDate, completedDate,
+            technicianId, technicianName, projectId, projectName,
+            checkIn, checkOut, servicePhotos, serviceNotes, customerSignature,
+            invoiced, invoiceId, items, asset_info,
+            createdAt, updatedAt, ...rest
+        } = order;
+
         return {
             ...rest,
             ...(clientId !== undefined && { client_id: clientId }),
@@ -411,31 +429,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...(technicianName !== undefined && { technician_name: technicianName }),
             ...(projectId !== undefined && { project_id: projectId }),
             ...(projectName !== undefined && { project_name: projectName }),
-            ...(order.checkIn !== undefined && { check_in: order.checkIn }),
-            ...(order.checkOut !== undefined && { check_out: order.checkOut }),
-            ...(order.servicePhotos !== undefined && { service_photos: order.servicePhotos }),
-            ...(order.serviceNotes !== undefined && { service_notes: order.serviceNotes }),
-            ...(order.customerSignature !== undefined && { customer_signature: order.customerSignature }),
-            ...(order.invoiced !== undefined && { invoiced: order.invoiced }),
-            ...(order.invoiceId !== undefined && { invoice_id: order.invoiceId }),
-            ...(order.items !== undefined && { items: order.items }),
-            ...(order.asset_info !== undefined && { asset_info: order.asset_info }),
+            ...(checkIn !== undefined && { check_in: checkIn }),
+            ...(checkOut !== undefined && { check_out: checkOut }),
+            ...(servicePhotos !== undefined && { service_photos: servicePhotos }),
+            ...(serviceNotes !== undefined && { service_notes: serviceNotes }),
+            ...(customerSignature !== undefined && { customer_signature: customerSignature }),
+            ...(invoiced !== undefined && { invoiced: invoiced }),
+            ...(invoiceId !== undefined && { invoice_id: invoiceId }),
+            ...(items !== undefined && { items: items }),
+            ...(asset_info !== undefined && { asset_info: asset_info }),
             ...(createdAt !== undefined && { created_at: createdAt }),
             ...(updatedAt !== undefined && { updated_at: updatedAt }),
-        };
-    };
-
-    const mapQuoteToDB = (q: Partial<Quote>) => {
-        const { clientId, clientName, validityDate, paymentTerms, signatureData, createdAt, updatedAt, ...rest } = q;
-        return {
-            ...rest,
-            ...(clientId && { client_id: clientId }),
-            ...(clientName && { client_name: clientName }),
-            ...(validityDate && { validity_date: validityDate }),
-            ...(paymentTerms && { payment_terms: paymentTerms }),
-            ...(signatureData && { signature_data: signatureData }),
-            ...(createdAt && { created_at: createdAt }),
-            ...(updatedAt && { updated_at: updatedAt }),
         };
     };
 
