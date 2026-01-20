@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { Order } from '../types/order';
+import ServiceOrderReport from '../components/ServiceOrderReport';
 
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -113,9 +114,10 @@ const OrderDetail: React.FC = () => {
               </button>
               <button
                 onClick={handlePrint}
-                className="flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="flex w-auto cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 <span className="material-symbols-outlined text-xl">print</span>
+                <span className="hidden sm:inline">Gerar Relatório</span>
               </button>
             </div>
           </div>
@@ -285,33 +287,40 @@ const OrderDetail: React.FC = () => {
                   )}
                 </div>
               </div>
-            )}
-          </div>
-        </div>
       </div>
 
-      {/* Print styles */}
-      <style>{`
+          {/* Printable Report Component */}
+          < ServiceOrderReport order={order} client={client} />
+
+          {/* Print styles */}
+          < style > {`
         @media print {
-          .flex.h-full.flex-col.p-8 { padding: 0 !important; }
-          .mx-auto.w-full.max-w-7xl { max-width: 100% !important; }
-          header { margin-bottom: 2rem !important; }
-          .breadcrumb, button, .relative, nav, aside { display: none !important; }
-          .grid { display: block !important; }
-          .bg-white, .dark\\:bg-\\[\\#18202F\\] { border: 1px solid #eee !important; box-shadow: none !important; margin-bottom: 1.5rem !important; }
-          .lg\\:col-span-2 { width: 100% !important; }
-          img { max-width: 100% !important; page-break-inside: avoid; }
-          h1 { font-size: 24pt !important; }
-          h2 { font-size: 18pt !important; }
-          body { background: white !important; color: black !important; }
-          .dark { background: white !important; color: black !important; }
-          .bg-primary { background-color: #000 !important; color: #fff !important; }
-          .p-8, .p-6 { padding: 1.5rem !important; }
-          .material-symbols-outlined { font-size: 14pt !important; }
+          /* Hide everything by default */
+          body * {
+            visibility: hidden;
+          }
+           /* Show only the report and its children */
+          #printable-report, #printable-report * {
+            visibility: visible;
+          }
+          /* Position the report absolutely to top-left */
+          #printable-report {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            display: block !important;
+          }
+          
+          /* Ensure no other structural elements interfere */
+          .flex.h-full.flex-col.p-8 { display: none !important; }
+          nav, aside, header, footer, .breadcrumb { display: none !important; }
         }
-      `}</style>
-    </div>
-  );
+      `}</style >
+        </div >
+        );
 };
 
-export default OrderDetail;
+        export default OrderDetail;

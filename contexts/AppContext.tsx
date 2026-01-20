@@ -375,6 +375,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         customerSignature: data.customer_signature,
         invoiced: data.invoiced || false,
         invoiceId: data.invoice_id,
+        items: data.items || [],
+        asset_info: data.asset_info,
         createdAt: data.created_at,
         updatedAt: data.updated_at
     });
@@ -416,6 +418,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...(order.customerSignature !== undefined && { customer_signature: order.customerSignature }),
             ...(order.invoiced !== undefined && { invoiced: order.invoiced }),
             ...(order.invoiceId !== undefined && { invoice_id: order.invoiceId }),
+            ...(order.items !== undefined && { items: order.items }),
+            ...(order.asset_info !== undefined && { asset_info: order.asset_info }),
             ...(createdAt !== undefined && { created_at: createdAt }),
             ...(updatedAt !== undefined && { updated_at: updatedAt }),
         };

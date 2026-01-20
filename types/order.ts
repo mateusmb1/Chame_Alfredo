@@ -23,6 +23,8 @@ export interface Order {
   customerSignature?: string;
   invoiced?: boolean;
   invoiceId?: string;
+  items?: any[];
+  asset_info?: any;
 }
 
 export interface CreateOrderData {
