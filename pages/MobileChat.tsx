@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
+import { useToast } from '../contexts/ToastContext';
 import { supabase } from '../src/lib/supabase';
 
 const MobileChat: React.FC = () => {
     const navigate = useNavigate();
     const { messages, conversations, sendMessage, getOrCreateConversation, uploadChatFile } = useApp();
+    const { showToast } = useToast();
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const [technician, setTechnician] = useState<any>(null);
@@ -63,6 +65,7 @@ const MobileChat: React.FC = () => {
             setNewMessage('');
         } catch (error) {
             console.error('Error sending message:', error);
+            showToast('error', 'Erro ao enviar mensagem');
         }
     };
 
@@ -75,7 +78,13 @@ const MobileChat: React.FC = () => {
             const url = await uploadChatFile(file);
             if (url) {
                 await handleSendMessage(null as any, url, type);
+                showToast('success', 'Arquivo enviado!');
+            } else {
+                showToast('error', 'Erro no upload do arquivo');
             }
+        } catch (error) {
+            console.error('Upload error:', error);
+            showToast('error', 'Erro ao processar arquivo');
         } finally {
             setIsUploading(false);
             if (e.target) e.target.value = '';

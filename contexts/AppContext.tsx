@@ -659,14 +659,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 conversation_id: conversationId,
                 sender_id: senderId,
                 sender_type: senderType,
-                content,
-                attachment_url: attachmentUrl,
-                attachment_type: attachmentType,
+                content: content || '',
+                attachment_url: attachmentUrl || null,
+                attachment_type: attachmentType || null,
                 read: false
             }]);
 
         if (error) {
-            console.error('Error sending message:', error);
+            console.error('Error inserting message into DB:', error);
             throw error;
         }
 

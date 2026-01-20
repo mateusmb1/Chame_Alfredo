@@ -49,8 +49,18 @@ const MobileOrderDetail: React.FC = () => {
         const foundOrder = orders.find(o => o.id === id);
         if (foundOrder) {
             setOrder(foundOrder);
+            // Load existing data if local state is empty
+            if (foundOrder.servicePhotos && photos.length === 0) setPhotos(foundOrder.servicePhotos);
+            if (foundOrder.serviceNotes && !notes) setNotes(foundOrder.serviceNotes);
+            if (foundOrder.customerSignature && !signature) setSignature(foundOrder.customerSignature);
+            if (foundOrder.checkIn && !checkInOut.checkIn) {
+                setCheckInOut(prev => ({ ...prev, checkIn: foundOrder.checkIn }));
+            }
+            if (foundOrder.checkOut && !checkInOut.checkOut) {
+                setCheckInOut(prev => ({ ...prev, checkOut: foundOrder.checkOut }));
+            }
         }
-    }, [id, orders, navigate]);
+    }, [id, orders, navigate, photos.length, notes, signature, checkInOut.checkIn, checkInOut.checkOut]);
 
     const handleCheckIn = () => {
         if ('geolocation' in navigator) {
@@ -65,9 +75,12 @@ const MobileOrderDetail: React.FC = () => {
                     };
                     setCheckInOut({ ...checkInOut, checkIn: checkInData });
                     if (order) {
-                        updateOrder(order.id, { checkIn: checkInData });
+                        updateOrder(order.id, {
+                            checkIn: checkInData,
+                            status: 'em_andamento'
+                        });
                     }
-                    showToast('success', 'Check-in realizado com sucesso!');
+                    showToast('success', 'Check-in realizado! Ordem iniciada.');
                 },
                 (error) => {
                     showToast('error', 'Erro ao obter localização');
@@ -115,8 +128,12 @@ const MobileOrderDetail: React.FC = () => {
                     caption: '',
                     timestamp: new Date().toISOString()
                 };
-                setPhotos([...photos, newPhoto]);
-                showToast('success', 'Foto adicionada!');
+                const updatedPhotos = [...photos, newPhoto];
+                setPhotos(updatedPhotos);
+                if (order) {
+                    updateOrder(order.id, { servicePhotos: updatedPhotos });
+                }
+                showToast('success', 'Foto adicionada e salva!');
             };
 
             reader.readAsDataURL(file);
@@ -180,9 +197,59 @@ const MobileOrderDetail: React.FC = () => {
         }
     };
 
-    const handleSignature = () => {
-        // Simular captura de assinatura
-        setSignature('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+    const canvasRef = React.useRef<HTMLCanvasElement>(null);
+    const [isDrawing, setIsDrawing] = useState(false);
+
+    const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+
+        const rect = canvas.getBoundingClientRect();
+        const x = ('touches' in e) ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+        const y = ('touches' in e) ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        setIsDrawing(true);
+    };
+
+    const draw = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!isDrawing) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const x = ('touches' in e) ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+        const y = ('touches' in e) ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+
+        ctx.lineTo(x, y);
+        ctx.stroke();
+    };
+
+    const endDrawing = () => {
+        setIsDrawing(false);
+    };
+
+    const clearSignature = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
+
+    const handleSaveSignature = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const dataUrl = canvas.toDataURL();
+        setSignature(dataUrl);
         setIsSignatureModalOpen(false);
         showToast('success', 'Assinatura capturada!');
     };
@@ -196,158 +263,158 @@ const MobileOrderDetail: React.FC = () => {
     };
 
     return (
-        <div class="min-h-screen bg-gray-50 pb-20">
+        <div className="min-h-screen bg-gray-50 pb-20">
             {/* Header */}
-            <div class="bg-gradient-to-r from-primary to-blue-600 text-white p-4 sticky top-0 z-10 shadow-lg">
-                <div class="flex items-center gap-3">
+            <div className="bg-gradient-to-r from-primary to-blue-600 text-white p-4 sticky top-0 z-10 shadow-lg">
+                <div className="flex items-center gap-3">
                     <button
                         onClick={() => navigate('/mobile/dashboard')}
-                        class="p-2 rounded-full hover:bg-white/20 transition-colors"
+                        className="p-2 rounded-full hover:bg-white/20 transition-colors"
                     >
-                        <span class="material-symbols-outlined">arrow_back</span>
+                        <span className="material-symbols-outlined">arrow_back</span>
                     </button>
-                    <div class="flex-1">
-                        <h1 class="text-lg font-bold">Ordem #{order.id}</h1>
-                        <p class="text-sm text-white/80">{order.clientName}</p>
+                    <div className="flex-1">
+                        <h1 className="text-lg font-bold">Ordem #{order.id}</h1>
+                        <p className="text-sm text-white/80">{order.clientName}</p>
                     </div>
                 </div>
             </div>
 
-            <div class="p-4 space-y-4">
+            <div className="p-4 space-y-4">
                 {/* Order Info */}
-                <div class="bg-white rounded-xl shadow-md p-4">
-                    <h2 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary">info</span>
+                <div className="bg-white rounded-xl shadow-md p-4">
+                    <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary">info</span>
                         Informações do Serviço
                     </h2>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Tipo:</span>
-                            <span class="font-semibold text-gray-900">{order.serviceType}</span>
+                    <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-gray-600">Tipo:</span>
+                            <span className="font-semibold text-gray-900">{order.serviceType}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Prioridade:</span>
-                            <span class="font-semibold text-gray-900">{order.priority}</span>
+                        <div className="flex justify-between">
+                            <span className="text-gray-600">Prioridade:</span>
+                            <span className="font-semibold text-gray-900">{order.priority}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Status:</span>
-                            <span class="font-semibold text-gray-900">{order.status}</span>
+                        <div className="flex justify-between">
+                            <span className="text-gray-600">Status:</span>
+                            <span className="font-semibold text-gray-900">{order.status}</span>
                         </div>
                     </div>
-                    <div class="mt-3 pt-3 border-t border-gray-200">
-                        <p class="text-sm text-gray-700">{order.description}</p>
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                        <p className="text-sm text-gray-700">{order.description}</p>
                     </div>
                 </div>
 
                 {/* Check-in/Check-out */}
-                <div class="bg-white rounded-xl shadow-md p-4">
-                    <h2 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary">location_on</span>
+                <div className="bg-white rounded-xl shadow-md p-4">
+                    <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary">location_on</span>
                         Check-in / Check-out
                     </h2>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                         <button
                             onClick={handleCheckIn}
                             disabled={!!checkInOut.checkIn}
-                            class={`h-12 rounded-lg font-semibold flex items-center justify-center gap-2 ${checkInOut.checkIn
+                            className={`h-12 rounded-lg font-semibold flex items-center justify-center gap-2 ${checkInOut.checkIn
                                 ? 'bg-green-100 text-green-700 cursor-not-allowed'
                                 : 'bg-primary text-white hover:bg-primary/90'
                                 }`}
                         >
-                            <span class="material-symbols-outlined text-lg">login</span>
+                            <span className="material-symbols-outlined text-lg">login</span>
                             {checkInOut.checkIn ? formatTime(checkInOut.checkIn.timestamp) : 'Check-in'}
                         </button>
                         <button
                             onClick={handleCheckOut}
                             disabled={!checkInOut.checkIn || !!checkInOut.checkOut}
-                            class={`h-12 rounded-lg font-semibold flex items-center justify-center gap-2 ${checkInOut.checkOut
+                            className={`h-12 rounded-lg font-semibold flex items-center justify-center gap-2 ${checkInOut.checkOut
                                 ? 'bg-green-100 text-green-700 cursor-not-allowed'
                                 : checkInOut.checkIn
                                     ? 'bg-orange-500 text-white hover:bg-orange-600'
                                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                 }`}
                         >
-                            <span class="material-symbols-outlined text-lg">logout</span>
+                            <span className="material-symbols-outlined text-lg">logout</span>
                             {checkInOut.checkOut ? formatTime(checkInOut.checkOut.timestamp) : 'Check-out'}
                         </button>
                     </div>
                 </div>
 
                 {/* Photos */}
-                <div class="bg-white rounded-xl shadow-md p-4">
-                    <h2 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary">photo_camera</span>
+                <div className="bg-white rounded-xl shadow-md p-4">
+                    <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary">photo_camera</span>
                         Fotos do Serviço
                     </h2>
 
-                    <div class="grid grid-cols-3 gap-2 mb-3">
+                    <div className="grid grid-cols-3 gap-2 mb-3">
                         {photos.map(photo => (
-                            <div key={photo.id} class="aspect-square rounded-lg overflow-hidden bg-gray-100">
-                                <img src={photo.url} alt="Foto do serviço" class="w-full h-full object-cover" />
+                            <div key={photo.id} className="aspect-square rounded-lg overflow-hidden bg-gray-100">
+                                <img src={photo.url} alt="Foto do serviço" className="w-full h-full object-cover" />
                             </div>
                         ))}
                     </div>
 
-                    <label class="flex items-center justify-center gap-2 h-12 bg-blue-50 text-primary font-semibold rounded-lg border-2 border-dashed border-primary hover:bg-blue-100 transition-colors cursor-pointer">
-                        <span class="material-symbols-outlined">add_a_photo</span>
+                    <label className="flex items-center justify-center gap-2 h-12 bg-blue-50 text-primary font-semibold rounded-lg border-2 border-dashed border-primary hover:bg-blue-100 transition-colors cursor-pointer">
+                        <span className="material-symbols-outlined">add_a_photo</span>
                         <span>Adicionar Foto</span>
                         <input
                             type="file"
                             accept="image/*"
                             capture="environment"
                             onChange={handlePhotoUpload}
-                            class="hidden"
+                            className="hidden"
                         />
                     </label>
                 </div>
 
                 {/* Notes */}
-                <div class="bg-white rounded-xl shadow-md p-4">
-                    <h2 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary">edit_note</span>
+                <div className="bg-white rounded-xl shadow-md p-4">
+                    <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary">edit_note</span>
                         Observações
                     </h2>
                     <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         rows={4}
-                        class="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
                         placeholder="Adicione observações sobre o serviço..."
                     />
                 </div>
 
                 {/* Signature */}
-                <div class="bg-white rounded-xl shadow-md p-4">
-                    <h2 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary">draw</span>
+                <div className="bg-white rounded-xl shadow-md p-4">
+                    <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary">draw</span>
                         Assinatura do Cliente
                     </h2>
                     {signature ? (
-                        <div class="border-2 border-green-500 rounded-lg p-4 bg-green-50">
-                            <div class="flex items-center justify-center gap-2 text-green-700">
-                                <span class="material-symbols-outlined">check_circle</span>
-                                <span class="font-semibold">Assinatura Capturada</span>
+                        <div className="border-2 border-green-500 rounded-lg p-4 bg-green-50">
+                            <div className="flex items-center justify-center gap-2 text-green-700">
+                                <span className="material-symbols-outlined">check_circle</span>
+                                <span className="font-semibold">Assinatura Capturada</span>
                             </div>
                         </div>
                     ) : (
                         <button
                             onClick={() => setIsSignatureModalOpen(true)}
-                            class="w-full h-12 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
+                            className="w-full h-12 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
                         >
-                            <span class="material-symbols-outlined">gesture</span>
+                            <span className="material-symbols-outlined">gesture</span>
                             <span>Capturar Assinatura</span>
                         </button>
                     )}
                 </div>
 
                 {/* Actions */}
-                <div class="space-y-3">
+                <div className="space-y-3">
                     {order.status === 'nova' && (
                         <button
                             onClick={handleStartOrder}
-                            class="w-full h-12 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                            className="w-full h-12 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
                         >
-                            <span class="material-symbols-outlined">play_arrow</span>
+                            <span className="material-symbols-outlined">play_arrow</span>
                             <span>Iniciar Ordem</span>
                         </button>
                     )}
@@ -355,9 +422,9 @@ const MobileOrderDetail: React.FC = () => {
                     {order.status === 'em_andamento' && (
                         <button
                             onClick={handleCompleteOrder}
-                            class="w-full h-12 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                            className="w-full h-12 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                         >
-                            <span class="material-symbols-outlined">check_circle</span>
+                            <span className="material-symbols-outlined">check_circle</span>
                             <span>Concluir Ordem</span>
                         </button>
                     )}
@@ -366,24 +433,48 @@ const MobileOrderDetail: React.FC = () => {
 
             {/* Signature Modal */}
             {isSignatureModalOpen && (
-                <div class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div class="bg-white rounded-2xl p-6 w-full max-w-md">
-                        <h3 class="text-xl font-bold text-gray-900 mb-4">Assinatura do Cliente</h3>
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg h-48 mb-4 flex items-center justify-center bg-gray-50">
-                            <p class="text-gray-400">Área de assinatura</p>
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-hidden">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Assinatura do Cliente</h3>
+
+                        <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl overflow-hidden mb-4 relative h-64 touch-none">
+                            <canvas
+                                ref={canvasRef}
+                                width={400}
+                                height={256}
+                                className="w-full h-full cursor-crosshair"
+                                onMouseDown={startDrawing}
+                                onMouseMove={draw}
+                                onMouseUp={endDrawing}
+                                onMouseLeave={endDrawing}
+                                onTouchStart={startDrawing}
+                                onTouchMove={draw}
+                                onTouchEnd={endDrawing}
+                            />
                         </div>
-                        <div class="flex gap-3">
+
+                        <div className="flex flex-col gap-3">
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={clearSignature}
+                                    className="flex-1 h-12 bg-gray-100 text-gray-600 font-semibold rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                    Limpar
+                                </button>
+                                <button
+                                    onClick={handleSaveSignature}
+                                    className="flex-1 h-12 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-lg">check</span>
+                                    Confirmar
+                                </button>
+                            </div>
                             <button
                                 onClick={() => setIsSignatureModalOpen(false)}
-                                class="flex-1 h-12 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
+                                className="w-full h-12 text-gray-400 font-medium text-sm"
                             >
                                 Cancelar
-                            </button>
-                            <button
-                                onClick={handleSignature}
-                                class="flex-1 h-12 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
-                            >
-                                Confirmar
                             </button>
                         </div>
                     </div>
