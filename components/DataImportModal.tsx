@@ -156,24 +156,44 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
             if (importType === 'clients') {
                 const selected = clientRows.filter(r => r.selected);
                 setImportProgress({ current: 0, total: selected.length });
+                let successCount = 0;
+                let errorCount = 0;
 
                 for (let i = 0; i < selected.length; i++) {
                     const { data } = selected[i];
-                    await supabase.from('clients').insert({
-                        name: data.name,
-                        company_name: data.company_name,
-                        email: data.email,
-                        phone: data.phone,
-                        cnpj: data.cnpj,
-                        cpf: data.cpf,
-                        address: data.address,
-                        city: data.city,
-                        state: data.state,
-                        zip_code: data.zip_code,
-                        type: data.type,
-                    });
+                    try {
+                        const { error } = await supabase.from('clients').insert({
+                            name: data.name,
+                            company_name: data.company_name,
+                            email: data.email,
+                            phone: data.phone,
+                            cnpj: data.cnpj,
+                            cpf: data.cpf,
+                            address: data.address,
+                            city: data.city,
+                            state: data.state,
+                            zip_code: data.zip_code,
+                            type: data.type,
+                        });
+                        if (error) {
+                            console.error(`Error inserting client ${data.name}:`, error);
+                            errorCount++;
+                        } else {
+                            successCount++;
+                        }
+                    } catch (err) {
+                        console.error(`Exception inserting client ${data.name}:`, err);
+                        errorCount++;
+                    }
                     setImportProgress({ current: i + 1, total: selected.length });
                 }
+
+                if (errorCount > 0) {
+                    showToast('warning', `${successCount} clientes importados, ${errorCount} falhas. Verifique o console.`);
+                } else {
+                    showToast('success', `${successCount} clientes importados com sucesso!`);
+                }
+
 
             } else if (importType === 'materials') {
                 const selected = materialRows.filter(r => r.selected);
