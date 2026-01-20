@@ -425,6 +425,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         };
     };
 
+    const mapQuoteToDB = (q: Partial<Quote>) => {
+        const { clientId, clientName, validityDate, paymentTerms, signatureData, createdAt, updatedAt, ...rest } = q;
+        return {
+            ...rest,
+            ...(clientId && { client_id: clientId }),
+            ...(clientName && { client_name: clientName }),
+            ...(validityDate && { validity_date: validityDate }),
+            ...(paymentTerms && { payment_terms: paymentTerms }),
+            ...(signatureData && { signature_data: signatureData }),
+            ...(createdAt && { created_at: createdAt }),
+            ...(updatedAt && { updated_at: updatedAt }),
+        };
+    };
+
     // Client operations (Mapping already added)
 
 
@@ -464,11 +478,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const { data, error } = await supabase.from('orders').insert([dbOrder]).select().single();
         if (error) {
             console.error('Error adding order:', error);
-            // Fallback since we can't use useToast here directly easily without refactor
-            // But we can throw or rely on caller? 
-            // Caller (Orders.tsx) relies on optimistic or context update, but context update didn't happen.
-            // Let's stick to console but I will explain to user.
-            alert(`Erro ao criar ordem: ${(error as any).message || 'Erro desconhecido'}`);
         } else if (data) {
             setOrders(prev => [...prev, mapOrderFromDB(data)]);
         }
@@ -482,7 +491,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const { error } = await supabase.from('orders').update(dbUpdate).eq('id', id);
         if (error) {
             console.error('Error updating order:', error);
-            alert(`Erro ao atualizar ordem: ${error.message}`);
         }
     }, [mapOrderToDB, supabase, setOrders]);
 

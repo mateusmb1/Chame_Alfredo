@@ -119,8 +119,8 @@ const MobileOrderDetail: React.FC = () => {
                         await updateOrder(id, {
                             checkIn: checkInData,
                             status: 'em_andamento',
-                            servicePhotos: photos,
-                            serviceNotes: notes
+                            servicePhotos: photos || [],
+                            serviceNotes: notes || ''
                         });
                         setCheckInOut(prev => ({ ...prev, checkIn: checkInData }));
                         showToast('success', 'Início de trabalho registrado com sucesso!');
