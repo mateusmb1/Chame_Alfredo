@@ -5,7 +5,7 @@ export interface Order {
   serviceType: string;
   description: string;
   status: 'nova' | 'em_andamento' | 'pendente' | 'concluida' | 'cancelada';
-  priority: 'baixa' | 'normal' | 'alta' | 'urgente';
+  priority: 'baixa' | 'media' | 'alta' | 'urgente';
   scheduledDate: string;
   completedDate: string | null;
   technicianId: string;

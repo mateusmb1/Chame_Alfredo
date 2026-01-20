@@ -16,7 +16,7 @@ const MobileCreateOrder: React.FC = () => {
         clientId: '',
         serviceType: '',
         description: '',
-        priority: 'normal' as 'baixa' | 'normal' | 'alta' | 'urgente',
+        priority: 'media' as 'baixa' | 'media' | 'alta' | 'urgente',
         observations: ''
     });
 
@@ -120,14 +120,14 @@ const MobileCreateOrder: React.FC = () => {
                     <div className="bg-white rounded-xl p-4 shadow-sm">
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Prioridade *</label>
                         <div className="grid grid-cols-2 gap-2">
-                            {(['baixa', 'normal', 'alta', 'urgente'] as const).map((p) => (
+                            {(['baixa', 'media', 'alta', 'urgente'] as const).map((p) => (
                                 <button
                                     key={p}
                                     type="button"
                                     onClick={() => setFormData({ ...formData, priority: p })}
                                     className={`py-2 px-4 rounded-lg text-sm font-medium border-2 transition-all ${formData.priority === p
-                                            ? 'border-primary bg-primary text-white'
-                                            : 'border-gray-100 bg-gray-50 text-gray-600 hover:border-gray-200'
+                                        ? 'border-primary bg-primary text-white'
+                                        : 'border-gray-100 bg-gray-50 text-gray-600 hover:border-gray-200'
                                         }`}
                                 >
                                     {p.charAt(0).toUpperCase() + p.slice(1)}

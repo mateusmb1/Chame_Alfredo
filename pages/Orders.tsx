@@ -24,7 +24,7 @@ const Orders: React.FC = () => {
     technicianId: '',
     technicianName: '',
     description: '',
-    priority: 'normal' as 'baixa' | 'normal' | 'alta' | 'urgente',
+    priority: 'media' as 'baixa' | 'media' | 'alta' | 'urgente',
     observations: ''
   });
 
@@ -38,7 +38,7 @@ const Orders: React.FC = () => {
       technicianId: '',
       technicianName: '',
       description: '',
-      priority: 'normal',
+      priority: 'media',
       observations: ''
     });
     setIsModalOpen(true);
@@ -97,7 +97,7 @@ const Orders: React.FC = () => {
       technicianId: '',
       technicianName: '',
       description: '',
-      priority: 'normal',
+      priority: 'media',
       observations: ''
     });
   };
@@ -232,7 +232,7 @@ const Orders: React.FC = () => {
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Prioridade</label>
               <div className="flex gap-4">
-                {(['baixa', 'normal', 'alta', 'urgente'] as const).map(priority => (
+                {(['baixa', 'media', 'alta', 'urgente'] as const).map(priority => (
                   <label key={priority} className="flex items-center gap-2">
                     <input
                       type="radio"
