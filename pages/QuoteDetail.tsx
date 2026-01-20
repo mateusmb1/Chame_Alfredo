@@ -17,15 +17,55 @@ const QuoteDetail: React.FC = () => {
     const { showToast } = useToast();
     const { quotes, clients } = useApp();
     const [quote, setQuote] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const found = quotes.find(q => q.id === id);
-        if (found) {
-            setQuote(found);
+        // Give time for quotes to load from Supabase
+        const timer = setTimeout(() => {
+            const found = quotes.find(q => q.id === id);
+            if (found) {
+                setQuote(found);
+            }
+            setIsLoading(false);
+        }, 500);
+
+        // Also check immediately if quotes are already loaded
+        if (quotes.length > 0) {
+            const found = quotes.find(q => q.id === id);
+            if (found) {
+                setQuote(found);
+                setIsLoading(false);
+                clearTimeout(timer);
+            }
         }
+
+        return () => clearTimeout(timer);
     }, [id, quotes]);
 
-    if (!quote) return <div className="p-8">Carregando...</div>;
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <span className="ml-3 text-gray-600 dark:text-gray-400">Carregando orçamento...</span>
+            </div>
+        );
+    }
+
+    if (!quote) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 text-center p-8">
+                <span className="text-6xl mb-4">📄</span>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Orçamento não encontrado</h2>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">O orçamento com ID "{id}" não existe ou foi removido.</p>
+                <button
+                    onClick={() => navigate('/quotes')}
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+                >
+                    Voltar para Orçamentos
+                </button>
+            </div>
+        );
+    }
 
     const client = clients.find(c => c.id === quote.clientId);
     const issueDate = new Date(quote.createdAt).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });

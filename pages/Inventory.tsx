@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { useApp, InventoryItem } from '../contexts/AppContext';
+import { useApp } from '../contexts/AppContext';
 import { useToast } from '../contexts/ToastContext';
+import { InventoryItem } from '../types/inventory';
 
 const Inventory: React.FC = () => {
     const { inventory, addInventoryItem, updateInventoryItem, deleteInventoryItem } = useApp();
@@ -16,16 +17,20 @@ const Inventory: React.FC = () => {
 
     const [formData, setFormData] = useState({
         name: '',
-        code: '',
+        sku: '',
         quantity: '',
         location: '',
-        minStock: ''
+        minQuantity: '',
+        unit: '',
+        category: '',
+        price: '',
+        supplier: ''
     });
 
     const handleOpenNewItemModal = () => {
         setIsEditMode(false);
         setEditingItemId(null);
-        setFormData({ name: '', code: '', quantity: '', location: '', minStock: '' });
+        setFormData({ name: '', sku: '', quantity: '', location: '', minQuantity: '', unit: '', category: '', price: '', supplier: '' });
         setIsModalOpen(true);
     };
 
@@ -34,10 +39,14 @@ const Inventory: React.FC = () => {
         setEditingItemId(item.id);
         setFormData({
             name: item.name,
-            code: item.code,
+            sku: item.sku,
             quantity: String(item.quantity),
             location: item.location,
-            minStock: String(item.minStock)
+            minQuantity: String(item.minQuantity),
+            unit: item.unit || '',
+            category: item.category || '',
+            price: String(item.price || 0),
+            supplier: item.supplier || ''
         });
         setIsModalOpen(true);
     };
@@ -45,16 +54,29 @@ const Inventory: React.FC = () => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        const itemData = {
+            name: formData.name,
+            sku: formData.sku,
+            quantity: Number(formData.quantity),
+            location: formData.location,
+            minQuantity: Number(formData.minQuantity),
+            unit: formData.unit || 'un',
+            category: formData.category || 'geral',
+            price: Number(formData.price) || 0,
+            supplier: formData.supplier || '',
+            lastRestockDate: new Date().toISOString().split('T')[0]
+        };
+
         if (isEditMode && editingItemId) {
-            updateInventoryItem(editingItemId, formData);
+            updateInventoryItem(editingItemId, itemData);
             showToast('success', 'Item atualizado com sucesso!');
         } else {
-            addInventoryItem(formData);
+            addInventoryItem(itemData);
             showToast('success', 'Item adicionado ao estoque com sucesso!');
         }
 
         setIsModalOpen(false);
-        setFormData({ name: '', code: '', quantity: '', location: '', minStock: '' });
+        setFormData({ name: '', sku: '', quantity: '', location: '', minQuantity: '', unit: '', category: '', price: '', supplier: '' });
     };
 
     const handleDeleteClick = (itemId: string) => {
@@ -68,6 +90,13 @@ const Inventory: React.FC = () => {
             showToast('success', 'Item excluído do estoque com sucesso!');
         }
         setItemToDelete(null);
+    };
+
+    // Helper to calculate stock status based on quantity and minQuantity
+    const getStockStatus = (item: InventoryItem) => {
+        if (item.quantity === 0) return 'esgotado';
+        if (item.quantity <= item.minQuantity) return 'estoque_baixo';
+        return 'em_estoque';
     };
 
     const getStatusColor = (status: string) => {
@@ -89,29 +118,29 @@ const Inventory: React.FC = () => {
     };
 
     return (
-        <div class="flex h-full flex-col">
-            <header class="p-6 pb-0">
-                <h1 class="text-gray-900 dark:text-white text-3xl sm:text-4xl font-black leading-tight tracking-[-0.033em]">Gerenciamento de Inventário</h1>
+        <div className="flex h-full flex-col">
+            <header className="p-6 pb-0">
+                <h1 className="text-gray-900 dark:text-white text-3xl sm:text-4xl font-black leading-tight tracking-[-0.033em]">Gerenciamento de Inventário</h1>
             </header>
-            <div class="p-6">
-                <div class="flex flex-col sm:flex-row gap-4 mb-6">
-                    <div class="flex-1">
-                        <div class="relative w-full sm:max-w-md">
-                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-                            <input class="w-full h-10 pl-10 pr-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary" placeholder="Buscar por nome ou código..." />
+            <div className="p-6">
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                    <div className="flex-1">
+                        <div className="relative w-full sm:max-w-md">
+                            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                            <input className="w-full h-10 pl-10 pr-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-primary focus:border-primary" placeholder="Buscar por nome ou SKU..." />
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button class="flex h-10 items-center justify-center gap-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros</span>
-                            <span class="material-symbols-outlined text-gray-500 text-base">filter_list</span>
+                    <div className="flex items-center gap-2">
+                        <button className="flex h-10 items-center justify-center gap-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros</span>
+                            <span className="material-symbols-outlined text-gray-500 text-base">filter_list</span>
                         </button>
                         <button
                             onClick={handleOpenNewItemModal}
-                            class="flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-white hover:bg-primary/90 transition-colors"
+                            className="flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-white hover:bg-primary/90 transition-colors"
                         >
-                            <span class="material-symbols-outlined text-lg">add_circle</span>
-                            <span class="text-sm font-bold">Adicionar Item</span>
+                            <span className="material-symbols-outlined text-lg">add_circle</span>
+                            <span className="text-sm font-bold">Adicionar Item</span>
                         </button>
                     </div>
                 </div>
@@ -126,138 +155,209 @@ const Inventory: React.FC = () => {
                         <>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                class="flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                                className="flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleSubmit}
-                                class="flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-white hover:bg-primary/90"
+                                className="flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-white hover:bg-primary/90"
                             >
-                                <span class="material-symbols-outlined text-lg">save</span>
+                                <span className="material-symbols-outlined text-lg">save</span>
                                 <span>{isEditMode ? 'Atualizar' : 'Adicionar'} Item</span>
                             </button>
                         </>
                     }
                 >
-                    <form onSubmit={handleSubmit} class="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Nome do Item</label>
+                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Nome do Item</label>
                             <input
                                 type="text"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                                 placeholder="Ex: Filtro de Óleo"
                                 required
                             />
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Código do Item</label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">SKU / Código</label>
                                 <input
                                     type="text"
-                                    value={formData.code}
-                                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                                    class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    value={formData.sku}
+                                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                                    className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                                     placeholder="Ex: FO-12345"
                                     required
                                 />
                             </div>
 
                             <div>
-                                <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Quantidade {isEditMode ? 'Atual' : 'Inicial'}</label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Quantidade {isEditMode ? 'Atual' : 'Inicial'}</label>
                                 <input
                                     type="number"
                                     min="0"
                                     value={formData.quantity}
                                     onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                                    class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                                     placeholder="0"
                                     required
                                 />
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Localização</label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Localização</label>
                                 <input
                                     type="text"
                                     value={formData.location}
                                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                    class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                                     placeholder="Ex: Armazém A, P-01"
                                     required
                                 />
                             </div>
 
                             <div>
-                                <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Estoque Mínimo</label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Estoque Mínimo</label>
                                 <input
                                     type="number"
                                     min="0"
-                                    value={formData.minStock}
-                                    onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
-                                    class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    value={formData.minQuantity}
+                                    onChange={(e) => setFormData({ ...formData, minQuantity: e.target.value })}
+                                    className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                                     placeholder="0"
                                     required
                                 />
                             </div>
                         </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Unidade</label>
+                                <input
+                                    type="text"
+                                    value={formData.unit}
+                                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                                    className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    placeholder="Ex: un, kg, m"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Categoria</label>
+                                <input
+                                    type="text"
+                                    value={formData.category}
+                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    placeholder="Ex: Peças, Material"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Preço Unitário</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={formData.price}
+                                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                    className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    placeholder="0.00"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Fornecedor</label>
+                            <input
+                                type="text"
+                                value={formData.supplier}
+                                onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                                className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                placeholder="Nome do fornecedor"
+                            />
+                        </div>
                     </form>
                 </Modal>
 
-                <div class="overflow-visible rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-[#18202F]">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                            <thead class="bg-gray-50 dark:bg-gray-800/50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Nome</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Código</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Qtd. Estoque</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Localização</th>
-                                    <th class="relative px-6 py-3"><span class="sr-only">Ações</span></th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-                                {inventory.map(item => (
-                                    <tr key={item.id} class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{item.name}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.code}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(item.status)}`}>
-                                                {getStatusLabel(item.status)}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.quantity} Un.</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.location}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div class="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleOpenEditModal(item)}
-                                                    class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                                    title="Editar"
-                                                >
-                                                    <span class="material-symbols-outlined text-lg text-blue-600 dark:text-blue-400">edit</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteClick(item.id)}
-                                                    class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                                    title="Excluir"
-                                                >
-                                                    <span class="material-symbols-outlined text-lg text-red-600 dark:text-red-400">delete</span>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                {/* Empty State */}
+                {inventory.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <span className="text-6xl mb-4">📦</span>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Nenhum item no estoque</h2>
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">Comece adicionando seu primeiro item ao inventário.</p>
+                        <button
+                            onClick={handleOpenNewItemModal}
+                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-lg">add_circle</span>
+                            Adicionar Item
+                        </button>
                     </div>
-                </div>
+                ) : (
+                    <div className="overflow-visible rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-[#18202F]">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                                <thead className="bg-gray-50 dark:bg-gray-800/50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Nome</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">SKU</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Qtd. Estoque</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Localização</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Preço</th>
+                                        <th className="relative px-6 py-3"><span className="sr-only">Ações</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                                    {inventory.map(item => {
+                                        const status = getStockStatus(item);
+                                        return (
+                                            <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{item.name}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.sku}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(status)}`}>
+                                                        {getStatusLabel(status)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.quantity} {item.unit || 'Un.'}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.location}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price || 0)}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleOpenEditModal(item)}
+                                                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                                            title="Editar"
+                                                        >
+                                                            <span className="material-symbols-outlined text-lg text-blue-600 dark:text-blue-400">edit</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteClick(item.id)}
+                                                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                                            title="Excluir"
+                                                        >
+                                                            <span className="material-symbols-outlined text-lg text-red-600 dark:text-red-400">delete</span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Delete Confirmation Dialog */}
