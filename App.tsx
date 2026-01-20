@@ -27,6 +27,7 @@ import MobileAgenda from './pages/MobileAgenda';
 import MobileNotifications from './pages/MobileNotifications';
 import MobileChat from './pages/MobileChat';
 import MobileProfile from './pages/MobileProfile';
+import MobileCreateOrder from './pages/MobileCreateOrder';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
 
@@ -93,6 +94,7 @@ const App: React.FC = () => {
             <Route path="/mobile/notifications" element={<MobileNotifications />} />
             <Route path="/mobile/chat" element={<MobileChat />} />
             <Route path="/mobile/profile" element={<MobileProfile />} />
+            <Route path="/mobile/order/new" element={<MobileCreateOrder />} />
             <Route path="/*" element={<AppLayout />} />
           </Routes>
         </BrowserRouter>

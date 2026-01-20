@@ -26,7 +26,7 @@ interface CheckInOut {
 const MobileOrderDetail: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
-    const { orders, updateOrder } = useApp();
+    const { orders, updateOrder, uploadFile } = useApp();
     const { showToast } = useToast();
 
     const [technician, setTechnician] = useState<Technician | null>(null);
@@ -36,6 +36,8 @@ const MobileOrderDetail: React.FC = () => {
     const [notes, setNotes] = useState('');
     const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
     const [signature, setSignature] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
     useEffect(() => {
         const storedTech = localStorage.getItem('technician');
@@ -62,10 +64,11 @@ const MobileOrderDetail: React.FC = () => {
         }
     }, [id, orders, navigate, photos.length, notes, signature, checkInOut.checkIn, checkInOut.checkOut]);
 
-    const handleCheckIn = () => {
+    const handleCheckIn = async () => {
         if ('geolocation' in navigator) {
+            setIsSaving(true);
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                async (position) => {
                     const checkInData = {
                         timestamp: new Date().toISOString(),
                         location: {
@@ -73,16 +76,25 @@ const MobileOrderDetail: React.FC = () => {
                             lng: position.coords.longitude
                         }
                     };
-                    setCheckInOut({ ...checkInOut, checkIn: checkInData });
-                    if (order) {
-                        updateOrder(order.id, {
-                            checkIn: checkInData,
-                            status: 'em_andamento'
-                        });
+
+                    try {
+                        if (id) {
+                            await updateOrder(id, {
+                                checkIn: checkInData,
+                                status: 'em_andamento'
+                            });
+                            setCheckInOut(prev => ({ ...prev, checkIn: checkInData }));
+                            showToast('success', 'Check-in realizado! Ordem iniciada.');
+                        }
+                    } catch (error) {
+                        console.error('Error in check-in:', error);
+                        showToast('error', 'Erro ao salvar check-in');
+                    } finally {
+                        setIsSaving(false);
                     }
-                    showToast('success', 'Check-in realizado! Ordem iniciada.');
                 },
                 (error) => {
+                    setIsSaving(false);
                     showToast('error', 'Erro ao obter localização');
                 }
             );
@@ -115,28 +127,35 @@ const MobileOrderDetail: React.FC = () => {
         }
     };
 
-    const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (files && files.length > 0) {
+        if (files && files.length > 0 && id) {
             const file = files[0];
-            const reader = new FileReader();
+            setIsUploadingPhoto(true);
 
-            reader.onloadend = () => {
-                const newPhoto: ServicePhoto = {
-                    id: `photo-${Date.now()}`,
-                    url: reader.result as string,
-                    caption: '',
-                    timestamp: new Date().toISOString()
-                };
-                const updatedPhotos = [...photos, newPhoto];
-                setPhotos(updatedPhotos);
-                if (order) {
-                    updateOrder(order.id, { servicePhotos: updatedPhotos });
+            try {
+                const publicUrl = await uploadFile(file, 'orders', `service-photos/${id}`);
+
+                if (publicUrl) {
+                    const newPhoto: ServicePhoto = {
+                        id: `photo-${Date.now()}`,
+                        url: publicUrl,
+                        caption: '',
+                        timestamp: new Date().toISOString()
+                    };
+                    const updatedPhotos = [...photos, newPhoto];
+                    await updateOrder(id, { servicePhotos: updatedPhotos });
+                    setPhotos(updatedPhotos);
+                    showToast('success', 'Foto enviada com sucesso!');
+                } else {
+                    showToast('error', 'Erro ao fazer upload da foto');
                 }
-                showToast('success', 'Foto adicionada e salva!');
-            };
-
-            reader.readAsDataURL(file);
+            } catch (error) {
+                console.error('Error uploading photo:', error);
+                showToast('error', 'Erro ao processar foto');
+            } finally {
+                setIsUploadingPhoto(false);
+            }
         }
     };
 
@@ -245,13 +264,47 @@ const MobileOrderDetail: React.FC = () => {
         if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
 
-    const handleSaveSignature = () => {
+    const handleSaveSignature = async () => {
         const canvas = canvasRef.current;
-        if (!canvas) return;
-        const dataUrl = canvas.toDataURL();
-        setSignature(dataUrl);
-        setIsSignatureModalOpen(false);
-        showToast('success', 'Assinatura capturada!');
+        if (!canvas || !id) return;
+
+        setIsSaving(true);
+        try {
+            const dataUrl = canvas.toDataURL();
+            // Convert dataUrl to File to upload to Storage
+            const response = await fetch(dataUrl);
+            const blob = await response.blob();
+            const file = new File([blob], `signature-${id}.png`, { type: 'image/png' });
+
+            const publicUrl = await uploadFile(file, 'orders', `signatures/${id}`);
+
+            if (publicUrl) {
+                await updateOrder(id, { customerSignature: publicUrl });
+                setSignature(publicUrl);
+                setIsSignatureModalOpen(false);
+                showToast('success', 'Assinatura salva com sucesso!');
+            } else {
+                showToast('error', 'Erro ao salvar arquivo de assinatura');
+            }
+        } catch (error) {
+            console.error('Error saving signature:', error);
+            showToast('error', 'Erro ao processar assinatura');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleSaveNotes = async () => {
+        if (!id) return;
+        setIsSaving(true);
+        try {
+            await updateOrder(id, { serviceNotes: notes });
+            showToast('success', 'Observações salvas!');
+        } catch (error) {
+            showToast('error', 'Erro ao salvar observações');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     if (!order || !technician) {
@@ -321,7 +374,11 @@ const MobileOrderDetail: React.FC = () => {
                                 : 'bg-primary text-white hover:bg-primary/90'
                                 }`}
                         >
-                            <span className="material-symbols-outlined text-lg">login</span>
+                            {isSaving && !checkInOut.checkIn ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            ) : (
+                                <span className="material-symbols-outlined text-lg">login</span>
+                            )}
                             {checkInOut.checkIn ? formatTime(checkInOut.checkIn.timestamp) : 'Check-in'}
                         </button>
                         <button
@@ -356,8 +413,17 @@ const MobileOrderDetail: React.FC = () => {
                     </div>
 
                     <label className="flex items-center justify-center gap-2 h-12 bg-blue-50 text-primary font-semibold rounded-lg border-2 border-dashed border-primary hover:bg-blue-100 transition-colors cursor-pointer">
-                        <span className="material-symbols-outlined">add_a_photo</span>
-                        <span>Adicionar Foto</span>
+                        {isUploadingPhoto ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                                <span>Enviando...</span>
+                            </>
+                        ) : (
+                            <>
+                                <span className="material-symbols-outlined">add_a_photo</span>
+                                <span>Adicionar Foto</span>
+                            </>
+                        )}
                         <input
                             type="file"
                             accept="image/*"
@@ -378,9 +444,21 @@ const MobileOrderDetail: React.FC = () => {
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         rows={4}
-                        className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3"
                         placeholder="Adicione observações sobre o serviço..."
                     />
+                    <button
+                        onClick={handleSaveNotes}
+                        disabled={isSaving}
+                        className="w-full h-10 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                    >
+                        {isSaving ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                            <span className="material-symbols-outlined text-lg">save</span>
+                        )}
+                        <span>Salvar Observações</span>
+                    </button>
                 </div>
 
                 {/* Signature */}
@@ -466,7 +544,11 @@ const MobileOrderDetail: React.FC = () => {
                                     onClick={handleSaveSignature}
                                     className="flex-1 h-12 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
                                 >
-                                    <span className="material-symbols-outlined text-lg">check</span>
+                                    {isSaving ? (
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    ) : (
+                                        <span className="material-symbols-outlined text-lg">check</span>
+                                    )}
                                     Confirmar
                                 </button>
                             </div>

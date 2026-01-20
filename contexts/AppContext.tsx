@@ -81,6 +81,7 @@ interface AppContextType {
     sendMessage: (conversationId: string, senderId: string, senderType: 'admin' | 'technician' | 'client', content: string, attachmentUrl?: string, attachmentType?: 'image' | 'file') => Promise<void>;
     getOrCreateConversation: (techId: string) => Promise<string | null>;
     uploadChatFile: (file: File) => Promise<string | null>;
+    uploadFile: (file: File, bucket?: string, folder?: string) => Promise<string | null>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -707,26 +708,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return data.id;
     }, [conversations, supabase]);
 
-    const uploadChatFile = React.useCallback(async (file: File): Promise<string | null> => {
+    const uploadFile = React.useCallback(async (file: File, bucket: string = 'orders', folder: string = 'general'): Promise<string | null> => {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `chat-attachments/${fileName}`;
+        const filePath = `${folder}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
-            .from('orders') // Reusing orders bucket for now as it's likely already setup for public access
+            .from(bucket)
             .upload(filePath, file);
 
         if (uploadError) {
-            console.error('Error uploading chat file:', uploadError);
+            console.error(`Error uploading file to ${bucket}/${folder}:`, uploadError);
             return null;
         }
 
         const { data } = supabase.storage
-            .from('orders')
+            .from(bucket)
             .getPublicUrl(filePath);
 
         return data.publicUrl;
     }, [supabase]);
+
+    const uploadChatFile = React.useCallback(async (file: File): Promise<string | null> => {
+        return uploadFile(file, 'orders', 'chat-attachments');
+    }, [uploadFile]);
 
     const value: AppContextType = React.useMemo(() => ({
         clients,
@@ -797,6 +802,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         sendMessage,
         getOrCreateConversation,
         uploadChatFile,
+        uploadFile,
     }), [
         clients, orders, inventory, quotes, contracts, technicians, projects, projectActivities,
         products, invoices, appointments, conversations, messages, onNewOrderCallback,
@@ -805,7 +811,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addContract, updateContract, deleteContract, addTechnician, updateTechnician, deleteTechnician,
         authenticateTechnician, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
         addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder,
-        sendMessage, getOrCreateConversation, uploadChatFile
+        sendMessage, getOrCreateConversation, uploadChatFile, uploadFile
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

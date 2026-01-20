@@ -219,13 +219,23 @@ const MobileDashboard: React.FC = () => {
                 )}
             </div>
 
-            {/* Floating Chat Button */}
-            <button
-                onClick={() => navigate('/mobile/chat')}
-                className="fixed bottom-20 right-4 w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95 transition-all flex items-center justify-center z-50"
-            >
-                <span className="material-symbols-outlined text-2xl">chat</span>
-            </button>
+            {/* Floating Buttons */}
+            <div className="fixed bottom-20 right-4 flex flex-col gap-3 z-50">
+                <button
+                    onClick={() => navigate('/mobile/order/new')}
+                    className="w-14 h-14 bg-gradient-to-r from-blue-600 to-primary text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
+                    title="Nova Ordem de Serviço"
+                >
+                    <span className="material-symbols-outlined text-2xl">add</span>
+                </button>
+                <button
+                    onClick={() => navigate('/mobile/chat')}
+                    className="w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
+                    title="Chat"
+                >
+                    <span className="material-symbols-outlined text-2xl">chat</span>
+                </button>
+            </div>
 
             {/* Bottom Navigation */}
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
