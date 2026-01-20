@@ -5,7 +5,7 @@ import { supabase } from '../src/lib/supabase';
 
 const MobileChat: React.FC = () => {
     const navigate = useNavigate();
-    const { messages, conversations } = useApp();
+    const { messages, conversations, sendMessage, getOrCreateConversation } = useApp();
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const [technician, setTechnician] = useState<any>(null);
@@ -43,28 +43,9 @@ const MobileChat: React.FC = () => {
     }, [messages, conversationId]);
 
     const initializeConversation = async (techId: string) => {
-        // Try to find existing conversation
-        const existingConv = conversations.find(c =>
-            c.type === 'administrador-tecnico' &&
-            c.participants.includes(techId)
-        );
-
-        if (existingConv) {
-            setConversationId(existingConv.id);
-        } else {
-            // Create new conversation
-            const { data, error } = await supabase
-                .from('conversations')
-                .insert([{
-                    type: 'administrador-tecnico',
-                    participants: [techId]
-                }])
-                .select()
-                .single();
-
-            if (data && !error) {
-                setConversationId(data.id);
-            }
+        const id = await getOrCreateConversation(techId);
+        if (id) {
+            setConversationId(id);
         }
     };
 
@@ -73,24 +54,11 @@ const MobileChat: React.FC = () => {
 
         if (!newMessage.trim() || !technician || !conversationId) return;
 
-        const { error } = await supabase
-            .from('messages')
-            .insert([{
-                conversation_id: conversationId,
-                sender_id: technician.id,
-                sender_type: 'technician',
-                content: newMessage,
-                read: false
-            }]);
-
-        if (!error) {
+        try {
+            await sendMessage(conversationId, technician.id, 'technician', newMessage);
             setNewMessage('');
-
-            // Update conversation last_message_at
-            await supabase
-                .from('conversations')
-                .update({ last_message_at: new Date().toISOString() })
-                .eq('id', conversationId);
+        } catch (error) {
+            console.error('Error sending message:', error);
         }
     };
 

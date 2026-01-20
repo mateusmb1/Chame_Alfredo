@@ -76,6 +76,10 @@ interface AppContextType {
     // Notification callbacks
     onNewOrder?: (order: Order) => void;
     setOnNewOrder: (callback: (order: Order) => void) => void;
+
+    // Communication operations
+    sendMessage: (conversationId: string, senderId: string, senderType: 'admin' | 'technician' | 'client', content: string) => Promise<void>;
+    getOrCreateConversation: (techId: string) => Promise<string | null>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -174,18 +178,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 createdAt: a.created_at,
                 updatedAt: a.updated_at
             })));
-            if (conversationsData) setConversations(conversationsData.map((c: any) => ({
-                ...c,
-                lastMessageAt: c.last_message_at,
-                createdAt: c.created_at
-            })));
-            if (messagesData) setMessages(messagesData.map((m: any) => ({
-                ...m,
-                conversationId: m.conversation_id,
-                senderId: m.sender_id,
-                senderType: m.sender_type,
-                createdAt: m.created_at
-            })));
+            if (conversationsData) setConversations(conversationsData.map(mapConversationFromDB));
+            if (messagesData) setMessages(messagesData.map(mapMessageFromDB));
         };
 
         fetchData();
@@ -200,6 +194,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             supabase.channel('contracts_all').on('postgres_changes', { event: '*', schema: 'public', table: 'contracts' }, payload => handleRealtimeUpdate(payload, setContracts, mapContractFromDB)).subscribe(),
             supabase.channel('projects_all').on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, payload => handleRealtimeUpdate(payload, setProjects, mapProjectFromDB)).subscribe(),
             supabase.channel('acts_all').on('postgres_changes', { event: '*', schema: 'public', table: 'project_activities' }, payload => handleRealtimeUpdate(payload, setProjectActivities, mapActivityFromDB)).subscribe(),
+            supabase.channel('conv_all').on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, payload => handleRealtimeUpdate(payload, setConversations, mapConversationFromDB)).subscribe(),
+            supabase.channel('msg_all').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => handleRealtimeUpdate(payload, setMessages, mapMessageFromDB)).subscribe(),
         ];
 
         return () => {
@@ -370,6 +366,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         customerSignature: data.customer_signature,
         createdAt: data.created_at,
         updatedAt: data.updated_at
+    });
+
+    const mapConversationFromDB = (c: any): Conversation => ({
+        ...c,
+        lastMessageAt: c.last_message_at,
+        createdAt: c.created_at
+    });
+
+    const mapMessageFromDB = (m: any): Message => ({
+        ...m,
+        conversationId: m.conversation_id,
+        senderId: m.sender_id,
+        senderType: m.sender_type,
+        createdAt: m.created_at
     });
 
     const mapOrderToDB = (order: Partial<Order>) => {
@@ -638,6 +648,60 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setOnNewOrderCallback(() => callback);
     }, [setOnNewOrderCallback]);
 
+    // Communication operations
+    const sendMessage = React.useCallback(async (conversationId: string, senderId: string, senderType: 'admin' | 'technician' | 'client', content: string) => {
+        const { error } = await supabase
+            .from('messages')
+            .insert([{
+                conversation_id: conversationId,
+                sender_id: senderId,
+                sender_type: senderType,
+                content,
+                read: false
+            }]);
+
+        if (error) {
+            console.error('Error sending message:', error);
+            throw error;
+        }
+
+        // Update conversation last_message_at
+        await supabase
+            .from('conversations')
+            .update({ last_message_at: new Date().toISOString() })
+            .eq('id', conversationId);
+    }, [supabase]);
+
+    const getOrCreateConversation = React.useCallback(async (techId: string): Promise<string | null> => {
+        // Try to find existing conversation
+        const existingConv = conversations.find(c =>
+            c.type === 'administrador-tecnico' &&
+            c.participants.includes(techId)
+        );
+
+        if (existingConv) {
+            return existingConv.id;
+        }
+
+        // Create new conversation
+        const { data, error } = await supabase
+            .from('conversations')
+            .insert([{
+                type: 'administrador-tecnico',
+                participants: [techId],
+                last_message_at: new Date().toISOString()
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating conversation:', error);
+            return null;
+        }
+
+        return data.id;
+    }, [conversations, supabase]);
+
     const value: AppContextType = React.useMemo(() => ({
         clients,
         orders,
@@ -702,6 +766,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Notification callbacks
         onNewOrder: onNewOrderCallback,
         setOnNewOrder,
+
+        // Communication operations
+        sendMessage,
+        getOrCreateConversation,
     }), [
         clients, orders, inventory, quotes, contracts, technicians, projects, projectActivities,
         products, invoices, appointments, conversations, messages, onNewOrderCallback,
@@ -709,7 +777,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addInventoryItem, updateInventoryItem, deleteInventoryItem, addQuote, updateQuote, deleteQuote,
         addContract, updateContract, deleteContract, addTechnician, updateTechnician, deleteTechnician,
         authenticateTechnician, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
-        addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder
+        addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder,
+        sendMessage, getOrCreateConversation
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -1,62 +1,38 @@
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
-
-interface Message {
-    id: string;
-    sender: 'admin' | 'technician' | 'client';
-    senderName: string;
-    message: string;
-    timestamp: string;
-    read: boolean;
-}
+import { Conversation, Message } from '../types/communication';
 
 const Communication: React.FC = () => {
-    const { clients, technicians } = useApp();
+    const { clients, technicians, conversations, messages: allMessages, sendMessage, getOrCreateConversation } = useApp();
     const [activeTab, setActiveTab] = useState<'clients' | 'team'>('team');
     const [selectedContact, setSelectedContact] = useState<any>(null);
     const [newMessage, setNewMessage] = useState('');
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: '1',
-            sender: 'technician',
-            senderName: 'João Silva',
-            message: 'Cheguei no local. Iniciando a instalação.',
-            timestamp: new Date(Date.now() - 3600000).toISOString(),
-            read: true
-        },
-        {
-            id: '2',
-            sender: 'admin',
-            senderName: 'Você',
-            message: 'Perfeito! Precisa de algum material adicional?',
-            timestamp: new Date(Date.now() - 3000000).toISOString(),
-            read: true
-        },
-        {
-            id: '3',
-            sender: 'technician',
-            senderName: 'João Silva',
-            message: 'Sim, vou precisar de 2 câmeras extras. O cliente solicitou.',
-            timestamp: new Date(Date.now() - 1800000).toISOString(),
-            read: true
+    const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+
+    const filteredMessages = currentConversationId
+        ? allMessages.filter(m => m.conversationId === currentConversationId)
+            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        : [];
+    React.useEffect(() => {
+        if (selectedContact && activeTab === 'team') {
+            getOrCreateConversation(selectedContact.id).then(id => {
+                setCurrentConversationId(id);
+            });
+        } else {
+            setCurrentConversationId(null);
         }
-    ]);
+    }, [selectedContact, activeTab, getOrCreateConversation]);
 
-    const handleSendMessage = (e: React.FormEvent) => {
+    const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !selectedContact) return;
+        if (!newMessage.trim() || !selectedContact || !currentConversationId) return;
 
-        const message: Message = {
-            id: `msg-${Date.now()}`,
-            sender: 'admin',
-            senderName: 'Você',
-            message: newMessage,
-            timestamp: new Date().toISOString(),
-            read: true
-        };
-
-        setMessages([...messages, message]);
-        setNewMessage('');
+        try {
+            await sendMessage(currentConversationId, 'admin-id', 'admin', newMessage);
+            setNewMessage('');
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
     };
 
     const formatTime = (timestamp: string) => {
@@ -94,8 +70,8 @@ const Communication: React.FC = () => {
                         <button
                             onClick={() => setActiveTab('team')}
                             class={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all ${activeTab === 'team'
-                                    ? 'bg-primary text-white shadow-md'
-                                    : 'bg-white text-gray-600 hover:bg-gray-100'
+                                ? 'bg-primary text-white shadow-md'
+                                : 'bg-white text-gray-600 hover:bg-gray-100'
                                 }`}
                         >
                             <div class="flex items-center justify-center gap-2">
@@ -106,8 +82,8 @@ const Communication: React.FC = () => {
                         <button
                             onClick={() => setActiveTab('clients')}
                             class={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all ${activeTab === 'clients'
-                                    ? 'bg-primary text-white shadow-md'
-                                    : 'bg-white text-gray-600 hover:bg-gray-100'
+                                ? 'bg-primary text-white shadow-md'
+                                : 'bg-white text-gray-600 hover:bg-gray-100'
                                 }`}
                         >
                             <div class="flex items-center justify-center gap-2">
@@ -137,8 +113,8 @@ const Communication: React.FC = () => {
                                     key={tech.id}
                                     onClick={() => setSelectedContact(tech)}
                                     class={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${selectedContact?.id === tech.id
-                                            ? 'bg-primary/10 border-l-4 border-primary'
-                                            : 'hover:bg-gray-100'
+                                        ? 'bg-primary/10 border-l-4 border-primary'
+                                        : 'hover:bg-gray-100'
                                         }`}
                                 >
                                     <div class="relative">
@@ -154,10 +130,10 @@ const Communication: React.FC = () => {
                                         </div>
                                         <div class="flex items-center gap-2">
                                             <span class={`px-2 py-0.5 rounded-full text-xs font-semibold ${tech.status === 'em_servico'
-                                                    ? 'bg-blue-100 text-blue-700'
-                                                    : tech.status === 'ativo'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-gray-100 text-gray-600'
+                                                ? 'bg-blue-100 text-blue-700'
+                                                : tech.status === 'ativo'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-gray-100 text-gray-600'
                                                 }`}>
                                                 {getStatusLabel(tech.status)}
                                             </span>
@@ -177,8 +153,8 @@ const Communication: React.FC = () => {
                                     key={client.id}
                                     onClick={() => setSelectedContact(client)}
                                     class={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${selectedContact?.id === client.id
-                                            ? 'bg-primary/10 border-l-4 border-primary'
-                                            : 'hover:bg-gray-100'
+                                        ? 'bg-primary/10 border-l-4 border-primary'
+                                        : 'hover:bg-gray-100'
                                         }`}
                                 >
                                     <div class="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-white font-bold">
@@ -208,8 +184,8 @@ const Communication: React.FC = () => {
                         <div class="flex items-center gap-3">
                             <div class="relative">
                                 <div class={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold ${activeTab === 'team'
-                                        ? 'bg-gradient-to-br from-blue-500 to-purple-600'
-                                        : 'bg-gradient-to-br from-green-500 to-teal-600'
+                                    ? 'bg-gradient-to-br from-blue-500 to-purple-600'
+                                    : 'bg-gradient-to-br from-green-500 to-teal-600'
                                     }`}>
                                     {selectedContact.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                                 </div>
@@ -243,29 +219,29 @@ const Communication: React.FC = () => {
 
                     {/* Messages */}
                     <div class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
-                        {messages.map((msg) => (
+                        {filteredMessages.map((msg) => (
                             <div
                                 key={msg.id}
-                                class={`flex items-start gap-3 ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}
+                                class={`flex items-start gap-3 ${msg.senderType === 'admin' ? 'justify-end' : 'justify-start'}`}
                             >
-                                {msg.sender !== 'admin' && (
+                                {msg.senderType !== 'admin' && (
                                     <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                        {msg.senderName.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                                        {selectedContact.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                                     </div>
                                 )}
-                                <div class={`flex flex-col ${msg.sender === 'admin' ? 'items-end' : 'items-start'}`}>
-                                    <div class={`p-3 rounded-2xl max-w-md ${msg.sender === 'admin'
-                                            ? 'bg-primary text-white rounded-tr-none'
-                                            : 'bg-white text-gray-800 rounded-tl-none shadow-sm'
+                                <div class={`flex flex-col ${msg.senderType === 'admin' ? 'items-end' : 'items-start'}`}>
+                                    <div class={`p-3 rounded-2xl max-w-md ${msg.senderType === 'admin'
+                                        ? 'bg-primary text-white rounded-tr-none'
+                                        : 'bg-white text-gray-800 rounded-tl-none shadow-sm'
                                         }`}>
-                                        {msg.sender !== 'admin' && (
-                                            <p class="text-xs font-semibold mb-1 opacity-70">{msg.senderName}</p>
+                                        {msg.senderType !== 'admin' && (
+                                            <p class="text-xs font-semibold mb-1 opacity-70">{selectedContact.name}</p>
                                         )}
-                                        <p class="text-sm">{msg.message}</p>
+                                        <p class="text-sm">{msg.content}</p>
                                     </div>
-                                    <span class="text-xs text-gray-500 mt-1">{formatTime(msg.timestamp)}</span>
+                                    <span class="text-xs text-gray-500 mt-1">{formatTime(msg.createdAt)}</span>
                                 </div>
-                                {msg.sender === 'admin' && (
+                                {msg.senderType === 'admin' && (
                                     <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                                         AD
                                     </div>
@@ -313,8 +289,8 @@ const Communication: React.FC = () => {
                 <div class="w-72 bg-white border-l border-gray-200 hidden xl:flex flex-col p-6">
                     <div class="flex flex-col items-center text-center mb-6">
                         <div class={`w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-3 ${activeTab === 'team'
-                                ? 'bg-gradient-to-br from-blue-500 to-purple-600'
-                                : 'bg-gradient-to-br from-green-500 to-teal-600'
+                            ? 'bg-gradient-to-br from-blue-500 to-purple-600'
+                            : 'bg-gradient-to-br from-green-500 to-teal-600'
                             }`}>
                             {selectedContact.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                         </div>
@@ -323,10 +299,10 @@ const Communication: React.FC = () => {
                             <>
                                 <p class="text-sm text-gray-600 mb-2">{selectedContact.specialization?.[0] || 'Técnico'}</p>
                                 <span class={`px-3 py-1 rounded-full text-xs font-semibold ${selectedContact.status === 'em_servico'
-                                        ? 'bg-blue-100 text-blue-700'
-                                        : selectedContact.status === 'ativo'
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-gray-100 text-gray-600'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : selectedContact.status === 'ativo'
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-gray-100 text-gray-600'
                                     }`}>
                                     {getStatusLabel(selectedContact.status)}
                                 </span>
