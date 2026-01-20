@@ -10,7 +10,8 @@ import {
     Plus,
     Trash2,
     Upload,
-    FileText
+    FileText,
+    FolderPlus
 } from 'lucide-react';
 
 interface QuoteItem {
@@ -25,10 +26,11 @@ const QuoteDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { showToast } = useToast();
-    const { quotes, clients } = useApp();
+    const { quotes, clients, addProject, updateQuote } = useApp();
     const [quote, setQuote] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [isConverting, setIsConverting] = useState(false);
     const [logoUrl, setLogoUrl] = useState<string>('');
 
     // Company info
@@ -158,6 +160,44 @@ const QuoteDetail: React.FC = () => {
         }
     };
 
+    const handleConvertToProject = async () => {
+        if (!quote) return;
+        setIsConverting(true);
+        try {
+            const client = clients.find(c => c.id === quote.clientId);
+            const projectData = {
+                name: `Projeto - ${clientName || quote.clientName}`,
+                description: `Projeto criado a partir do orçamento #${estNumber}. ${quote.notes || ''}`,
+                type: 'instalacao' as const,
+                status: 'planejamento' as const,
+                clientId: quote.clientId,
+                clientName: clientName || quote.clientName,
+                startDate: new Date().toISOString().split('T')[0],
+                endDate: estStartDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                budget: estimateTotal,
+                progress: 0,
+                responsibleId: '',
+                responsibleName: techName || '',
+                team: [],
+                relatedOrders: [],
+                quoteId: quote.id,
+                quoteName: estNumber,
+                documents: [],
+                notes: []
+            };
+            const newProject = addProject(projectData);
+            if (updateQuote) {
+                updateQuote(quote.id, { ...quote, projectId: newProject?.id, status: 'approved' });
+            }
+            showToast('success', 'Projeto criado com sucesso!');
+            navigate(`/projects`);
+        } catch (err: any) {
+            showToast('error', `Erro ao converter: ${err.message}`);
+        } finally {
+            setIsConverting(false);
+        }
+    };
+
     const handleSave = async () => {
         setIsSaving(true);
         try {
@@ -224,6 +264,23 @@ const QuoteDetail: React.FC = () => {
                         >
                             <Printer className="w-4 h-4" /> Imprimir
                         </button>
+                        {!quote.projectId && (
+                            <button
+                                onClick={handleConvertToProject}
+                                disabled={isConverting}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-sm font-semibold hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                            >
+                                <FolderPlus className="w-4 h-4" /> {isConverting ? 'Convertendo...' : 'Criar Projeto'}
+                            </button>
+                        )}
+                        {quote.projectId && (
+                            <button
+                                onClick={() => navigate('/projects')}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-sm font-semibold hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
+                            >
+                                <FolderPlus className="w-4 h-4" /> Ver Projeto
+                            </button>
+                        )}
                         <button
                             onClick={handleSave}
                             disabled={isSaving}

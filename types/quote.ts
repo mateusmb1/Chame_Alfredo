@@ -30,6 +30,8 @@ export interface Quote {
   createdAt: string;
   updatedAt: string;
   signatureData?: string;
+  projectId?: string; // Linked project ID (when converted)
+  quoteNumber?: string; // Human-readable quote number
 }
 
 export interface CreateQuoteData {

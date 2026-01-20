@@ -15,6 +15,8 @@ export interface Project {
   responsibleName: string;
   team: ProjectMember[];
   relatedOrders: string[]; // Order IDs
+  quoteId?: string; // Linked quote ID
+  quoteName?: string; // Quote reference number
   documents: ProjectDocument[];
   notes: ProjectNote[];
   createdAt: string;
