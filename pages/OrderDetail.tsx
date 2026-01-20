@@ -37,7 +37,7 @@ const OrderDetail: React.FC = () => {
       case 'nova': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
       case 'em_andamento': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
       case 'pendente': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
-      case 'finalizada': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+      case 'concluida': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
       case 'cancelada': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -48,7 +48,7 @@ const OrderDetail: React.FC = () => {
       case 'nova': return 'Nova';
       case 'em_andamento': return 'Em Andamento';
       case 'pendente': return 'Pendente';
-      case 'finalizada': return 'Finalizada';
+      case 'concluida': return 'Concluída';
       case 'cancelada': return 'Cancelada';
       default: return status;
     }
@@ -89,7 +89,7 @@ const OrderDetail: React.FC = () => {
                 {isStatusMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-20">
                     <div className="py-1" role="menu">
-                      {(['nova', 'em_andamento', 'pendente', 'finalizada', 'cancelada'] as const).map((s) => (
+                      {(['nova', 'em_andamento', 'pendente', 'concluida', 'cancelada'] as const).map((s) => (
                         <button
                           key={s}
                           onClick={() => handleStatusChange(s)}
@@ -155,8 +155,8 @@ const OrderDetail: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Prioridade</p>
                   <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold uppercase ${order.priority === 'urgente' ? 'bg-red-100 text-red-600' :
-                      order.priority === 'alta' ? 'bg-orange-100 text-orange-600' :
-                        'bg-blue-100 text-blue-600'
+                    order.priority === 'alta' ? 'bg-orange-100 text-orange-600' :
+                      'bg-blue-100 text-blue-600'
                     }`}>
                     {order.priority}
                   </span>

@@ -160,7 +160,7 @@ const MobileOrderDetail: React.FC = () => {
         if (order) {
             try {
                 await updateOrder(order.id, {
-                    status: 'finalizada',
+                    status: 'concluida',
                     completedDate: new Date().toISOString(),
                     checkIn: checkInOut.checkIn,
                     checkOut: checkInOut.checkOut || {

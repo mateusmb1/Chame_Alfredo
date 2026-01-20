@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useApp } from '../contexts/AppContext';
@@ -6,6 +7,7 @@ import { Order } from '../types/order';
 import { useToast } from '../contexts/ToastContext';
 
 const Orders: React.FC = () => {
+  const navigate = useNavigate();
   const { orders, clients, technicians, addOrder, updateOrder, deleteOrder } = useApp();
   const { showToast } = useToast();
 
@@ -296,6 +298,13 @@ const Orders: React.FC = () => {
                       <p class="text-base font-bold text-gray-900 dark:text-white mb-1">{order.clientName}</p>
                       <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{order.serviceType}</p>
                       <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                        <button
+                          onClick={() => navigate(`/orders/detail/${order.id}`)}
+                          class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          title="Ver Detalhes"
+                        >
+                          <span class="material-symbols-outlined text-base text-gray-600 dark:text-gray-400">visibility</span>
+                        </button>
                         <button
                           onClick={() => handleOpenEditModal(order)}
                           class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

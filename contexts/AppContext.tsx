@@ -427,10 +427,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (error) console.error('Error deleting client:', error);
     }, [supabase]);
 
-    const addOrder = React.useCallback(async (order: Omit<Order, 'id' | 'status' | 'createdAt'>) => {
+    const addOrder = React.useCallback(async (order: Omit<Order, 'id' | 'status' | 'createdAt'> & { status?: Order['status'] }) => {
         const dbOrder = mapOrderToDB({
-            ...order,
-            status: 'nova'
+            status: 'nova' as Order['status'], // Default
+            ...order
         });
         const { data, error } = await supabase.from('orders').insert([dbOrder]).select().single();
         if (error) {

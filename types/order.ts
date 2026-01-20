@@ -4,8 +4,8 @@ export interface Order {
   clientName: string;
   serviceType: string;
   description: string;
-  status: 'nova' | 'em_andamento' | 'pendente' | 'finalizada' | 'cancelada';
-  priority: 'baixa' | 'media' | 'alta' | 'urgente';
+  status: 'nova' | 'em_andamento' | 'pendente' | 'concluida' | 'cancelada';
+  priority: 'baixa' | 'normal' | 'alta' | 'urgente';
   scheduledDate: string;
   completedDate: string | null;
   technicianId: string;
