@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
+import OrderItemSelector, { OrderLineItem } from '../components/OrderItemSelector';
 import { useApp } from '../contexts/AppContext';
 import { Order } from '../types/order';
 import { useToast } from '../contexts/ToastContext';
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
-  const { orders, clients, technicians, addOrder, updateOrder, deleteOrder } = useApp();
+  const { orders, clients, technicians, inventory, addOrder, updateOrder, deleteOrder, addInventoryItem } = useApp();
   const { showToast } = useToast();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,6 +29,8 @@ const Orders: React.FC = () => {
     observations: ''
   });
 
+  const [orderItems, setOrderItems] = useState<OrderLineItem[]>([]);
+
   const handleOpenNewOrderModal = () => {
     setIsEditMode(false);
     setEditingOrderId(null);
@@ -41,6 +44,7 @@ const Orders: React.FC = () => {
       priority: 'media',
       observations: ''
     });
+    setOrderItems([]);
     setIsModalOpen(true);
   };
 
@@ -57,6 +61,17 @@ const Orders: React.FC = () => {
       priority: order.priority as any,
       observations: order.observations || ''
     });
+    // Load existing items if available
+    setOrderItems(order.items?.map((item: any) => ({
+      id: item.id || `item-${Date.now()}`,
+      type: item.type || 'service',
+      name: item.name || item.description || '',
+      description: item.description,
+      quantity: item.quantity || 1,
+      unitPrice: item.unitPrice || 0,
+      total: item.total || (item.quantity * item.unitPrice) || 0,
+      sourceId: item.sourceId
+    })) || []);
     setIsModalOpen(true);
   };
 
@@ -68,13 +83,25 @@ const Orders: React.FC = () => {
 
     const originalOrder = isEditMode && editingOrderId ? orders.find(o => o.id === editingOrderId) : null;
 
+    const totalValue = orderItems.reduce((sum, item) => sum + item.total, 0);
+
     const orderData: any = {
       ...formData,
       clientName: selectedClient?.name || formData.clientName,
       technicianName: selectedTech?.name || formData.technicianName,
       scheduledDate: originalOrder?.scheduledDate || new Date().toISOString(),
       completedDate: originalOrder?.completedDate || null,
-      value: originalOrder?.value || 0
+      value: totalValue,
+      items: orderItems.map(item => ({
+        id: item.id,
+        type: item.type,
+        name: item.name,
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        total: item.total,
+        sourceId: item.sourceId
+      }))
     };
 
     if (formData.technicianId && (!isEditMode || (originalOrder && originalOrder.status === 'nova'))) {
@@ -100,6 +127,7 @@ const Orders: React.FC = () => {
       priority: 'media',
       observations: ''
     });
+    setOrderItems([]);
   };
 
   const handleDeleteClick = (orderId: string) => {
@@ -113,6 +141,11 @@ const Orders: React.FC = () => {
       showToast('success', 'Ordem de serviço excluída com sucesso!');
     }
     setOrderToDelete(null);
+  };
+
+  const handleAddNewProduct = (product: any) => {
+    addInventoryItem(product);
+    showToast('success', `Produto "${product.name}" adicionado ao estoque!`);
   };
 
   const getStatusColor = (status: string) => {
@@ -134,6 +167,9 @@ const Orders: React.FC = () => {
       default: return status;
     }
   };
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
   const groupedOrders = {
     nova: orders.filter(o => o.status === 'nova'),
@@ -161,7 +197,7 @@ const Orders: React.FC = () => {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           title={isEditMode ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}
-          size="lg"
+          size="xl"
           footer={
             <>
               <button
@@ -209,6 +245,7 @@ const Orders: React.FC = () => {
                   <option value="Manutenção Preventiva">Manutenção Preventiva</option>
                   <option value="Instalação">Instalação</option>
                   <option value="Reparo">Reparo</option>
+                  <option value="Substituição">Substituição</option>
                   <option value="Consultoria">Consultoria</option>
                 </select>
               </div>
@@ -253,10 +290,21 @@ const Orders: React.FC = () => {
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={4}
+                rows={3}
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 placeholder="Descreva os detalhes do serviço a ser realizado..."
                 required
+              />
+            </div>
+
+            {/* Products & Services Selection */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <OrderItemSelector
+                items={orderItems}
+                onItemsChange={setOrderItems}
+                inventory={inventory}
+                productsServices={[]}
+                onAddNewProduct={handleAddNewProduct}
               />
             </div>
           </form>
@@ -293,36 +341,41 @@ const Orders: React.FC = () => {
                         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(order.status)}`}>
                           <span className="size-1.5 rounded-full bg-current"></span>{getStatusLabel(order.status)}
                         </span>
+                      </div>
+                      <p className="text-base font-bold text-gray-900 dark:text-white mb-1">{order.clientName}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{order.serviceType}</p>
+                      {order.value > 0 && (
+                        <p className="text-sm font-bold text-primary mb-2">{formatCurrency(order.value)}</p>
+                      )}
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
                         {order.invoiced && (
-                          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                             <span className="material-symbols-outlined text-[10px]">receipt</span>Faturado
                           </span>
                         )}
-                      </div>
-                      <p className="text-base font-bold text-gray-900 dark:text-white mb-1">{order.clientName}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{order.serviceType}</p>
-                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-                        <button
-                          onClick={() => navigate(`/orders/${order.id}`)}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          title="Ver Detalhes"
-                        >
-                          <span className="material-symbols-outlined text-base text-gray-600 dark:text-gray-400">visibility</span>
-                        </button>
-                        <button
-                          onClick={() => handleOpenEditModal(order)}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          title="Editar"
-                        >
-                          <span className="material-symbols-outlined text-base text-blue-600 dark:text-blue-400">edit</span>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(order.id)}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          title="Excluir"
-                        >
-                          <span className="material-symbols-outlined text-base text-red-600 dark:text-red-400">delete</span>
-                        </button>
+                        <div className="flex items-center gap-2 ml-auto">
+                          <button
+                            onClick={() => navigate(`/orders/${order.id}`)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            title="Ver Detalhes"
+                          >
+                            <span className="material-symbols-outlined text-base text-gray-600 dark:text-gray-400">visibility</span>
+                          </button>
+                          <button
+                            onClick={() => handleOpenEditModal(order)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            title="Editar"
+                          >
+                            <span className="material-symbols-outlined text-base text-blue-600 dark:text-blue-400">edit</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(order.id)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            title="Excluir"
+                          >
+                            <span className="material-symbols-outlined text-base text-red-600 dark:text-red-400">delete</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))
