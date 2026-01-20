@@ -441,15 +441,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [setOrders, mapOrderToDB, mapOrderFromDB, supabase]);
 
     const updateOrder = React.useCallback(async (id: string, updatedOrder: Partial<Order>) => {
+        // Optimistic update
+        setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updatedOrder } : o));
+
         const dbUpdate = mapOrderToDB(updatedOrder);
         const { error } = await supabase.from('orders').update(dbUpdate).eq('id', id);
-        if (error) console.error('Error updating order:', error);
-    }, [mapOrderToDB, supabase]);
+        if (error) {
+            console.error('Error updating order:', error);
+            // Revert or refresh on error? For now, just log.
+        }
+    }, [mapOrderToDB, supabase, setOrders]);
 
     const deleteOrder = React.useCallback(async (id: string) => {
+        setOrders(prev => prev.filter(o => o.id !== id));
         const { error } = await supabase.from('orders').delete().eq('id', id);
         if (error) console.error('Error deleting order:', error);
-    }, [supabase]);
+    }, [supabase, setOrders]);
 
     const addInventoryItem = React.useCallback(async (item: Omit<InventoryItem, 'id'>) => {
         const dbItem = mapInventoryToDB(item);

@@ -24,7 +24,7 @@ const MobileDashboard: React.FC = () => {
         const tech: Technician = JSON.parse(storedTech);
         setTechnician(tech);
 
-        const techOrders = orders.filter(order => order.technicianName === tech.name);
+        const techOrders = orders.filter(order => order.technicianId === tech.id);
         setMyOrders(techOrders);
     }, [orders, navigate]);
 

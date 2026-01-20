@@ -64,14 +64,21 @@ const Orders: React.FC = () => {
     const selectedClient = clients.find(c => c.id === formData.clientId);
     const selectedTech = technicians.find(t => t.id === formData.technicianId);
 
-    const orderData = {
+    const originalOrder = isEditMode && editingOrderId ? orders.find(o => o.id === editingOrderId) : null;
+
+    const orderData: any = {
       ...formData,
       clientName: selectedClient?.name || formData.clientName,
       technicianName: selectedTech?.name || formData.technicianName,
-      scheduledDate: new Date().toISOString(), // Default for now
-      completedDate: null,
-      value: 0
+      scheduledDate: originalOrder?.scheduledDate || new Date().toISOString(),
+      completedDate: originalOrder?.completedDate || null,
+      value: originalOrder?.value || 0
     };
+
+    // Workflow: If a technician is assigned and status is 'nova', move to 'pendente'
+    if (formData.technicianId && (!isEditMode || (originalOrder && originalOrder.status === 'nova'))) {
+      orderData.status = 'pendente';
+    }
 
     if (isEditMode && editingOrderId) {
       updateOrder(editingOrderId, orderData);
@@ -129,8 +136,8 @@ const Orders: React.FC = () => {
 
   const groupedOrders = {
     nova: orders.filter(o => o.status === 'nova'),
-    em_andamento: orders.filter(o => o.status === 'em_andamento'),
     pendente: orders.filter(o => o.status === 'pendente'),
+    em_andamento: orders.filter(o => o.status === 'em_andamento'),
     concluida: orders.filter(o => o.status === 'concluida')
   };
 
