@@ -314,14 +314,14 @@ const MobileOrderDetail: React.FC = () => {
                     <div className="flex gap-2">
                         <span className="px-2 py-1 bg-gray-100 rounded text-xs font-semibold text-gray-600 uppercase tracking-wider">{order.serviceType}</span>
                         <span className={`px-2 py-1 rounded text-xs font-semibold uppercase tracking-wider ${order.priority === 'urgente' ? 'bg-red-100 text-red-600' :
-                                order.priority === 'alta' ? 'bg-orange-100 text-orange-600' :
-                                    'bg-blue-100 text-blue-600'
+                            order.priority === 'alta' ? 'bg-orange-100 text-orange-600' :
+                                'bg-blue-100 text-blue-600'
                             }`}>{order.priority}</span>
                     </div>
                 </div>
 
                 {/* Unified Workflow State Machine */}
-                {order.status === 'nova' ? (
+                {(order.status === 'nova' || order.status === 'pendente') ? (
                     <div className="space-y-4">
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
                             <h2 className="font-bold text-blue-800 flex items-center gap-2">
