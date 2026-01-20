@@ -288,12 +288,14 @@ const OrderDetail: React.FC = () => {
                 </div>
               </div>
       </div>
+        </div>
+      </div>
 
-          {/* Printable Report Component */}
-          <ServiceOrderReport order={order} client={client} />
+      {/* Printable Report Component */}
+      <ServiceOrderReport order={order} client={client} />
 
-          {/* Print styles */}
-          <style>{`
+      {/* Print styles */}
+      <style>{`
         @media print {
           /* Hide everything by default */
           body * {
@@ -319,8 +321,8 @@ const OrderDetail: React.FC = () => {
           nav, aside, header, footer, .breadcrumb { display: none !important; }
         }
       `}</style>
-        </div>
-        );
+    </div>
+  );
 };
 
-        export default OrderDetail;
+export default OrderDetail;
