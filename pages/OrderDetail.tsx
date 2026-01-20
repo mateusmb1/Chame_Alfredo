@@ -9,6 +9,7 @@ const OrderDetail: React.FC = () => {
   const { orders, clients, updateOrder } = useApp();
   const [order, setOrder] = useState<Order | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     const foundOrder = orders.find(o => o.id === id);
@@ -30,6 +31,10 @@ const OrderDetail: React.FC = () => {
   const handleStatusChange = (newStatus: Order['status']) => {
     updateOrder(order.id, { status: newStatus });
     setIsStatusMenuOpen(false);
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const getStatusColor = (status: string) => {
@@ -106,7 +111,10 @@ const OrderDetail: React.FC = () => {
                 <span className="material-symbols-outlined text-base">edit</span>
                 <span className="truncate">Editar Ordem</span>
               </button>
-              <button className="flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+              <button
+                onClick={handlePrint}
+                className="flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
                 <span className="material-symbols-outlined text-xl">print</span>
               </button>
             </div>
@@ -182,11 +190,35 @@ const OrderDetail: React.FC = () => {
                 </div>
                 <div className="p-6 grid grid-cols-2 md:grid-cols-3 gap-4">
                   {order.servicePhotos.map((photo: any, index: number) => (
-                    <div key={index} className="aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <div
+                      key={index}
+                      onClick={() => setSelectedPhoto(photo.url)}
+                      className="aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer hover:opacity-90 transition-opacity"
+                    >
                       <img src={photo.url} alt={`Serviço ${index + 1}`} className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Lightbox Modal */}
+            {selectedPhoto && (
+              <div
+                className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+                onClick={() => setSelectedPhoto(null)}
+              >
+                <button
+                  className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full"
+                  onClick={() => setSelectedPhoto(null)}
+                >
+                  <span className="material-symbols-outlined text-3xl">close</span>
+                </button>
+                <img
+                  src={selectedPhoto}
+                  alt="Full size"
+                  className="max-h-full max-w-full rounded-lg shadow-2xl animate-in zoom-in-95 duration-200"
+                />
               </div>
             )}
           </div>
@@ -257,6 +289,27 @@ const OrderDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Print styles */}
+      <style>{`
+        @media print {
+          .flex.h-full.flex-col.p-8 { padding: 0 !important; }
+          .mx-auto.w-full.max-w-7xl { max-width: 100% !important; }
+          header { margin-bottom: 2rem !important; }
+          .breadcrumb, button, .relative, nav, aside { display: none !important; }
+          .grid { display: block !important; }
+          .bg-white, .dark\\:bg-\\[\\#18202F\\] { border: 1px solid #eee !important; box-shadow: none !important; margin-bottom: 1.5rem !important; }
+          .lg\\:col-span-2 { width: 100% !important; }
+          img { max-width: 100% !important; page-break-inside: avoid; }
+          h1 { font-size: 24pt !important; }
+          h2 { font-size: 18pt !important; }
+          body { background: white !important; color: black !important; }
+          .dark { background: white !important; color: black !important; }
+          .bg-primary { background-color: #000 !important; color: #fff !important; }
+          .p-8, .p-6 { padding: 1.5rem !important; }
+          .material-symbols-outlined { font-size: 14pt !important; }
+        }
+      `}</style>
     </div>
   );
 };
