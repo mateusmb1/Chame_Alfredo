@@ -290,10 +290,10 @@ const OrderDetail: React.FC = () => {
       </div>
 
           {/* Printable Report Component */}
-          < ServiceOrderReport order={order} client={client} />
+          <ServiceOrderReport order={order} client={client} />
 
           {/* Print styles */}
-          < style > {`
+          <style>{`
         @media print {
           /* Hide everything by default */
           body * {
@@ -318,8 +318,8 @@ const OrderDetail: React.FC = () => {
           .flex.h-full.flex-col.p-8 { display: none !important; }
           nav, aside, header, footer, .breadcrumb { display: none !important; }
         }
-      `}</style >
-        </div >
+      `}</style>
+        </div>
         );
 };
 
