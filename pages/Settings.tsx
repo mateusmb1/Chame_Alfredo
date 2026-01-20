@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../src/lib/supabase';
 import { useToast } from '../contexts/ToastContext';
-import { Upload, Save, X, Loader2 } from 'lucide-react';
+import { Upload, Save, X, Loader2, Database } from 'lucide-react';
+import { DataImportModal } from '../components/DataImportModal';
 
 interface CompanySettings {
   id?: string;
@@ -42,6 +43,7 @@ const Settings: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Fetch settings on mount
   useEffect(() => {
@@ -451,7 +453,37 @@ const Settings: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Data Import Section */}
+        <div className="mt-8 rounded-xl bg-white dark:bg-[#18202F] border border-slate-200 dark:border-gray-800">
+          <div className="p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] mb-1 flex items-center gap-2">
+                  <Database className="w-5 h-5 text-primary" />
+                  Importação de Dados
+                </h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  Importe clientes, materiais e serviços do sistema Agenda Boa.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="flex w-full sm:w-auto cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-5 bg-gradient-to-r from-primary to-primary/80 text-white text-sm font-medium leading-normal hover:from-primary/90 hover:to-primary/70 transition-all shadow-md hover:shadow-lg"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Importar do Agenda Boa</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Import Modal */}
+      <DataImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+      />
     </div>
   );
 };
