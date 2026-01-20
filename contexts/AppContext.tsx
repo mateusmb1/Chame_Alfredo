@@ -78,8 +78,9 @@ interface AppContextType {
     setOnNewOrder: (callback: (order: Order) => void) => void;
 
     // Communication operations
-    sendMessage: (conversationId: string, senderId: string, senderType: 'admin' | 'technician' | 'client', content: string) => Promise<void>;
+    sendMessage: (conversationId: string, senderId: string, senderType: 'admin' | 'technician' | 'client', content: string, attachmentUrl?: string, attachmentType?: 'image' | 'file') => Promise<void>;
     getOrCreateConversation: (techId: string) => Promise<string | null>;
+    uploadChatFile: (file: File) => Promise<string | null>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -379,6 +380,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         conversationId: m.conversation_id,
         senderId: m.sender_id,
         senderType: m.sender_type,
+        attachmentUrl: m.attachment_url,
+        attachmentType: m.attachment_type,
         createdAt: m.created_at
     });
 
@@ -649,7 +652,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [setOnNewOrderCallback]);
 
     // Communication operations
-    const sendMessage = React.useCallback(async (conversationId: string, senderId: string, senderType: 'admin' | 'technician' | 'client', content: string) => {
+    const sendMessage = React.useCallback(async (conversationId: string, senderId: string, senderType: 'admin' | 'technician' | 'client', content: string, attachmentUrl?: string, attachmentType?: 'image' | 'file') => {
         const { error } = await supabase
             .from('messages')
             .insert([{
@@ -657,6 +660,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 sender_id: senderId,
                 sender_type: senderType,
                 content,
+                attachment_url: attachmentUrl,
+                attachment_type: attachmentType,
                 read: false
             }]);
 
@@ -701,6 +706,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         return data.id;
     }, [conversations, supabase]);
+
+    const uploadChatFile = React.useCallback(async (file: File): Promise<string | null> => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `chat-attachments/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('orders') // Reusing orders bucket for now as it's likely already setup for public access
+            .upload(filePath, file);
+
+        if (uploadError) {
+            console.error('Error uploading chat file:', uploadError);
+            return null;
+        }
+
+        const { data } = supabase.storage
+            .from('orders')
+            .getPublicUrl(filePath);
+
+        return data.publicUrl;
+    }, [supabase]);
 
     const value: AppContextType = React.useMemo(() => ({
         clients,
@@ -770,6 +796,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Communication operations
         sendMessage,
         getOrCreateConversation,
+        uploadChatFile,
     }), [
         clients, orders, inventory, quotes, contracts, technicians, projects, projectActivities,
         products, invoices, appointments, conversations, messages, onNewOrderCallback,
@@ -778,7 +805,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addContract, updateContract, deleteContract, addTechnician, updateTechnician, deleteTechnician,
         authenticateTechnician, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
         addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder,
-        sendMessage, getOrCreateConversation
+        sendMessage, getOrCreateConversation, uploadChatFile
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

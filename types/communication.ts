@@ -13,6 +13,8 @@ export interface Message {
     senderId: string;
     senderType: 'admin' | 'technician' | 'client';
     content: string;
+    attachmentUrl?: string;
+    attachmentType?: 'image' | 'file';
     read: boolean;
     createdAt: string;
 }

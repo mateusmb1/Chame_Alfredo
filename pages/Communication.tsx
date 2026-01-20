@@ -3,11 +3,15 @@ import { useApp } from '../contexts/AppContext';
 import { Conversation, Message } from '../types/communication';
 
 const Communication: React.FC = () => {
-    const { clients, technicians, conversations, messages: allMessages, sendMessage, getOrCreateConversation } = useApp();
+    const { clients, technicians, conversations, messages: allMessages, sendMessage, getOrCreateConversation, uploadChatFile } = useApp();
     const [activeTab, setActiveTab] = useState<'clients' | 'team'>('team');
     const [selectedContact, setSelectedContact] = useState<any>(null);
     const [newMessage, setNewMessage] = useState('');
     const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const imageInputRef = React.useRef<HTMLInputElement>(null);
 
     const filteredMessages = currentConversationId
         ? allMessages.filter(m => m.conversationId === currentConversationId)
@@ -23,15 +27,31 @@ const Communication: React.FC = () => {
         }
     }, [selectedContact, activeTab, getOrCreateConversation]);
 
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newMessage.trim() || !selectedContact || !currentConversationId) return;
+    const handleSendMessage = async (e: React.FormEvent, attachmentUrl?: string, attachmentType?: 'image' | 'file') => {
+        if (e) e.preventDefault();
+        if ((!newMessage.trim() && !attachmentUrl) || !selectedContact || !currentConversationId) return;
 
         try {
-            await sendMessage(currentConversationId, 'admin-id', 'admin', newMessage);
+            await sendMessage(currentConversationId, '00000000-0000-0000-0000-000000000000', 'admin', newMessage, attachmentUrl, attachmentType);
             setNewMessage('');
         } catch (error) {
             console.error('Error sending message:', error);
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'file') => {
+        const file = e.target.files?.[0];
+        if (!file || !currentConversationId) return;
+
+        setIsUploading(true);
+        try {
+            const url = await uploadChatFile(file);
+            if (url) {
+                await handleSendMessage(null as any, url, type);
+            }
+        } finally {
+            setIsUploading(false);
+            if (e.target) e.target.value = '';
         }
     };
 
@@ -237,7 +257,22 @@ const Communication: React.FC = () => {
                                         {msg.senderType !== 'admin' && (
                                             <p class="text-xs font-semibold mb-1 opacity-70">{selectedContact.name}</p>
                                         )}
-                                        <p class="text-sm">{msg.content}</p>
+                                        {msg.attachmentUrl && (
+                                            <div class="mb-2">
+                                                {msg.attachmentType === 'image' ? (
+                                                    <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer">
+                                                        <img src={msg.attachmentUrl} alt="Anexo" class="max-w-full rounded-lg shadow-sm cursor-zoom-in" />
+                                                    </a>
+                                                ) : (
+                                                    <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 p-2 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
+                                                        <span class="material-symbols-outlined">description</span>
+                                                        <span class="text-xs truncate max-w-[150px]">Documento</span>
+                                                        <span class="material-symbols-outlined text-sm">download</span>
+                                                    </a>
+                                                )}
+                                            </div>
+                                        )}
+                                        {msg.content && <p class="text-sm">{msg.content}</p>}
                                     </div>
                                     <span class="text-xs text-gray-500 mt-1">{formatTime(msg.createdAt)}</span>
                                 </div>
@@ -253,19 +288,43 @@ const Communication: React.FC = () => {
                     {/* Input */}
                     <form onSubmit={handleSendMessage} class="p-4 bg-white border-t border-gray-200">
                         <div class="flex items-center gap-2">
-                            <button type="button" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={(e) => handleFileUpload(e, 'file')}
+                                class="hidden"
+                            />
+                            <input
+                                type="file"
+                                ref={imageInputRef}
+                                onChange={(e) => handleFileUpload(e, 'image')}
+                                accept="image/*"
+                                class="hidden"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                                class="p-2 text-gray-500 hover:bg-gray-100 rounded-full disabled:opacity-50"
+                            >
                                 <span class="material-symbols-outlined">attach_file</span>
                             </button>
-                            <button type="button" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
+                            <button
+                                type="button"
+                                onClick={() => imageInputRef.current?.click()}
+                                disabled={isUploading}
+                                class="p-2 text-gray-500 hover:bg-gray-100 rounded-full disabled:opacity-50"
+                            >
                                 <span class="material-symbols-outlined">image</span>
                             </button>
                             <input
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
-                                class="flex-1 bg-gray-100 text-gray-900 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                placeholder="Digite sua mensagem..."
+                                disabled={isUploading}
+                                class="flex-1 bg-gray-100 text-gray-900 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                                placeholder={isUploading ? "Enviando arquivo..." : "Digite sua mensagem..."}
                             />
-                            <button type="submit" class="p-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                            <button type="submit" disabled={isUploading || !newMessage.trim()} class="p-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50">
                                 <span class="material-symbols-outlined text-xl">send</span>
                             </button>
                         </div>

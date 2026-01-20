@@ -5,12 +5,16 @@ import { supabase } from '../src/lib/supabase';
 
 const MobileChat: React.FC = () => {
     const navigate = useNavigate();
-    const { messages, conversations, sendMessage, getOrCreateConversation } = useApp();
+    const { messages, conversations, sendMessage, getOrCreateConversation, uploadChatFile } = useApp();
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const [technician, setTechnician] = useState<any>(null);
     const [conversationId, setConversationId] = useState<string | null>(null);
     const [newMessage, setNewMessage] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
     const [chatMessages, setChatMessages] = useState<any[]>([]);
 
     useEffect(() => {
@@ -49,16 +53,32 @@ const MobileChat: React.FC = () => {
         }
     };
 
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSendMessage = async (e: React.FormEvent, attachmentUrl?: string, attachmentType?: 'image' | 'file') => {
+        if (e) e.preventDefault();
 
-        if (!newMessage.trim() || !technician || !conversationId) return;
+        if ((!newMessage.trim() && !attachmentUrl) || !technician || !conversationId) return;
 
         try {
-            await sendMessage(conversationId, technician.id, 'technician', newMessage);
+            await sendMessage(conversationId, technician.id, 'technician', newMessage, attachmentUrl, attachmentType);
             setNewMessage('');
         } catch (error) {
             console.error('Error sending message:', error);
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'file') => {
+        const file = e.target.files?.[0];
+        if (!file || !conversationId) return;
+
+        setIsUploading(true);
+        try {
+            const url = await uploadChatFile(file);
+            if (url) {
+                await handleSendMessage(null as any, url, type);
+            }
+        } finally {
+            setIsUploading(false);
+            if (e.target) e.target.value = '';
         }
     };
 
@@ -110,7 +130,21 @@ const MobileChat: React.FC = () => {
                                     : 'bg-white text-gray-900 rounded-bl-none shadow-md'
                                     }`}
                             >
-                                <p className="text-sm">{message.content}</p>
+                                {message.attachmentUrl && (
+                                    <div className="mb-2">
+                                        {message.attachmentType === 'image' ? (
+                                            <a href={message.attachmentUrl} target="_blank" rel="noopener noreferrer">
+                                                <img src={message.attachmentUrl} alt="Anexo" className="max-w-full rounded-lg" />
+                                            </a>
+                                        ) : (
+                                            <a href={message.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/10 rounded-lg">
+                                                <span className="material-symbols-outlined">description</span>
+                                                <span className="text-xs truncate">Arquivo</span>
+                                            </a>
+                                        )}
+                                    </div>
+                                )}
+                                {message.content && <p className="text-sm">{message.content}</p>}
                                 <p className={`text-xs mt-1 ${message.senderType === 'technician' ? 'text-white/70' : 'text-gray-500'
                                     }`}>
                                     {formatTime(message.createdAt)}
@@ -124,17 +158,47 @@ const MobileChat: React.FC = () => {
 
             {/* Input */}
             <div className="bg-white border-t border-gray-200 p-4">
-                <form onSubmit={handleSendMessage} className="flex gap-2">
+                <form onSubmit={handleSendMessage} className="flex gap-2 items-center">
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={(e) => handleFileUpload(e, 'file')}
+                        className="hidden"
+                    />
+                    <input
+                        type="file"
+                        ref={imageInputRef}
+                        onChange={(e) => handleFileUpload(e, 'image')}
+                        accept="image/*"
+                        className="hidden"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => imageInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="w-10 h-10 text-gray-500 flex items-center justify-center rounded-full hover:bg-gray-100"
+                    >
+                        <span className="material-symbols-outlined">image</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="w-10 h-10 text-gray-500 flex items-center justify-center rounded-full hover:bg-gray-100"
+                    >
+                        <span className="material-symbols-outlined">attach_file</span>
+                    </button>
                     <input
                         type="text"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        className="flex-1 h-12 px-4 rounded-full border-2 border-gray-200 focus:border-primary focus:outline-none text-gray-900"
-                        placeholder="Digite sua mensagem..."
+                        disabled={isUploading}
+                        className="flex-1 h-12 px-4 rounded-full border-2 border-gray-200 focus:border-primary focus:outline-none text-gray-900 disabled:bg-gray-50"
+                        placeholder={isUploading ? "Enviando..." : "Digite..."}
                     />
                     <button
                         type="submit"
-                        disabled={!newMessage.trim()}
+                        disabled={isUploading || !newMessage.trim()}
                         className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <span className="material-symbols-outlined">send</span>
