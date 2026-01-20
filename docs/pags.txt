@@ -1,0 +1,1316 @@
+<!-- Pré-visualizar e Enviar Orçamento -->
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pré-visualizar e Enviar Orçamento</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#135bec",
+            "background-light": "#f6f6f8",
+            "background-dark": "#101622",
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-[#0d121b] dark:text-gray-200">
+<div class="relative flex h-auto min-h-screen w-full flex-col">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-20 w-full border-b border-solid border-[#e7ebf3] dark:border-gray-700 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+<div class="mx-auto flex max-w-7xl items-center justify-between whitespace-nowrap px-4 py-3 sm:px-6 lg:px-8">
+<div class="flex items-center gap-4 text-[#0d121b] dark:text-white">
+<div class="size-6 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M39.475 21.6262C40.358 21.4363 40.6863 21.5589 40.7581 21.5934C40.7876 21.655 40.8547 21.857 40.8082 22.3336C40.7408 23.0255 40.4502 24.0046 39.8572 25.2301C38.6799 27.6631 36.5085 30.6631 33.5858 33.5858C30.6631 36.5085 27.6632 38.6799 25.2301 39.8572C24.0046 40.4502 23.0255 40.7407 22.3336 40.8082C21.8571 40.8547 21.6551 40.7875 21.5934 40.7581C21.5589 40.6863 21.4363 40.358 21.6262 39.475C21.8562 38.4054 22.4689 36.9657 23.5038 35.2817C24.7575 33.2417 26.5497 30.9744 28.7621 28.762C30.9744 26.5497 33.2417 24.7574 35.2817 23.5037C36.9657 22.4689 38.4054 21.8562 39.475 21.6262ZM4.41189 29.2403L18.7597 43.5881C19.8813 44.7097 21.4027 44.9179 22.7217 44.7893C24.0585 44.659 25.5148 44.1631 26.9723 43.4579C29.9052 42.0387 33.2618 39.5667 36.4142 36.4142C39.5667 33.2618 42.0387 29.9052 43.4579 26.9723C44.1631 25.5148 44.659 24.0585 44.7893 22.7217C44.9179 21.4027 44.7097 19.8813 43.5881 18.7597L29.2403 4.41187C27.8527 3.02428 25.8765 3.02573 24.2861 3.36776C22.6081 3.72863 20.7334 4.58419 18.8396 5.74801C16.4978 7.18716 13.9881 9.18353 11.5858 11.5858C9.18354 13.988 7.18717 16.4978 5.74802 18.8396C4.58421 20.7334 3.72865 22.6081 3.36778 24.2861C3.02574 25.8765 3.02429 27.8527 4.41189 29.2403Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-[#0d121b] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Plataforma de Gestão</h2>
+</div>
+<div class="hidden items-center lg:flex lg:flex-1 lg:justify-end lg:gap-8">
+<div class="flex items-center gap-8">
+<a class="text-[#0d121b] dark:text-gray-300 text-sm font-medium leading-normal hover:text-primary dark:hover:text-primary" href="#">Dashboard</a>
+<a class="text-[#0d121b] dark:text-gray-300 text-sm font-medium leading-normal hover:text-primary dark:hover:text-primary" href="#">Ordens de Serviço</a>
+<a class="text-primary text-sm font-bold leading-normal" href="#">Orçamentos</a>
+<a class="text-[#0d121b] dark:text-gray-300 text-sm font-medium leading-normal hover:text-primary dark:hover:text-primary" href="#">Clientes</a>
+<a class="text-[#0d121b] dark:text-gray-300 text-sm font-medium leading-normal hover:text-primary dark:hover:text-primary" href="#">Estoque</a>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-[#e7ebf3] text-[#0d121b] dark:bg-gray-700 dark:text-white">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-[#e7ebf3] text-[#0d121b] dark:bg-gray-700 dark:text-white">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="h-10 w-10 rounded-full bg-cover bg-center bg-no-repeat" data-alt="User avatar image" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuACSDwd9tM_bPFV1rd3xWzKB9hnrZ_ODh9XEfhGW93itTHClo--q6DBXtWo-M5Ydtq5LMJeEz__8KMUT32xyrLPyQ0_Er6SQekGnzFAvrPEwGJP2YCy5Y4QqK-rhaNr9VAwEPnruwZ9Uv1fKf-wywrPqUuQ2mZzdTihNnP3DjrmwuDmdwEVCbBkUdaZSYRIBIhYMnx0QeNwmhGhoLCimA6kHecKrscY5y7o59rBRKH4rI0KzBMKKYfo3qgHyNj_MesVocG8Ah3Ni6nO");'></div>
+</div>
+</div>
+<button class="lg:hidden">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</header>
+<main class="flex-1">
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+<!-- Main Content: Quote Preview -->
+<div class="lg:col-span-2">
+<!-- Breadcrumbs -->
+<div class="mb-4 flex flex-wrap items-center gap-2">
+<a class="text-[#4c669a] dark:text-gray-400 text-sm font-medium leading-normal hover:underline" href="#">Orçamentos</a>
+<span class="text-[#4c669a] dark:text-gray-500 text-sm font-medium leading-normal">/</span>
+<a class="text-[#4c669a] dark:text-gray-400 text-sm font-medium leading-normal hover:underline" href="#">Orçamento #123</a>
+<span class="text-[#4c669a] dark:text-gray-500 text-sm font-medium leading-normal">/</span>
+<span class="text-[#0d121b] dark:text-gray-200 text-sm font-medium leading-normal">Pré-visualizar</span>
+</div>
+<!-- Page Heading -->
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+<h1 class="text-[#0d121b] dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Pré-visualizar Orçamento</h1>
+</div>
+<!-- Quote Preview Panel -->
+<div class="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 shadow-sm">
+<div class="p-8 sm:p-12">
+<div class="grid grid-cols-1 gap-8 sm:grid-cols-2">
+<div>
+<div class="mb-4 flex items-center gap-3">
+<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
+<span class="material-symbols-outlined !text-2xl">construction</span>
+</div>
+<h2 class="text-xl font-bold text-[#0d121b] dark:text-white">Sua Empresa de Serviços</h2>
+</div>
+<p class="text-sm text-gray-500 dark:text-gray-400">Rua Exemplo, 123<br/>Cidade, Estado, 12345-678<br/>contato@suaempresa.com<br/>(11) 98765-4321</p>
+</div>
+<div class="text-left sm:text-right">
+<h3 class="text-lg font-bold text-[#0d121b] dark:text-white">Orçamento para:</h3>
+<p class="font-semibold text-gray-700 dark:text-gray-300">Cliente Exemplo Ltda.</p>
+<p class="text-sm text-gray-500 dark:text-gray-400">Rua do Cliente, 456<br/>Outra Cidade, Estado, 87654-321<br/>cliente@exemplo.com</p>
+</div>
+</div>
+<div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-8">
+<div class="grid grid-cols-2 gap-4 text-sm">
+<div>
+<p class="font-semibold text-gray-700 dark:text-gray-300">Número do Orçamento:</p>
+<p class="text-gray-500 dark:text-gray-400">#123</p>
+</div>
+<div class="text-right">
+<p class="font-semibold text-gray-700 dark:text-gray-300">Data de Emissão:</p>
+<p class="text-gray-500 dark:text-gray-400">15 de Julho, 2024</p>
+</div>
+<div>
+<p class="font-semibold text-gray-700 dark:text-gray-300">Validade:</p>
+<p class="text-gray-500 dark:text-gray-400">14 de Agosto, 2024</p>
+</div>
+</div>
+</div>
+<div class="mt-8 flow-root">
+<div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+<div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+<thead class="bg-gray-50 dark:bg-gray-700/50">
+<tr>
+<th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 sm:pl-0" scope="col">Serviço / Produto</th>
+<th class="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-100" scope="col">Qtd.</th>
+<th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900 dark:text-gray-100" scope="col">Preço Unit.</th>
+<th class="py-3.5 pl-3 pr-4 text-right text-sm font-semibold text-gray-900 dark:text-gray-100 sm:pr-0" scope="col">Total</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
+<tr>
+<td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-100 sm:pl-0">Instalação de Ar Condicionado Split 12.000 BTUs</td>
+<td class="whitespace-nowrap px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-400">1</td>
+<td class="whitespace-nowrap px-3 py-4 text-right text-sm text-gray-500 dark:text-gray-400">R$ 450,00</td>
+<td class="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm text-gray-500 dark:text-gray-400 sm:pr-0">R$ 450,00</td>
+</tr>
+<tr>
+<td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-100 sm:pl-0">Manutenção Preventiva de Sistema Elétrico</td>
+<td class="whitespace-nowrap px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-400">2</td>
+<td class="whitespace-nowrap px-3 py-4 text-right text-sm text-gray-500 dark:text-gray-400">R$ 120,00</td>
+<td class="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm text-gray-500 dark:text-gray-400 sm:pr-0">R$ 240,00</td>
+</tr>
+<tr>
+<td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-100 sm:pl-0">Material (Cabos e Conectores)</td>
+<td class="whitespace-nowrap px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-400">1</td>
+<td class="whitespace-nowrap px-3 py-4 text-right text-sm text-gray-500 dark:text-gray-400">R$ 85,50</td>
+<td class="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm text-gray-500 dark:text-gray-400 sm:pr-0">R$ 85,50</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="mt-8 flex justify-end">
+<div class="w-full max-w-sm space-y-3">
+<div class="flex justify-between text-sm">
+<span class="text-gray-500 dark:text-gray-400">Subtotal:</span>
+<span class="font-medium text-gray-700 dark:text-gray-300">R$ 775,50</span>
+</div>
+<div class="flex justify-between text-sm">
+<span class="text-gray-500 dark:text-gray-400">Desconto (10%):</span>
+<span class="font-medium text-gray-700 dark:text-gray-300">- R$ 77,55</span>
+</div>
+<div class="flex justify-between text-sm">
+<span class="text-gray-500 dark:text-gray-400">Taxa de Serviço:</span>
+<span class="font-medium text-gray-700 dark:text-gray-300">R$ 20,00</span>
+</div>
+<div class="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-3 text-base">
+<span class="font-bold text-gray-900 dark:text-white">Total Geral:</span>
+<span class="font-bold text-primary">R$ 717,95</span>
+</div>
+</div>
+</div>
+<div class="mt-12 border-t border-gray-200 dark:border-gray-700 pt-8">
+<h4 class="text-base font-semibold text-gray-900 dark:text-white">Termos e Condições</h4>
+<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Pagamento a ser realizado em até 15 dias após a aprovação do orçamento. Qualquer serviço adicional será cobrado separadamente.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Action Sidebar -->
+<div class="lg:col-span-1">
+<div class="sticky top-24">
+<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+<h2 class="text-[#0d121b] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] mb-6">Ações</h2>
+<div class="flex flex-col gap-3">
+<button class="flex h-12 min-w-[84px] w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-5 text-base font-bold leading-normal tracking-[0.015em] text-white hover:bg-primary/90">
+<span class="material-symbols-outlined">email</span>
+<span class="truncate">Enviar por E-mail</span>
+</button>
+<button class="flex h-12 min-w-[84px] w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg bg-[#e7ebf3] px-5 text-base font-bold leading-normal tracking-[0.015em] text-[#0d121b] hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600">
+<span class="material-symbols-outlined">link</span>
+<span class="truncate">Gerar Link Compartilhável</span>
+</button>
+<button class="flex h-12 min-w-[84px] w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg bg-[#e7ebf3] px-5 text-base font-bold leading-normal tracking-[0.015em] text-[#0d121b] hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600">
+<span class="material-symbols-outlined">download</span>
+<span class="truncate">Baixar PDF</span>
+</button>
+<button class="flex h-12 min-w-[84px] w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg bg-transparent px-5 text-base font-bold leading-normal tracking-[0.015em] text-[#0d121b] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+<span class="material-symbols-outlined">arrow_back</span>
+<span class="truncate">Voltar para Edição</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
+
+<!-- Configuração de Impressão de Orçamento -->
+<!DOCTYPE html>
+
+<html class="light" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Configuração de Impressão de Orçamento</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#135bec",
+            "background-light": "#f6f6f8",
+            "background-dark": "#101622",
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+    }
+  </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark">
+<div class="relative flex min-h-screen w-full">
+<!-- SideNavBar -->
+<aside class="flex h-screen min-h-full flex-col bg-white dark:bg-gray-900/50 border-r border-gray-200 dark:border-gray-800 w-64 p-4">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Company logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBETZh3iv7AlERdi8o9szTAul9L1EIjdeXsdHOYPcOFDC71XcexnuJKnheT7QKsPautAS2H2Xlo9tHm1HCYbuUbPt9wHnNOFg1NL-BGvWJJCxdz6LBjbOdBNilPzde6mD0QCd39tRAPeX9klJHu3bR3nW63HtKMv-HSh1XqtHlnXcbjr_wMw8N5b7HnRssPdKeOdyH4tfRBtUZVO9RTl3jRRGB1FTALoidqvN7Zuo0_Fzj9F8TLf3zPn-3ll_rdS12sJTsfI4wXz_O5");'></div>
+<div class="flex flex-col">
+<h1 class="text-gray-900 dark:text-gray-100 text-base font-medium leading-normal">Nome da Empresa</h1>
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">plataforma@empresa.com</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<p class="text-sm font-medium leading-normal">Ordens de Serviço</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">receipt_long</span>
+<p class="text-sm font-medium leading-normal">Orçamentos</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined">group</span>
+<p class="text-sm font-medium leading-normal">Clientes</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<p class="text-sm font-medium leading-normal">Estoque</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium leading-normal">Configurações</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<p class="text-sm font-medium leading-normal">Ajuda</p>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto">
+<div class="p-8">
+<!-- PageHeading -->
+<header class="flex flex-wrap justify-between gap-3 pb-6">
+<h1 class="text-gray-900 dark:text-gray-50 text-3xl font-bold tracking-tight">Configuração de Impressão do Orçamento</h1>
+</header>
+<div class="grid grid-cols-12 gap-6">
+<!-- Left Column: Configuration Panel -->
+<div class="col-span-12 lg:col-span-4">
+<div class="bg-white dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-8">
+<div>
+<!-- SectionHeader -->
+<h2 class="text-gray-900 dark:text-gray-100 text-lg font-bold leading-tight tracking-tight">Modelo</h2>
+<!-- TextField -->
+<div class="mt-4">
+<label class="flex flex-col w-full">
+<p class="text-gray-800 dark:text-gray-200 text-sm font-medium leading-normal pb-2">Selecionar Template</p>
+<select class="form-select w-full rounded-lg text-gray-900 dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-primary dark:focus:border-primary placeholder:text-gray-400 dark:placeholder:text-gray-500 p-3 text-base font-normal leading-normal">
+<option value="moderno">Moderno</option>
+<option value="classico">Clássico</option>
+<option value="compacto">Compacto</option>
+</select>
+</label>
+</div>
+</div>
+<div>
+<!-- SectionHeader -->
+<h2 class="text-gray-900 dark:text-gray-100 text-lg font-bold leading-tight tracking-tight">Opções de Exibição</h2>
+<div class="space-y-4 mt-4">
+<label class="flex items-center justify-between cursor-pointer">
+<span class="text-gray-700 dark:text-gray-300">Mostrar Logotipo</span>
+<input checked="" class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between cursor-pointer">
+<span class="text-gray-700 dark:text-gray-300">Incluir Termos e Condições</span>
+<input checked="" class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between cursor-pointer">
+<span class="text-gray-700 dark:text-gray-300">Exibir Assinatura</span>
+<input class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/>
+</label>
+</div>
+</div>
+<div>
+<!-- SectionHeader -->
+<h2 class="text-gray-900 dark:text-gray-100 text-lg font-bold leading-tight tracking-tight">Layout da Página</h2>
+<div class="space-y-4 mt-4">
+<label class="flex flex-col w-full">
+<p class="text-gray-800 dark:text-gray-200 text-sm font-medium leading-normal pb-2">Tipo de Papel</p>
+<select class="form-select w-full rounded-lg text-gray-900 dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-primary dark:focus:border-primary placeholder:text-gray-400 dark:placeholder:text-gray-500 p-3 text-base font-normal leading-normal">
+<option value="a4">A4</option>
+<option value="letter">Carta (Letter)</option>
+</select>
+</label>
+<div class="grid grid-cols-2 gap-4">
+<label class="flex flex-col">
+<p class="text-gray-800 dark:text-gray-200 text-sm font-medium pb-2">Margem Superior (mm)</p>
+<input class="form-input w-full rounded-lg text-gray-900 dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-primary dark:focus:border-primary placeholder:text-gray-400 dark:placeholder:text-gray-500 p-3 text-base" type="number" value="20"/>
+</label>
+<label class="flex flex-col">
+<p class="text-gray-800 dark:text-gray-200 text-sm font-medium pb-2">Margem Inferior (mm)</p>
+<input class="form-input w-full rounded-lg text-gray-900 dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-primary dark:focus:border-primary placeholder:text-gray-400 dark:placeholder:text-gray-500 p-3 text-base" type="number" value="20"/>
+</label>
+<label class="flex flex-col">
+<p class="text-gray-800 dark:text-gray-200 text-sm font-medium pb-2">Margem Esquerda (mm)</p>
+<input class="form-input w-full rounded-lg text-gray-900 dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-primary dark:focus:border-primary placeholder:text-gray-400 dark:placeholder:text-gray-500 p-3 text-base" type="number" value="15"/>
+</label>
+<label class="flex flex-col">
+<p class="text-gray-800 dark:text-gray-200 text-sm font-medium pb-2">Margem Direita (mm)</p>
+<input class="form-input w-full rounded-lg text-gray-900 dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-primary dark:focus:border-primary placeholder:text-gray-400 dark:placeholder:text-gray-500 p-3 text-base" type="number" value="15"/>
+</label>
+</div>
+</div>
+</div>
+<div class="border-t border-gray-200 dark:border-gray-800 pt-6 space-y-3">
+<button class="w-full flex items-center justify-center gap-2 bg-primary text-white font-semibold py-3 px-4 rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-background-dark">
+<span class="material-symbols-outlined">print</span>
+                  Imprimir Agora
+                </button>
+<button class="w-full flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold py-3 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 dark:focus:ring-offset-background-dark">
+<span class="material-symbols-outlined">download</span>
+                  Baixar PDF
+                </button>
+</div>
+</div>
+</div>
+<!-- Right Column: Preview Area -->
+<div class="col-span-12 lg:col-span-8">
+<div class="sticky top-8">
+<div class="flex items-center justify-end gap-2 mb-4 px-4">
+<p class="text-sm text-gray-600 dark:text-gray-400">Zoom:</p>
+<button class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
+<span class="material-symbols-outlined">remove</span>
+</button>
+<span class="text-sm font-medium text-gray-800 dark:text-gray-200">100%</span>
+<button class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+<div class="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 aspect-[210/297]">
+<!-- A4 Preview Content -->
+<div class="h-full border border-gray-200 dark:border-gray-700 p-8 text-gray-900 dark:text-gray-100 flex flex-col text-sm">
+<header class="flex justify-between items-start pb-8 border-b border-gray-200 dark:border-gray-700">
+<div>
+<h2 class="text-3xl font-bold text-primary">ORÇAMENTO</h2>
+<p class="text-gray-500 dark:text-gray-400">#ORC-2024-00123</p>
+</div>
+<div class="text-right">
+<div class="bg-center bg-no-repeat aspect-square bg-contain size-12 mb-2 ml-auto" data-alt="Company Logo Preview" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD2Eh93u0LYwsRk6yNOZBU_8U3P5KOdc7_WApPffiPqN4lf1ZYPpobgxJFMVwOkdqIDEvR2HTb-cu5CfodFmxtFx2dm6khuKqFMKK6GhurY0o3FauBAsyS4WqPMVeRwvm3GCKmeLkyyRaL11NWs_iDokdG2Wgw-8s6a9oFflfNltUHv241gMJ7BK9p8nRszyIog7JrhKq_HtHXaN5D4lEILgD2qhQti1f_0q8KNqonkJT1tcHwvp5X2wI_s2uSoz3H4C8kFs9puuAbk");'></div>
+<p class="font-bold">Sua Empresa Inc.</p>
+<p class="text-gray-600 dark:text-gray-300">Rua Exemplo, 123, Cidade, UF</p>
+</div>
+</header>
+<section class="grid grid-cols-2 gap-8 my-8">
+<div>
+<h3 class="font-bold mb-2">Cliente:</h3>
+<p class="font-semibold">Nome do Cliente</p>
+<p class="text-gray-600 dark:text-gray-300">Rua do Cliente, 456</p>
+<p class="text-gray-600 dark:text-gray-300">cliente@email.com</p>
+</div>
+<div class="text-right">
+<p><span class="font-bold">Data Emissão:</span> 24/05/2024</p>
+<p><span class="font-bold">Data Validade:</span> 24/06/2024</p>
+</div>
+</section>
+<section class="flex-grow">
+<table class="w-full text-left">
+<thead class="bg-gray-50 dark:bg-gray-800">
+<tr>
+<th class="p-2 font-semibold">Item/Serviço</th>
+<th class="p-2 font-semibold text-center">Qtd.</th>
+<th class="p-2 font-semibold text-right">Preço Unit.</th>
+<th class="p-2 font-semibold text-right">Total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-gray-200 dark:border-gray-700">
+<td class="p-2">Manutenção de Ar Condicionado</td>
+<td class="p-2 text-center">2</td>
+<td class="p-2 text-right">R$ 150,00</td>
+<td class="p-2 text-right">R$ 300,00</td>
+</tr>
+<tr class="border-b border-gray-200 dark:border-gray-700">
+<td class="p-2">Instalação de Tomada</td>
+<td class="p-2 text-center">3</td>
+<td class="p-2 text-right">R$ 75,00</td>
+<td class="p-2 text-right">R$ 225,00</td>
+</tr>
+</tbody>
+</table>
+</section>
+<footer class="mt-auto pt-8">
+<div class="text-right mb-4">
+<p class="text-gray-600 dark:text-gray-400">Subtotal: R$ 525,00</p>
+<p class="text-gray-600 dark:text-gray-400">Desconto: R$ 0,00</p>
+<p class="text-2xl font-bold">Total: R$ 525,00</p>
+</div>
+<div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+<h4 class="font-bold mb-1">Termos e Condições</h4>
+<p class="text-xs text-gray-500 dark:text-gray-400">Pagamento em até 30 dias. Garantia de 90 dias sobre os serviços prestados.</p>
+</div>
+</footer>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
+
+<!-- Criar/Editar Orçamento -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Criar/Editar Orçamento</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#135bec",
+            "background-light": "#f6f6f8",
+            "background-dark": "#101622",
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200">
+<div class="relative flex min-h-screen w-full">
+<!-- SideNavBar -->
+<aside class="flex w-64 flex-col bg-white dark:bg-slate-900/50 p-4 border-r border-slate-200 dark:border-slate-800">
+<div class="flex h-full flex-col justify-between">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="User avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuACYAkjx7wiKxG-N_vpCtCRGyrn4OZLTQM6YBHdDGUeOEabA_ruSWFKddrO30h3SNsemFGYtkcxtU7oI6WcBB_E15PahSCxnhNRYvIemSMJHojKVlAVOPF9jl2knKqClmtOlQy7KjRkhhG3QSC11JKJ2PlIH8ZFGDMqxIKj4pLnlYU1UbP9cqdodSb0-ANSGNJj0EZi-FGFMKZSqTEV4xFZZe33F9oITNtOSlZxtEQWOhKN7gAp2F5q1sMmAzDs0061Mn613Wv3uQuT");'></div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-white text-base font-medium leading-normal">Nome do Usuário</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Empresa ABC</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+<p class="text-sm font-medium leading-normal">Orçamentos</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<p class="text-sm font-medium leading-normal">Ordens de Serviço</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">group</span>
+<p class="text-sm font-medium leading-normal">Clientes</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<p class="text-sm font-medium leading-normal">Estoque</p>
+</a>
+</nav>
+</div>
+<div class="flex flex-col gap-4">
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90">
+<span class="truncate">Nova Ordem de Serviço</span>
+</button>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium leading-normal">Configurações</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<p class="text-sm font-medium leading-normal">Ajuda</p>
+</a>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto">
+<div class="p-8 mx-auto max-w-5xl">
+<!-- PageHeading -->
+<div class="flex flex-wrap justify-between gap-3 mb-8">
+<div class="flex min-w-72 flex-col gap-2">
+<p class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Criar Orçamento</p>
+<p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">Preencha os detalhes abaixo para gerar um novo orçamento.</p>
+</div>
+</div>
+<!-- Form Container -->
+<div class="flex flex-col gap-8">
+<!-- Section: Informações Gerais -->
+<div class="bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<h2 class="text-slate-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] mb-6">Informações Gerais</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="md:col-span-2">
+<label class="flex flex-col w-full">
+<p class="text-slate-800 dark:text-slate-200 text-base font-medium leading-normal pb-2">Cliente</p>
+<div class="relative flex items-center">
+<select class="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-800 dark:text-slate-200 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark focus:border-primary h-12 placeholder:text-slate-400 px-3 text-base font-normal leading-normal">
+<option value="">Buscar ou selecionar um cliente existente</option>
+<option value="one">Cliente A</option>
+<option value="two">Cliente B</option>
+</select>
+<button class="absolute right-2 flex items-center justify-center size-8 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined text-xl">add</span>
+</button>
+</div>
+</label>
+</div>
+<div>
+<label class="flex flex-col w-full">
+<p class="text-slate-800 dark:text-slate-200 text-base font-medium leading-normal pb-2">ID do Orçamento</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-500 dark:text-slate-400 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 h-12 placeholder:text-slate-400 px-3 text-base font-normal leading-normal cursor-not-allowed" readonly="" value="ORC-2024-07-001"/>
+</label>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<label class="flex flex-col w-full">
+<p class="text-slate-800 dark:text-slate-200 text-base font-medium leading-normal pb-2">Data de Emissão</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-800 dark:text-slate-200 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark focus:border-primary h-12 placeholder:text-slate-400 px-3 text-base font-normal leading-normal" type="date" value="2024-07-28"/>
+</label>
+<label class="flex flex-col w-full">
+<p class="text-slate-800 dark:text-slate-200 text-base font-medium leading-normal pb-2">Data de Validade</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-800 dark:text-slate-200 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark focus:border-primary h-12 placeholder:text-slate-400 px-3 text-base font-normal leading-normal" type="date" value="2024-08-28"/>
+</label>
+</div>
+</div>
+</div>
+<!-- Section: Itens do Orçamento -->
+<div class="bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<h2 class="text-slate-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] mb-6">Itens do Orçamento</h2>
+<div class="overflow-x-auto">
+<div class="grid grid-cols-[1fr,100px,150px,150px,50px] gap-4 pb-2 border-b border-slate-200 dark:border-slate-800 text-sm font-medium text-slate-500 dark:text-slate-400">
+<span>Descrição</span>
+<span class="text-right">Qtd.</span>
+<span class="text-right">Valor Unit.</span>
+<span class="text-right">Subtotal</span>
+<span></span>
+</div>
+<!-- Item Row 1 -->
+<div class="grid grid-cols-[1fr,100px,150px,150px,50px] gap-4 items-center py-4 border-b border-slate-200 dark:border-slate-800">
+<input class="form-input w-full rounded-lg border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-12 text-sm" placeholder="Descrição do serviço ou produto" value="Manutenção Preventiva de Ar Condicionado"/>
+<input class="form-input w-full rounded-lg border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-12 text-right text-sm" type="number" value="2"/>
+<input class="form-input w-full rounded-lg border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-12 text-right text-sm" placeholder="R$ 0,00" value="R$ 150,00"/>
+<p class="text-right text-slate-800 dark:text-slate-200 text-sm">R$ 300,00</p>
+<button class="flex items-center justify-center size-8 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+<!-- Item Row 2 -->
+<div class="grid grid-cols-[1fr,100px,150px,150px,50px] gap-4 items-center py-4 border-b border-slate-200 dark:border-slate-800">
+<input class="form-input w-full rounded-lg border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-12 text-sm" placeholder="Descrição do serviço ou produto" value="Troca de Filtro"/>
+<input class="form-input w-full rounded-lg border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-12 text-right text-sm" type="number" value="2"/>
+<input class="form-input w-full rounded-lg border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-12 text-right text-sm" placeholder="R$ 0,00" value="R$ 50,00"/>
+<p class="text-right text-slate-800 dark:text-slate-200 text-sm">R$ 100,00</p>
+<button class="flex items-center justify-center size-8 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+</div>
+<button class="mt-6 flex items-center gap-2 text-primary font-medium text-sm hover:underline">
+<span class="material-symbols-outlined text-xl">add_circle_outline</span>
+              Adicionar Item
+            </button>
+</div>
+<!-- Section: Totais e Condições -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<h2 class="text-slate-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] mb-6">Condições e Detalhes</h2>
+<div class="flex flex-col gap-6">
+<label class="flex flex-col w-full">
+<p class="text-slate-800 dark:text-slate-200 text-base font-medium leading-normal pb-2">Condições de Pagamento</p>
+<textarea class="form-textarea w-full rounded-lg border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="Ex: 50% de entrada, 50% na conclusão." rows="3">Pagamento em até 30 dias após a emissão da fatura.</textarea>
+</label>
+<label class="flex flex-col w-full">
+<p class="text-slate-800 dark:text-slate-200 text-base font-medium leading-normal pb-2">Observações</p>
+<textarea class="form-textarea w-full rounded-lg border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="Qualquer informação adicional..." rows="3"></textarea>
+</label>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+<div class="flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<span class="text-slate-500 dark:text-slate-400">Subtotal</span>
+<span class="text-slate-800 dark:text-slate-200 font-medium">R$ 400,00</span>
+</div>
+<div class="flex justify-between items-center gap-4">
+<label class="text-slate-500 dark:text-slate-400" for="desconto">Desconto</label>
+<input class="form-input w-32 rounded-lg border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-10 text-right text-sm" id="desconto" placeholder="R$ 0,00" type="text"/>
+</div>
+<div class="flex justify-between items-center gap-4">
+<label class="text-slate-500 dark:text-slate-400" for="impostos">Impostos (%)</label>
+<input class="form-input w-32 rounded-lg border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-10 text-right text-sm" id="impostos" placeholder="0%" type="number"/>
+</div>
+</div>
+<div class="border-t border-slate-200 dark:border-slate-800 mt-4 pt-4">
+<div class="flex justify-between items-center">
+<span class="text-slate-900 dark:text-white font-bold text-lg">Valor Total</span>
+<span class="text-primary font-black text-2xl">R$ 400,00</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section: Anexos -->
+<div class="bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<h2 class="text-slate-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] mb-6">Anexos</h2>
+<div class="flex items-center justify-center w-full">
+<label class="flex flex-col items-center justify-center w-full h-48 border-2 border-slate-300 dark:border-slate-700 border-dashed rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800" for="dropzone-file">
+<div class="flex flex-col items-center justify-center pt-5 pb-6 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-4xl mb-3">cloud_upload</span>
+<p class="mb-2 text-sm"><span class="font-semibold">Clique para enviar</span> ou arraste e solte</p>
+<p class="text-xs">PDF, PNG, JPG ou DOCX (MAX. 10MB)</p>
+</div>
+<input class="hidden" id="dropzone-file" type="file"/>
+</label>
+</div>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-end items-center gap-4">
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-5 text-slate-800 dark:text-slate-200 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-slate-100 dark:hover:bg-slate-800">
+<span class="truncate">Cancelar</span>
+</button>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-slate-300 dark:hover:bg-slate-700">
+<span class="truncate">Salvar Rascunho</span>
+</button>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-5 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90">
+<span class="truncate">Salvar e Enviar</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+</body></html>
+
+<!-- Pré-visualizar e Enviar Orçamento -->
+<!DOCTYPE html>
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Relatório de Visita Técnica - Pré-visualização</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#135bec",
+            "report-bg": "#f3f4f6",
+            "report-border": "#d1d5db",
+            "report-header": "#f9fafb",
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+        },
+      },
+    }
+  </script>
+<style type="text/tailwindcss">
+    .report-table {
+      @apply w-full border-collapse border border-report-border text-[11px] leading-tight;
+    }
+    .report-table th, .report-table td {
+      @apply border border-report-border p-2 text-left align-top;
+    }
+    .report-section-title {
+      @apply bg-report-bg font-bold p-2 border-x border-t border-report-border text-[12px] uppercase tracking-tight;
+    }
+    .report-label {
+      @apply font-bold text-gray-700 block mb-0.5;
+    }
+    .report-value {
+      @apply text-gray-900;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; }
+      .report-container { box-shadow: none !important; border: none !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
+      .page-break { page-break-before: always; }
+    }
+</style>
+</head>
+<body class="font-display bg-gray-100 dark:bg-[#101622] text-[#0d121b] dark:text-gray-200 min-h-screen">
+<div class="relative flex h-auto min-h-screen w-full flex-col">
+<header class="no-print sticky top-0 z-20 w-full border-b border-solid border-[#e7ebf3] dark:border-gray-700 bg-white/80 dark:bg-[#101622]/80 backdrop-blur-sm">
+<div class="mx-auto flex max-w-7xl items-center justify-between whitespace-nowrap px-4 py-3 sm:px-6 lg:px-8">
+<div class="flex items-center gap-4 text-[#0d121b] dark:text-white">
+<div class="size-6 text-primary">
+<svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M39.475 21.6262C40.358 21.4363 40.6863 21.5589 40.7581 21.5934C40.7876 21.655 40.8547 21.857 40.8082 22.3336C40.7408 23.0255 40.4502 24.0046 39.8572 25.2301C38.6799 27.6631 36.5085 30.6631 33.5858 33.5858C30.6631 36.5085 27.6632 38.6799 25.2301 39.8572C24.0046 40.4502 23.0255 40.7407 22.3336 40.8082C21.8571 40.8547 21.6551 40.7875 21.5934 40.7581C21.5589 40.6863 21.4363 40.358 21.6262 39.475C21.8562 38.4054 22.4689 36.9657 23.5038 35.2817C24.7575 33.2417 26.5497 30.9744 28.7621 28.762C30.9744 26.5497 33.2417 24.7574 35.2817 23.5037C36.9657 22.4689 38.4054 21.8562 39.475 21.6262ZM4.41189 29.2403L18.7597 43.5881C19.8813 44.7097 21.4027 44.9179 22.7217 44.7893C24.0585 44.659 25.5148 44.1631 26.9723 43.4579C29.9052 42.0387 33.2618 39.5667 36.4142 36.4142C39.5667 33.2618 42.0387 29.9052 43.4579 26.9723C44.1631 25.5148 44.659 24.0585 44.7893 22.7217C44.9179 21.4027 44.7097 19.8813 43.5881 18.7597L29.2403 4.41187C27.8527 3.02428 25.8765 3.02573 24.2861 3.36776C22.6081 3.72863 20.7334 4.58419 18.8396 5.74801C16.4978 7.18716 13.9881 9.18353 11.5858 11.5858C9.18354 13.988 7.18717 16.4978 5.74802 18.8396C4.58421 20.7334 3.72865 22.6081 3.36778 24.2861C3.02574 25.8765 3.02429 27.8527 4.41189 29.2403Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-[#0d121b] dark:text-white text-lg font-bold leading-tight">Plataforma de Gestão</h2>
+</div>
+<div class="hidden items-center lg:flex lg:flex-1 lg:justify-end lg:gap-8">
+<div class="flex items-center gap-8">
+<a class="text-[#0d121b] dark:text-gray-300 text-sm font-medium hover:text-primary" href="#">Ordens de Serviço</a>
+<a class="text-primary text-sm font-bold" href="#">Relatórios</a>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-10 w-10 rounded-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuACSDwd9tM_bPFV1rd3xWzKB9hnrZ_ODh9XEfhGW93itTHClo--q6DBXtWo-M5Ydtq5LMJeEz__8KMUT32xyrLPyQ0_Er6SQekGnzFAvrPEwGJP2YCy5Y4QqK-rhaNr9VAwEPnruwZ9Uv1fKf-wywrPqUuQ2mZzdTihNnP3DjrmwuDmdwEVCbBkUdaZSYRIBIhYMnx0QeNwmhGhoLCimA6kHecKrscY5y7o59rBRKH4rI0KzBMKKYfo3qgHyNj_MesVocG8Ah3Ni6nO");'></div>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1">
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 gap-8 lg:grid-cols-4">
+<div class="lg:col-span-3">
+<div class="no-print mb-4 flex items-center justify-between">
+<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Pré-visualização do Relatório</h1>
+<div class="text-xs text-gray-500">Documento gerado em 21/10/2021</div>
+</div>
+<div class="report-container mx-auto bg-white shadow-2xl overflow-hidden text-black max-w-[800px] min-h-[1100px] border border-gray-200">
+<div class="p-8 sm:p-10">
+<div class="text-center mb-8 relative">
+<div class="absolute right-0 top-0 text-[10px] text-gray-400">1</div>
+<h1 class="text-xl font-medium">Relatório de Visita Técnica</h1>
+<h2 class="text-lg font-medium">(21/10/2021)</h2>
+<div class="flex justify-between mt-4 text-[10px] text-gray-500">
+<div>Por: Yasmin Sovek (yasmin.sovek@produtivo.com.br)</div>
+<div>Em: 21/10/2021 17:47</div>
+</div>
+</div>
+<div class="mb-4">
+<div class="report-section-title">Empresa responsável</div>
+<table class="report-table">
+<tbody><tr>
+<td class="w-1/2"><span class="report-label">Nome</span><span class="report-value">Produtivo</span></td>
+<td class="w-1/2"><span class="report-label">Telefone fixo</span><span class="report-value">(11) 11111-1111</span></td>
+</tr>
+<tr>
+<td class="w-1/2"><span class="report-label">CPF / CNPJ</span><span class="report-value">00000000000000</span></td>
+<td class="w-1/2"><span class="report-label">Endereço</span><span class="report-value">Av. Paulista - Bela Vista, São Paulo - State of São Paulo, Brazil</span></td>
+</tr>
+</tbody></table>
+</div>
+<div class="mb-4">
+<div class="report-section-title">Cliente</div>
+<table class="report-table">
+<tbody><tr>
+<td class="w-1/2"><span class="report-label">Nome</span><span class="report-value">Edifício Sunrise</span></td>
+<td class="w-1/2"><span class="report-label">Razão social</span><span class="report-value">Sunrise Ltda</span></td>
+</tr>
+<tr>
+<td class="w-1/2"><span class="report-label">CPF / CNPJ</span><span class="report-value">999.999.999-99</span></td>
+<td class="w-1/2"><span class="report-label">Endereço</span><span class="report-value">Av. Paulista - Bela Vista, São Paulo - State of São Paulo, Brazil</span></td>
+</tr>
+<tr>
+<td colspan="2"><span class="report-label">URL de abertura de chamados</span><span class="report-value text-blue-600">Clique aqui para abertura de chamado</span></td>
+</tr>
+</tbody></table>
+</div>
+<div class="mb-4">
+<div class="report-section-title">Informações do serviço</div>
+<table class="report-table">
+<tbody><tr>
+<td class="w-1/2"><span class="report-label">Horário planejado</span><span class="report-value">21/10/2021 18:00</span></td>
+<td class="w-1/2"><span class="report-label">Horário realizado</span><span class="report-value">25/10/2021 18:33 - 25/10/2021 18:33</span></td>
+</tr>
+<tr>
+<td class="w-1/2"><span class="report-label">Tempo de execução</span><span class="report-value">34 segundos</span></td>
+<td class="w-1/2"><span class="report-label">Tempo de início do atendimento</span><span class="report-value">4 dias, 48 minutos e 46 segundos</span></td>
+</tr>
+<tr>
+<td colspan="2"><span class="report-label">Tempo de finalização do atendimento</span><span class="report-value">4 dias, 49 minutos e 20 segundos</span></td>
+</tr>
+</tbody></table>
+</div>
+<div class="mb-4">
+<div class="report-section-title">Ativo</div>
+<table class="report-table">
+<tbody><tr>
+<td class="w-1/2"><span class="report-label">Nome</span><span class="report-value">ELEVADOR SOCIAL DIREITA</span></td>
+<td class="w-1/2"><span class="report-label">Local do ativo</span><span class="report-value">Edifício Sunrise</span></td>
+</tr>
+<tr>
+<td class="w-1/2"><span class="report-label">Marca</span><span class="report-value">Atlas Schindler</span></td>
+<td class="w-1/2"><span class="report-label">Modelo</span><span class="report-value">Schindler 1000</span></td>
+</tr>
+<tr>
+<td class="w-1/2"><span class="report-label">Patrimônio / Número de Série</span><span class="report-value">61344</span></td>
+<td class="w-1/2"><span class="report-label">URL de abertura de chamados</span><span class="report-value text-blue-600">Clique aqui para abertura de chamado</span></td>
+</tr>
+</tbody></table>
+</div>
+<div class="mb-4">
+<div class="report-section-title">Início do Trabalho</div>
+<table class="report-table">
+<tbody><tr>
+<td class="w-1/2"><span class="report-label">Tipo de serviço</span><span class="report-value">Manutenção preventiva</span></td>
+<td class="w-1/2"><span class="report-label">Km veículo</span><span class="report-value">5</span></td>
+</tr>
+<tr>
+<td colspan="2"><span class="report-label">Localização GPS</span><span class="report-value text-blue-600">-25.379698, -49.2438974 (-25.3796988; -49.2438974)</span></td>
+</tr>
+</tbody></table>
+</div>
+<div class="page-break mt-12 pt-8 border-t border-dashed border-gray-300 relative">
+<div class="absolute right-0 top-8 text-[10px] text-gray-400">2</div>
+<div class="report-section-title">Diagnóstico</div>
+<div class="border-x border-b border-report-border p-3 text-[11px]">
+<span class="report-label">Relato do cliente</span>
+<p class="report-value mb-4">Necessita realizar a manutenção do elevador para verificar se está em condições para uso.</p>
+<span class="report-label">Descrição do diagnóstico</span>
+<p class="report-value mb-4">Sujeira no controle de comando.</p>
+<div class="grid grid-cols-3 gap-2 mt-4">
+<div>
+<div class="report-label text-[10px]">Fotos</div>
+<div class="border border-report-border bg-gray-50 h-40 flex items-center justify-center overflow-hidden">
+<img alt="Photo 1" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTcHQtyD11e4YfLrBKzN8LO73cfnq3EZbYJate6DLtC86CA3Zhv14R0mE75CdIHXUy4xqFqFfDABX34qqIlhqUqZCc-yODhZ6-bNGHjzqiEHYf4l2J0Jrw-EIf3rV1zVZeVl-HqboJEw4oMAJPFTufRltWRwbJ8hMLgXw9CNPVXg5cpFN1yYH2rRWOgSeR1OgLCfQgO7NKMylmDXvH9biWmyfBbX73MBaF0Qkj9FxdpfhSpCXCX2ez3BS8iW_ofB7X5G1PnqI0fIij"/>
+</div>
+<div class="text-[9px] text-gray-500 mt-1">Quadro de comando do elevador</div>
+</div>
+<div>
+<div class="report-label text-[10px]">Fotos</div>
+<div class="border border-report-border bg-gray-50 h-40 flex items-center justify-center overflow-hidden">
+<img alt="Photo 2" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7drPZm3E6_R4FBXaXGQkKnEbPuXULef9DSkmSssDVszhWKnt6EKXSc8YulCVl9O-b326ii3Y98wxGNnz7pudDq2GDCGhcIsDamfq1DcYksPi_hi2lzmWLJNKLhcr4-YlK6RHvO1rOrGyZxEldcjjd8EATP9L_qkiT0X31m5imPgT1wisfPuA0O2kUOF6xtfR-fl7MOFgmgAeVnznzwCa0wlhJbH8dvkyQOteWGo2cXAKGoEQp7oiIJKJp_YhCSZ-6ezRCHlnFZkWj"/>
+</div>
+<div class="text-[9px] text-gray-500 mt-1">Elevador Social</div>
+</div>
+<div>
+<div class="report-label text-[10px]">Fotos</div>
+<div class="border border-report-border bg-gray-50 h-40 flex items-center justify-center overflow-hidden">
+<img alt="Photo 3" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI2uxkrgVM6XBz_BSbugAsdtfPjKOcJzz3Cx-xIjoFxUH57M9wWFp-pYtwrip71XJl_i15_TUIsOvk3C5ZoChoNQCl_rDuvW4rXdD6g1ipCYfEgWlTMtcZrbeOEXTQatczlpB57ZP_6GL7Afov6WNhuQxYocSugWvIIC1xU7Uf9m0siwd1Y6-EcnV2yfO5tkXQKyioFy8kLBWNh_aqOzEjSWtJKzivJZVb1-x0lA7Da-E16GgsRJ4B7FzFNOyThKwoHwQOB8Xrg1bC"/>
+</div>
+<div class="text-[9px] text-gray-500 mt-1">Parte interna do elevador</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-4">
+<div class="report-section-title">Serviços Realizados</div>
+<table class="report-table">
+<thead>
+<tr class="bg-gray-50">
+<th class="w-12">Código</th>
+<th>Nome</th>
+<th class="text-right w-20">Quantidade</th>
+<th class="text-right w-24">Preço unitário</th>
+<th class="text-right w-24">Subtotal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3</td>
+<td>Limpeza quadro de comando</td>
+<td class="text-right">1.0</td>
+<td class="text-right">500.0</td>
+<td class="text-right font-bold">500.0</td>
+</tr>
+</tbody>
+</table>
+<div class="border-x border-b border-report-border p-3 text-[11px]">
+<span class="report-label">Pendências</span>
+<p class="report-value">Verificar casa de máquinas, pois está com ausência de iluminação.</p>
+</div>
+</div>
+<div class="mt-4">
+<div class="report-section-title">Fim do Trabalho</div>
+<table class="report-table">
+<tbody><tr>
+<td class="w-1/2 h-32">
+<span class="report-label">Assinatura do técnico</span>
+<div class="flex flex-col items-center justify-center h-full">
+<span class="font-['Cursive'] text-2xl text-gray-700">Yasmin</span>
+<div class="w-4/5 border-b border-gray-300 mt-2"></div>
+</div>
+</td>
+<td class="w-1/2 h-32">
+<span class="report-label">Assinatura do cliente</span>
+<div class="flex flex-col items-center justify-center h-full">
+<span class="font-['Cursive'] text-2xl text-gray-700">Renan</span>
+<div class="w-4/5 border-b border-gray-300 mt-2"></div>
+</div>
+</td>
+</tr>
+</tbody></table>
+<div class="mt-2 text-[9px] text-gray-400">Produtivo</div>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-1 no-print">
+<div class="sticky top-24">
+<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+<h2 class="text-[#0d121b] dark:text-white text-lg font-bold mb-6">Ações do Documento</h2>
+<div class="flex flex-col gap-3">
+<button class="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-bold text-white hover:bg-primary/90 transition-colors">
+<span class="material-symbols-outlined">email</span>
+<span>Enviar por E-mail</span>
+</button>
+<button class="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-700 px-5 text-sm font-bold text-[#0d121b] dark:text-white hover:bg-gray-200 transition-colors">
+<span class="material-symbols-outlined">link</span>
+<span>Gerar Link</span>
+</button>
+<button class="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-700 px-5 text-sm font-bold text-[#0d121b] dark:text-white hover:bg-gray-200 transition-colors" onclick="window.print()">
+<span class="material-symbols-outlined">download</span>
+<span>Baixar PDF / Imprimir</span>
+</button>
+<div class="my-2 border-t border-gray-100 dark:border-gray-700"></div>
+<button class="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-transparent px-5 text-sm font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+<span class="material-symbols-outlined">edit</span>
+<span>Voltar para Edição</span>
+</button>
+</div>
+</div>
+<div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-900/30">
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-blue-600">info</span>
+<div>
+<h4 class="text-sm font-bold text-blue-800 dark:text-blue-300">Dica de Impressão</h4>
+<p class="text-xs text-blue-700 dark:text-blue-400 mt-1">Para melhores resultados, habilite "Gráficos de segundo plano" nas configurações de impressão.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>
+
+<!-- Configuração de Impressão de Orçamento -->
+<!DOCTYPE html>
+<html class="light" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Configuração de Impressão de Relatório</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24
+        }
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            border-left: 1px solid #e5e7eb;
+            border-top: 1px solid #e5e7eb;
+        }
+        .report-grid > div {
+            border-right: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 4px 8px;
+        }
+        .report-section-header {
+            background-color: #f3f4f6;
+            padding: 4px 8px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .dark .report-grid { border-color: #374151; }
+        .dark .report-grid > div { border-color: #374151; }
+        .dark .report-section-header { background-color: #1f2937; border-color: #374151; }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark">
+<div class="relative flex min-h-screen w-full">
+<aside class="flex h-screen min-h-full flex-col bg-white dark:bg-gray-900/50 border-r border-gray-200 dark:border-gray-800 w-64 p-4">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Company logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBETZh3iv7AlERdi8o9szTAul9L1EIjdeXsdHOYPcOFDC71XcexnuJKnheT7QKsPautAS2H2Xlo9tHm1HCYbuUbPt9wHnNOFg1NL-BGvWJJCxdz6LBjbOdBNilPzde6mD0QCd39tRAPeX9klJHu3bR3nW63HtKMv-HSh1XqtHlnXcbjr_wMw8N5b7HnRssPdKeOdyH4tfRBtUZVO9RTl3jRRGB1FTALoidqvN7Zuo0_Fzj9F8TLf3zPn-3ll_rdS12sJTsfI4wXz_O5");'></div>
+<div class="flex flex-col">
+<h1 class="text-gray-900 dark:text-gray-100 text-base font-medium leading-normal">Nome da Empresa</h1>
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">plataforma@empresa.com</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<p class="text-sm font-medium leading-normal">Ordens de Serviço</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-300" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">receipt_long</span>
+<p class="text-sm font-medium leading-normal">Relatórios</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined">group</span>
+<p class="text-sm font-medium leading-normal">Clientes</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<p class="text-sm font-medium leading-normal">Estoque</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium leading-normal">Configurações</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<p class="text-sm font-medium leading-normal">Ajuda</p>
+</a>
+</div>
+</aside>
+<main class="flex-1 overflow-y-auto">
+<div class="p-8">
+<header class="flex flex-wrap justify-between gap-3 pb-6">
+<h1 class="text-gray-900 dark:text-gray-50 text-3xl font-bold tracking-tight">Configuração de Impressão: Modelo Relatório</h1>
+</header>
+<div class="grid grid-cols-12 gap-6">
+<div class="col-span-12 lg:col-span-4">
+<div class="bg-white dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-8">
+<div>
+<h2 class="text-gray-900 dark:text-gray-100 text-lg font-bold leading-tight tracking-tight">Modelo</h2>
+<div class="mt-4">
+<label class="flex flex-col w-full">
+<p class="text-gray-800 dark:text-gray-200 text-sm font-medium leading-normal pb-2">Selecionar Template</p>
+<select class="form-select w-full rounded-lg text-gray-900 dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-primary dark:focus:border-primary placeholder:text-gray-400 dark:placeholder:text-gray-500 p-3 text-base font-normal leading-normal">
+<option selected="" value="relatorio">Modelo Relatório</option>
+<option value="moderno">Moderno</option>
+<option value="classico">Clássico</option>
+<option value="compacto">Compacto</option>
+</select>
+</label>
+</div>
+</div>
+<div>
+<h2 class="text-gray-900 dark:text-gray-100 text-lg font-bold leading-tight tracking-tight">Opções de Exibição</h2>
+<div class="space-y-4 mt-4">
+<label class="flex items-center justify-between cursor-pointer">
+<span class="text-gray-700 dark:text-gray-300">Mostrar Logotipo</span>
+<input checked="" class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between cursor-pointer">
+<span class="text-gray-700 dark:text-gray-300">Exibir Assinaturas</span>
+<input checked="" class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between cursor-pointer">
+<span class="text-gray-700 dark:text-gray-300">Incluir Diagnóstico com Fotos</span>
+<input checked="" class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/>
+</label>
+</div>
+</div>
+<div>
+<h2 class="text-gray-900 dark:text-gray-100 text-lg font-bold leading-tight tracking-tight">Layout da Página</h2>
+<div class="space-y-4 mt-4">
+<label class="flex flex-col w-full">
+<p class="text-gray-800 dark:text-gray-200 text-sm font-medium leading-normal pb-2">Tipo de Papel</p>
+<select class="form-select w-full rounded-lg text-gray-900 dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-primary dark:focus:border-primary placeholder:text-gray-400 dark:placeholder:text-gray-500 p-3 text-base font-normal leading-normal">
+<option selected="" value="a4">A4</option>
+<option value="letter">Carta (Letter)</option>
+</select>
+</label>
+<div class="grid grid-cols-2 gap-4">
+<label class="flex flex-col">
+<p class="text-gray-800 dark:text-gray-200 text-sm font-medium pb-2">Margem Sup. (mm)</p>
+<input class="form-input w-full rounded-lg text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 text-base" type="number" value="10"/>
+</label>
+<label class="flex flex-col">
+<p class="text-gray-800 dark:text-gray-200 text-sm font-medium pb-2">Margem Inf. (mm)</p>
+<input class="form-input w-full rounded-lg text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 text-base" type="number" value="10"/>
+</label>
+</div>
+</div>
+</div>
+<div class="border-t border-gray-200 dark:border-gray-800 pt-6 space-y-3">
+<button class="w-full flex items-center justify-center gap-2 bg-primary text-white font-semibold py-3 px-4 rounded-lg hover:bg-primary/90 transition-colors">
+<span class="material-symbols-outlined">print</span>
+                                Imprimir Agora
+                            </button>
+<button class="w-full flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold py-3 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+<span class="material-symbols-outlined">download</span>
+                                Baixar PDF
+                            </button>
+</div>
+</div>
+</div>
+<div class="col-span-12 lg:col-span-8">
+<div class="sticky top-8">
+<div class="flex items-center justify-end gap-2 mb-4 px-4">
+<p class="text-sm text-gray-600 dark:text-gray-400">Zoom:</p>
+<button class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
+<span class="material-symbols-outlined">remove</span>
+</button>
+<span class="text-sm font-medium text-gray-800 dark:text-gray-200">90%</span>
+<button class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+<div class="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 min-h-[1000px]">
+<div class="h-full text-gray-900 dark:text-gray-100 flex flex-col text-[11px] leading-tight">
+<header class="text-center mb-6">
+<h2 class="text-lg font-bold">Relatório de Visita Técnica</h2>
+<p class="text-sm">(21/10/2021)</p>
+<div class="flex justify-between items-end mt-4 text-[9px] text-gray-500">
+<p>Por: Yasmin Soweck (yasmin.soweck@produtivo.com.br)</p>
+<p>Em: 21/10/2021 17:47</p>
+</div>
+</header>
+<div class="mb-4">
+<div class="report-section-header">Empresa responsável</div>
+<div class="report-grid">
+<div><p class="font-bold text-[9px] uppercase text-gray-500">Nome</p><p>Produtivo</p></div>
+<div><p class="font-bold text-[9px] uppercase text-gray-500">Telefone fixo</p><p>(11) 11111-1111</p></div>
+<div><p class="font-bold text-[9px] uppercase text-gray-500">CPF / CNPJ</p><p>00000000000000</p></div>
+<div><p class="font-bold text-[9px] uppercase text-gray-500">Endereço</p><p>Av. Paulista - Bela Vista, São Paulo - State of São Paulo, Brazil</p></div>
+</div>
+</div>
+<div class="mb-4">
+<div class="report-section-header">Cliente</div>
+<div class="report-grid">
+<div><p class="font-bold text-[9px] uppercase text-gray-500">Nome</p><p>Edificio Sunrise</p></div>
+<div><p class="font-bold text-[9px] uppercase text-gray-500">Razão social</p><p>Sunrise Ltda</p></div>
+<div><p class="font-bold text-[9px] uppercase text-gray-500">CPF / CNPJ</p><p>999.999.999-99</p></div>
+<div><p class="font-bold text-[9px] uppercase text-gray-500">Endereço</p><p>Av. Paulista - Bela Vista, São Paulo - State of São Paulo, Brazil</p></div>
+</div>
+</div>
+<div class="mb-4">
+<div class="report-section-header">Informações do serviço</div>
+<div class="report-grid">
+<div><p class="font-bold text-[9px] uppercase text-gray-500">Horário planejado</p><p>21/10/2021 18:00</p></div>
+<div><p class="font-bold text-[9px] uppercase text-gray-500">Horário realizado</p><p>25/10/2021 18:33 - 25/10/2021 18:33</p></div>
+<div><p class="font-bold text-[9px] uppercase text-gray-500">Tempo de execução</p><p>34 segundos</p></div>
+<div><p class="font-bold text-[9px] uppercase text-gray-500">Tempo de início do atendimento</p><p>4 dias, 48 minutos e 46 segundos</p></div>
+</div>
+</div>
+<div class="mb-4">
+<div class="report-section-header">Diagnóstico</div>
+<div class="p-2 border-x border-b border-gray-200 dark:border-gray-700">
+<p class="font-bold text-[9px] uppercase text-gray-500 mb-1">Relato do cliente</p>
+<p class="mb-3">Necessita realizar a manutenção do elevador para verificar se está em condições para uso.</p>
+<p class="font-bold text-[9px] uppercase text-gray-500 mb-2">Fotos</p>
+<div class="grid grid-cols-3 gap-2">
+<div class="flex flex-col gap-1">
+<div class="aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden border border-gray-200 dark:border-gray-700">
+<img class="w-full h-full object-cover grayscale opacity-50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2Eh93u0LYwsRk6yNOZBU_8U3P5KOdc7_WApPffiPqN4lf1ZYPpobgxJFMVwOkdqIDEvR2HTb-cu5CfodFmxtFx2dm6khuKqFMKK6GhurY0o3FauBAsyS4WqPMVeRwvm3GCKmeLkyyRaL11NWs_iDokdG2Wgw-8s6a9oFflfNltUHv241gMJ7BK9p8nRszyIog7JrhKq_HtHXaN5D4lEILgD2qhQti1f_0q8KNqonkJT1tcHwvp5X2wI_s2uSoz3H4C8kFs9puuAbk"/>
+</div>
+<p class="text-[8px] text-gray-500">Painel de comando</p>
+</div>
+<div class="flex flex-col gap-1">
+<div class="aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden border border-gray-200 dark:border-gray-700">
+<img class="w-full h-full object-cover grayscale opacity-50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2Eh93u0LYwsRk6yNOZBU_8U3P5KOdc7_WApPffiPqN4lf1ZYPpobgxJFMVwOkdqIDEvR2HTb-cu5CfodFmxtFx2dm6khuKqFMKK6GhurY0o3FauBAsyS4WqPMVeRwvm3GCKmeLkyyRaL11NWs_iDokdG2Wgw-8s6a9oFflfNltUHv241gMJ7BK9p8nRszyIog7JrhKq_HtHXaN5D4lEILgD2qhQti1f_0q8KNqonkJT1tcHwvp5X2wI_s2uSoz3H4C8kFs9puuAbk"/>
+</div>
+<p class="text-[8px] text-gray-500">Elevador social</p>
+</div>
+<div class="flex flex-col gap-1">
+<div class="aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden border border-gray-200 dark:border-gray-700">
+<img class="w-full h-full object-cover grayscale opacity-50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2Eh93u0LYwsRk6yNOZBU_8U3P5KOdc7_WApPffiPqN4lf1ZYPpobgxJFMVwOkdqIDEvR2HTb-cu5CfodFmxtFx2dm6khuKqFMKK6GhurY0o3FauBAsyS4WqPMVeRwvm3GCKmeLkyyRaL11NWs_iDokdG2Wgw-8s6a9oFflfNltUHv241gMJ7BK9p8nRszyIog7JrhKq_HtHXaN5D4lEILgD2qhQti1f_0q8KNqonkJT1tcHwvp5X2wI_s2uSoz3H4C8kFs9puuAbk"/>
+</div>
+<p class="text-[8px] text-gray-500">Porta interna</p>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-8">
+<div class="grid grid-cols-2 gap-0 border border-gray-200 dark:border-gray-700">
+<div class="p-4 border-r border-gray-200 dark:border-gray-700 min-h-[100px] flex flex-col justify-between">
+<p class="font-bold text-[9px] uppercase text-gray-500">Assinatura do técnico</p>
+<div class="mt-4 italic text-lg text-gray-400 font-serif">Yasmin</div>
+</div>
+<div class="p-4 min-h-[100px] flex flex-col justify-between">
+<p class="font-bold text-[9px] uppercase text-gray-500">Assinatura do cliente</p>
+<div class="mt-4 italic text-lg text-gray-400 font-serif">Renan</div>
+</div>
+</div>
+</div>
+<footer class="mt-auto pt-4 text-[8px] text-gray-400 flex justify-between">
+<span>Sistema de Gestão</span>
+<span>Página 1 de 1</span>
+</footer>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { Order } from '../types/order';
-import ServiceOrderReport from '../components/ServiceOrderReport';
+
 
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,7 +35,7 @@ const OrderDetail: React.FC = () => {
   };
 
   const handlePrint = () => {
-    window.print();
+    navigate(`/orders/${order.id}/print`);
   };
 
   const getStatusColor = (status: string) => {
@@ -287,40 +287,11 @@ const OrderDetail: React.FC = () => {
                   )}
                 </div>
               </div>
-      </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Printable Report Component */}
-      <ServiceOrderReport order={order} client={client} />
-
-      {/* Print styles */}
-      <style>{`
-        @media print {
-          /* Hide everything by default */
-          body * {
-            visibility: hidden;
-          }
-           /* Show only the report and its children */
-          #printable-report, #printable-report * {
-            visibility: visible;
-          }
-          /* Position the report absolutely to top-left */
-          #printable-report {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            display: block !important;
-          }
-          
-          /* Ensure no other structural elements interfere */
-          .flex.h-full.flex-col.p-8 { display: none !important; }
-          nav, aside, header, footer, .breadcrumb { display: none !important; }
-        }
-      `}</style>
     </div>
   );
 };

@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
 import CreateOrder from './pages/CreateOrder';
 import OrderDetail from './pages/OrderDetail';
+import ServiceOrderPrintConfig from './pages/ServiceOrderPrintConfig';
 import Clients from './pages/Clients';
 import Inventory from './pages/Inventory';
 import Communication from './pages/Communication';
@@ -16,8 +17,10 @@ import TeamMemberProfile from './pages/TeamMemberProfile';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Quotes from './pages/Quotes';
-import CreateQuote from './pages/CreateQuote';
+import QuoteCreate from './pages/QuoteCreate';
+import QuoteEdit from './pages/QuoteEdit';
 import QuoteDetail from './pages/QuoteDetail';
+import QuotePrintConfig from './pages/QuotePrintConfig';
 import Contracts from './pages/Contracts';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
@@ -58,9 +61,12 @@ const AppLayout: React.FC = () => {
         <Route path="/orders" element={<Orders />} />
         <Route path="/orders/new" element={<CreateOrder />} />
         <Route path="/orders/:id" element={<OrderDetail />} />
+        <Route path="/orders/:id/print" element={<ServiceOrderPrintConfig />} />
         <Route path="/quotes" element={<Quotes />} />
-        <Route path="/quotes/new" element={<CreateQuote />} />
+        <Route path="/quotes/new" element={<QuoteCreate />} />
         <Route path="/quotes/:id" element={<QuoteDetail />} />
+        <Route path="/quotes/:id/edit" element={<QuoteEdit />} />
+        <Route path="/quotes/:id/print-config" element={<QuotePrintConfig />} />
         <Route path="/invoices" element={<InvoiceList />} />
         <Route path="/invoices/new" element={<InvoiceForm />} />
         <Route path="/invoices/:id" element={<InvoicePreview />} />
