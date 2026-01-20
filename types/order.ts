@@ -21,6 +21,8 @@ export interface Order {
   servicePhotos?: any[];
   serviceNotes?: string;
   customerSignature?: string;
+  invoiced?: boolean;
+  invoiceId?: string;
 }
 
 export interface CreateOrderData {

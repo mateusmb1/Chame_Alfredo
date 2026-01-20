@@ -82,6 +82,7 @@ interface AppContextType {
     getOrCreateConversation: (techId: string) => Promise<string | null>;
     uploadChatFile: (file: File) => Promise<string | null>;
     uploadFile: (file: File, bucket?: string, folder?: string) => Promise<string | null>;
+    generateMonthlyInvoices: (month: number, year: number) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -366,6 +367,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         servicePhotos: data.service_photos || [],
         serviceNotes: data.service_notes,
         customerSignature: data.customer_signature,
+        invoiced: data.invoiced || false,
+        invoiceId: data.invoice_id,
         createdAt: data.created_at,
         updatedAt: data.updated_at
     });
@@ -405,6 +408,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...(order.servicePhotos !== undefined && { service_photos: order.servicePhotos }),
             ...(order.serviceNotes !== undefined && { service_notes: order.serviceNotes }),
             ...(order.customerSignature !== undefined && { customer_signature: order.customerSignature }),
+            ...(order.invoiced !== undefined && { invoiced: order.invoiced }),
+            ...(order.invoiceId !== undefined && { invoice_id: order.invoiceId }),
             ...(createdAt !== undefined && { created_at: createdAt }),
             ...(updatedAt !== undefined && { updated_at: updatedAt }),
         };
@@ -733,6 +738,96 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return uploadFile(file, 'orders', 'chat-attachments');
     }, [uploadFile]);
 
+    const generateMonthlyInvoices = React.useCallback(async (month: number, year: number) => {
+        const startOfMonth = new Date(year, month - 1, 1).toISOString();
+        const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999).toISOString();
+
+        // 1. Get all active contracts
+        const activeContracts = contracts.filter(c => c.status === 'ativo');
+
+        for (const contract of activeContracts) {
+            // 2. Find completed orders for this client in the month that haven't been invoiced
+            const billableOrders = orders.filter(o =>
+                o.clientId === contract.clientId &&
+                o.status === 'concluida' &&
+                !o.invoiced &&
+                o.completedDate &&
+                o.completedDate >= startOfMonth &&
+                o.completedDate <= endOfMonth
+            );
+
+            // 3. Create items list
+            const items: any[] = [
+                {
+                    id: crypto.randomUUID(),
+                    description: `Assinatura Mensal - ${contract.title}`,
+                    quantity: 1,
+                    unitPrice: contract.value,
+                    totalPrice: contract.value,
+                    sourceId: contract.id,
+                    sourceType: 'contract'
+                }
+            ];
+
+            let serviceOrdersTotal = 0;
+            billableOrders.forEach(order => {
+                items.push({
+                    id: crypto.randomUUID(),
+                    description: `Serviço Extra: ${order.serviceType} - #${order.id.substring(0, 8)}`,
+                    quantity: 1,
+                    unitPrice: order.value,
+                    totalPrice: order.value,
+                    sourceId: order.id,
+                    sourceType: 'order'
+                });
+                serviceOrdersTotal += order.value;
+            });
+
+            const subtotal = contract.value + serviceOrdersTotal;
+            const tax = subtotal * 0.05; // Example 5% tax
+            const total = subtotal + tax;
+
+            // 4. Create Invoice in DB
+            const invoiceNumber = `INV-${year}${month.toString().padStart(2, '0')}-${contract.clientId.substring(0, 4)}`;
+
+            const { data: newInvoice, error: invoiceError } = await supabase
+                .from('invoices')
+                .insert([{
+                    invoice_number: invoiceNumber,
+                    client_id: contract.clientId,
+                    issue_date: new Date().toISOString(),
+                    due_date: new Date(year, month, 10).toISOString(), // Default due date 10th of next month
+                    subtotal,
+                    tax,
+                    total,
+                    status: 'pending',
+                    type: 'recurring',
+                    contract_id: contract.id,
+                    items: items // Assuming the DB can store this as JSON
+                }])
+                .select()
+                .single();
+
+            if (invoiceError) {
+                console.error(`Error generating invoice for client ${contract.clientId}:`, invoiceError);
+                continue;
+            }
+
+            // 5. Mark orders as invoiced
+            if (newInvoice && billableOrders.length > 0) {
+                const orderIds = billableOrders.map(o => o.id);
+                const { error: updateError } = await supabase
+                    .from('orders')
+                    .update({ invoiced: true, invoice_id: newInvoice.id })
+                    .in('id', orderIds);
+
+                if (updateError) {
+                    console.error('Error marking orders as invoiced:', updateError);
+                }
+            }
+        }
+    }, [contracts, orders, supabase]);
+
     const value: AppContextType = React.useMemo(() => ({
         clients,
         orders,
@@ -803,6 +898,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         getOrCreateConversation,
         uploadChatFile,
         uploadFile,
+        generateMonthlyInvoices,
     }), [
         clients, orders, inventory, quotes, contracts, technicians, projects, projectActivities,
         products, invoices, appointments, conversations, messages, onNewOrderCallback,
@@ -811,7 +907,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addContract, updateContract, deleteContract, addTechnician, updateTechnician, deleteTechnician,
         authenticateTechnician, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
         addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder,
-        sendMessage, getOrCreateConversation, uploadChatFile, uploadFile
+        sendMessage, getOrCreateConversation, uploadChatFile, uploadFile, generateMonthlyInvoices
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

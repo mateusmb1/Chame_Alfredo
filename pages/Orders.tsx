@@ -293,6 +293,11 @@ const Orders: React.FC = () => {
                         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(order.status)}`}>
                           <span className="size-1.5 rounded-full bg-current"></span>{getStatusLabel(order.status)}
                         </span>
+                        {order.invoiced && (
+                          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                            <span className="material-symbols-outlined text-[10px]">receipt</span>Faturado
+                          </span>
+                        )}
                       </div>
                       <p className="text-base font-bold text-gray-900 dark:text-white mb-1">{order.clientName}</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{order.serviceType}</p>

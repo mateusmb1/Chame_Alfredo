@@ -4,6 +4,8 @@ export interface InvoiceItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  sourceId?: string;
+  sourceType?: 'order' | 'contract';
 }
 
 export interface Invoice {
