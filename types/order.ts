@@ -16,6 +16,11 @@ export interface Order {
   updatedAt: string;
   projectId?: string;
   projectName?: string;
+  checkIn?: any;
+  checkOut?: any;
+  servicePhotos?: any[];
+  serviceNotes?: string;
+  customerSignature?: string;
 }
 
 export interface CreateOrderData {

@@ -363,6 +363,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         technicianName: data.technician_name,
         projectId: data.project_id,
         projectName: data.project_name,
+        checkIn: data.check_in,
+        checkOut: data.check_out,
+        servicePhotos: data.service_photos || [],
+        serviceNotes: data.service_notes,
+        customerSignature: data.customer_signature,
         createdAt: data.created_at,
         updatedAt: data.updated_at
     });
@@ -381,6 +386,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...(technicianName !== undefined && { technician_name: technicianName }),
             ...(projectId !== undefined && { project_id: projectId }),
             ...(projectName !== undefined && { project_name: projectName }),
+            ...(order.checkIn !== undefined && { check_in: order.checkIn }),
+            ...(order.checkOut !== undefined && { check_out: order.checkOut }),
+            ...(order.servicePhotos !== undefined && { service_photos: order.servicePhotos }),
+            ...(order.serviceNotes !== undefined && { service_notes: order.serviceNotes }),
+            ...(order.customerSignature !== undefined && { customer_signature: order.customerSignature }),
             ...(createdAt !== undefined && { created_at: createdAt }),
             ...(updatedAt !== undefined && { updated_at: updatedAt }),
         };

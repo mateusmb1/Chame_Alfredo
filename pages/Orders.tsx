@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { useApp, Order } from '../contexts/AppContext';
+import { useApp } from '../contexts/AppContext';
+import { Order } from '../types/order';
 import { useToast } from '../contexts/ToastContext';
 
 const Orders: React.FC = () => {
-  const { orders, clients, addOrder, updateOrder, deleteOrder } = useApp();
+  const { orders, clients, technicians, addOrder, updateOrder, deleteOrder } = useApp();
   const { showToast } = useToast();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,18 +16,29 @@ const Orders: React.FC = () => {
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    client: '',
+    clientId: '',
     clientName: '',
     serviceType: '',
-    technician: '',
+    technicianId: '',
+    technicianName: '',
     description: '',
-    priority: 'normal' as 'baixa' | 'normal' | 'alta' | 'urgente'
+    priority: 'normal' as 'baixa' | 'normal' | 'alta' | 'urgente',
+    observations: ''
   });
 
   const handleOpenNewOrderModal = () => {
     setIsEditMode(false);
     setEditingOrderId(null);
-    setFormData({ client: '', clientName: '', serviceType: '', technician: '', description: '', priority: 'normal' });
+    setFormData({
+      clientId: '',
+      clientName: '',
+      serviceType: '',
+      technicianId: '',
+      technicianName: '',
+      description: '',
+      priority: 'normal',
+      observations: ''
+    });
     setIsModalOpen(true);
   };
 
@@ -34,12 +46,14 @@ const Orders: React.FC = () => {
     setIsEditMode(true);
     setEditingOrderId(order.id);
     setFormData({
-      client: order.client,
+      clientId: order.clientId,
       clientName: order.clientName,
       serviceType: order.serviceType,
-      technician: order.technician,
+      technicianId: order.technicianId,
+      technicianName: order.technicianName,
       description: order.description,
-      priority: order.priority
+      priority: order.priority as any,
+      observations: order.observations || ''
     });
     setIsModalOpen(true);
   };
@@ -47,10 +61,16 @@ const Orders: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const selectedClient = clients.find(c => c.id === formData.client);
+    const selectedClient = clients.find(c => c.id === formData.clientId);
+    const selectedTech = technicians.find(t => t.id === formData.technicianId);
+
     const orderData = {
       ...formData,
-      clientName: selectedClient?.name || formData.clientName
+      clientName: selectedClient?.name || formData.clientName,
+      technicianName: selectedTech?.name || formData.technicianName,
+      scheduledDate: new Date().toISOString(), // Default for now
+      completedDate: null,
+      value: 0
     };
 
     if (isEditMode && editingOrderId) {
@@ -62,7 +82,16 @@ const Orders: React.FC = () => {
     }
 
     setIsModalOpen(false);
-    setFormData({ client: '', clientName: '', serviceType: '', technician: '', description: '', priority: 'normal' });
+    setFormData({
+      clientId: '',
+      clientName: '',
+      serviceType: '',
+      technicianId: '',
+      technicianName: '',
+      description: '',
+      priority: 'normal',
+      observations: ''
+    });
   };
 
   const handleDeleteClick = (orderId: string) => {
@@ -147,8 +176,8 @@ const Orders: React.FC = () => {
             <div>
               <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Cliente</label>
               <select
-                value={formData.client}
-                onChange={(e) => setFormData({ ...formData, client: e.target.value })}
+                value={formData.clientId}
+                onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
                 class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 required
               >
@@ -179,15 +208,15 @@ const Orders: React.FC = () => {
               <div>
                 <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Técnico Responsável</label>
                 <select
-                  value={formData.technician}
-                  onChange={(e) => setFormData({ ...formData, technician: e.target.value })}
+                  value={formData.technicianId}
+                  onChange={(e) => setFormData({ ...formData, technicianId: e.target.value })}
                   class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   required
                 >
                   <option value="">Selecione um técnico</option>
-                  <option value="João Silva">João Silva</option>
-                  <option value="Maria Santos">Maria Santos</option>
-                  <option value="Pedro Costa">Pedro Costa</option>
+                  {technicians.map(tech => (
+                    <option key={tech.id} value={tech.id}>{tech.name}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -252,7 +281,7 @@ const Orders: React.FC = () => {
                   statusOrders.map(order => (
                     <div key={order.id} class="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4 shadow-sm hover:shadow-md transition-shadow">
                       <div class="flex justify-between items-start mb-2">
-                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">#{order.id}</p>
+                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">#{(order.id || '').substring(0, 8)}</p>
                         <span class={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(order.status)}`}>
                           <span class="size-1.5 rounded-full bg-current"></span>{getStatusLabel(order.status)}
                         </span>

@@ -64,6 +64,9 @@ const MobileOrderDetail: React.FC = () => {
                         }
                     };
                     setCheckInOut({ ...checkInOut, checkIn: checkInData });
+                    if (order) {
+                        updateOrder(order.id, { checkIn: checkInData });
+                    }
                     showToast('success', 'Check-in realizado com sucesso!');
                 },
                 (error) => {
@@ -87,6 +90,9 @@ const MobileOrderDetail: React.FC = () => {
                         }
                     };
                     setCheckInOut({ ...checkInOut, checkOut: checkOutData });
+                    if (order) {
+                        updateOrder(order.id, { checkOut: checkOutData });
+                    }
                     showToast('success', 'Check-out realizado com sucesso!');
                 },
                 (error) => {
@@ -124,8 +130,12 @@ const MobileOrderDetail: React.FC = () => {
         }
     };
 
-    const handleCompleteOrder = () => {
+    const handleCompleteOrder = async () => {
         const errors = [];
+
+        if (!checkInOut.checkIn) {
+            errors.push('Check-in é obrigatório');
+        }
 
         if (photos.length === 0) {
             errors.push('Pelo menos uma foto do serviço é obrigatória');
@@ -141,14 +151,32 @@ const MobileOrderDetail: React.FC = () => {
 
         if (errors.length > 0) {
             errors.forEach(err => showToast('error', err));
-            if (!signature) setIsSignatureModalOpen(true);
+            if (!signature && checkInOut.checkIn && photos.length > 0 && notes.trim()) {
+                setIsSignatureModalOpen(true);
+            }
             return;
         }
 
         if (order) {
-            updateOrder(order.id, { status: 'concluida' });
-            showToast('success', 'Ordem concluída com sucesso!');
-            setTimeout(() => navigate('/mobile/dashboard'), 1500);
+            try {
+                await updateOrder(order.id, {
+                    status: 'finalizada',
+                    completedDate: new Date().toISOString(),
+                    checkIn: checkInOut.checkIn,
+                    checkOut: checkInOut.checkOut || {
+                        timestamp: new Date().toISOString(),
+                        location: checkInOut.checkIn?.location
+                    },
+                    servicePhotos: photos,
+                    serviceNotes: notes,
+                    customerSignature: signature || undefined
+                });
+                showToast('success', 'Ordem concluída com sucesso!');
+                setTimeout(() => navigate('/mobile/dashboard'), 1500);
+            } catch (error) {
+                console.error('Error completing order:', error);
+                showToast('error', 'Erro ao concluir ordem');
+            }
         }
     };
 
