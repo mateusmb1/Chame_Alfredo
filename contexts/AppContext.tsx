@@ -482,7 +482,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const { error } = await supabase.from('orders').update(dbUpdate).eq('id', id);
         if (error) {
             console.error('Error updating order:', error);
-            // Revert or refresh on error? For now, just log.
+            alert(`Erro ao atualizar ordem: ${error.message}`);
         }
     }, [mapOrderToDB, supabase, setOrders]);
 
