@@ -464,6 +464,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const { data, error } = await supabase.from('orders').insert([dbOrder]).select().single();
         if (error) {
             console.error('Error adding order:', error);
+            // Fallback since we can't use useToast here directly easily without refactor
+            // But we can throw or rely on caller? 
+            // Caller (Orders.tsx) relies on optimistic or context update, but context update didn't happen.
+            // Let's stick to console but I will explain to user.
+            alert(`Erro ao criar ordem: ${(error as any).message || 'Erro desconhecido'}`);
         } else if (data) {
             setOrders(prev => [...prev, mapOrderFromDB(data)]);
         }
