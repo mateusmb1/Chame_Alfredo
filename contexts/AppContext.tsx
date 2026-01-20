@@ -78,6 +78,8 @@ interface AppContextType {
     // Notification callbacks
     onNewOrder?: (order: Order) => void;
     setOnNewOrder: (callback: (order: Order) => void) => void;
+    onNewMessage?: (message: Message) => void;
+    setOnNewMessage: (callback: (message: Message) => void) => void;
 
     // Communication operations
     sendMessage: (conversationId: string, senderId: string, senderType: 'admin' | 'technician' | 'client', content: string, attachmentUrl?: string, attachmentType?: 'image' | 'file') => Promise<void>;
@@ -111,6 +113,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Notification callbacks
     const [onNewOrderCallback, setOnNewOrderCallback] = useState<((order: Order) => void) | undefined>(undefined);
+    const [onNewMessageCallback, setOnNewMessageCallback] = useState<((message: Message) => void) | undefined>(undefined);
 
     // Initial Fetch & Real-time Subscriptions
     useEffect(() => {
@@ -200,7 +203,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             supabase.channel('projects_all').on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, payload => handleRealtimeUpdate(payload, setProjects, mapProjectFromDB)).subscribe(),
             supabase.channel('acts_all').on('postgres_changes', { event: '*', schema: 'public', table: 'project_activities' }, payload => handleRealtimeUpdate(payload, setProjectActivities, mapActivityFromDB)).subscribe(),
             supabase.channel('conv_all').on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, payload => handleRealtimeUpdate(payload, setConversations, mapConversationFromDB)).subscribe(),
-            supabase.channel('msg_all').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => handleRealtimeUpdate(payload, setMessages, mapMessageFromDB)).subscribe(),
+            supabase.channel('msg_all').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => handleRealtimeUpdate(payload, setMessages, mapMessageFromDB, 'messages')).subscribe(),
         ];
 
         return () => {
@@ -218,6 +221,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 // Trigger notification for new orders
                 if (tableName === 'orders' && onNewOrderCallback) {
                     onNewOrderCallback(newItem as Order);
+                }
+                if (tableName === 'messages' && onNewMessageCallback) {
+                    onNewMessageCallback(newItem as Message);
                 }
 
                 return [...prev, newItem];
@@ -683,6 +689,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const setOnNewOrder = React.useCallback((callback: (order: Order) => void) => {
         setOnNewOrderCallback(() => callback);
     }, [setOnNewOrderCallback]);
+
+    const setOnNewMessage = React.useCallback((callback: (message: Message) => void) => {
+        setOnNewMessageCallback(() => callback);
+    }, [setOnNewMessageCallback]);
 
     // Communication operations
     const sendMessage = React.useCallback(async (conversationId: string, senderId: string, senderType: 'admin' | 'technician' | 'client', content: string, attachmentUrl?: string, attachmentType?: 'image' | 'file') => {

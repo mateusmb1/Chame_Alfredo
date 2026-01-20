@@ -37,10 +37,27 @@ const Clients: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileDetails, setShowMobileDetails] = useState(false);
 
-  // Auto-select first client if none selected
+  // Memoize filtered clients for performance and robustness
+  const filteredClients = React.useMemo(() => {
+    const query = (searchQuery || '').toLowerCase().trim();
+    if (!query) return clients;
+
+    return clients.filter(c => {
+      const name = (c.name || '').toLowerCase();
+      const email = (c.email || '').toLowerCase();
+      const phone = (c.phone || '');
+      return name.includes(query) || email.includes(query) || phone.includes(query);
+    });
+  }, [clients, searchQuery]);
+
+  // Auto-select first client if none selected or if selected client no longer exists
   React.useEffect(() => {
-    if (!selectedClient && clients.length > 0) {
-      setSelectedClient(clients[0]);
+    if (clients.length > 0) {
+      if (!selectedClient) {
+        setSelectedClient(clients[0]);
+      } else if (!clients.find(c => c.id === selectedClient.id)) {
+        setSelectedClient(clients[0]);
+      }
     }
   }, [clients, selectedClient]);
 
@@ -158,11 +175,10 @@ const Clients: React.FC = () => {
     setClientToDelete(null);
   };
 
-  const filteredClients = clients.filter(c =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.phone.includes(searchQuery)
-  );
+  const clientContracts = React.useMemo(() => {
+    if (!selectedClient) return [];
+    return contracts.filter(c => c.clientId === selectedClient.id);
+  }, [contracts, selectedClient?.id]);
 
   return (
     <div className="flex flex-col h-full space-y-6">
@@ -350,9 +366,9 @@ const Clients: React.FC = () => {
                     <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Contratos Ativos</h4>
                     <FileText className="w-3.5 h-3.5 text-gray-300" />
                   </div>
-                  {contracts.filter(c => c.clientId === selectedClient.id).length > 0 ? (
+                  {clientContracts.length > 0 ? (
                     <div className="space-y-3">
-                      {contracts.filter(c => c.clientId === selectedClient.id).map(c => (
+                      {clientContracts.map(c => (
                         <Link key={c.id} to="/contracts" className="block p-4 bg-gray-50 dark:bg-white/5 rounded-2xl hover:bg-gray-100 dark:hover:bg-white/10 transition-all border border-transparent hover:border-gray-200 dark:hover:border-gray-800">
                           <div className="flex justify-between items-center mb-1">
                             <span className="text-xs font-bold text-gray-700 dark:text-white capitalize">{c.contractType || 'Contrato'}</span>

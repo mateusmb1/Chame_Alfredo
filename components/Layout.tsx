@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useApp } from '../contexts/AppContext';
 import {
   LayoutDashboard,
   Receipt,
@@ -26,7 +27,20 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { setOnNewMessage } = useApp();
   const [mobileOpen, setMobileOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setOnNewMessage((message) => {
+      // Admin only hears messages that are NOT from admin
+      if (message.senderType !== 'admin') {
+        try {
+          const audio = new Audio('/notification.mp3');
+          audio.play().catch(() => { });
+        } catch (e) { }
+      }
+    });
+  }, [setOnNewMessage]);
 
   const menuItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },

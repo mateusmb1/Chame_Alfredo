@@ -33,6 +33,7 @@ import MobileChat from './pages/MobileChat';
 import MobileProfile from './pages/MobileProfile';
 import MobileCreateOrder from './pages/MobileCreateOrder';
 import Layout from './components/Layout';
+import MobileLayout from './components/MobileLayout';
 import Landing from './pages/Landing';
 
 // Import new pages from downloader
@@ -104,6 +105,22 @@ const ClientAppLayout: React.FC = () => {
     </ClientLayout>
   );
 };
+const MobileAppLayout: React.FC = () => {
+  return (
+    <MobileLayout>
+      <Routes>
+        <Route path="/login" element={<TechnicianLogin />} />
+        <Route path="/dashboard" element={<MobileDashboard />} />
+        <Route path="/order/:id" element={<MobileOrderDetail />} />
+        <Route path="/agenda" element={<MobileAgenda />} />
+        <Route path="/notifications" element={<MobileNotifications />} />
+        <Route path="/chat" element={<MobileChat />} />
+        <Route path="/profile" element={<MobileProfile />} />
+        <Route path="/order/new" element={<MobileCreateOrder />} />
+      </Routes>
+    </MobileLayout>
+  );
+};
 
 const App: React.FC = () => {
   return (
@@ -113,14 +130,7 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/mobile/login" element={<TechnicianLogin />} />
-            <Route path="/mobile/dashboard" element={<MobileDashboard />} />
-            <Route path="/mobile/order/:id" element={<MobileOrderDetail />} />
-            <Route path="/mobile/agenda" element={<MobileAgenda />} />
-            <Route path="/mobile/notifications" element={<MobileNotifications />} />
-            <Route path="/mobile/chat" element={<MobileChat />} />
-            <Route path="/mobile/profile" element={<MobileProfile />} />
-            <Route path="/mobile/order/new" element={<MobileCreateOrder />} />
+            <Route path="/mobile/*" element={<MobileAppLayout />} />
             <Route path="/client/*" element={<ClientAppLayout />} />
             <Route path="/*" element={<AppLayout />} />
           </Routes>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, FileText, Receipt, BarChart3, MessageSquare, LogOut, Menu, X } from 'lucide-react';
+import { useApp } from '../contexts/AppContext';
 
 interface ClientLayoutProps {
     children: React.ReactNode;
@@ -9,7 +10,20 @@ interface ClientLayoutProps {
 const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { setOnNewMessage } = useApp();
     const [mobileOpen, setMobileOpen] = React.useState(false);
+
+    React.useEffect(() => {
+        setOnNewMessage((message) => {
+            // Client hears messages from admin or technician
+            if (message.senderType !== 'client') {
+                try {
+                    const audio = new Audio('/notification.mp3');
+                    audio.play().catch(() => { });
+                } catch (e) { }
+            }
+        });
+    }, [setOnNewMessage]);
 
     const navItems = [
         { label: 'Dashboard', path: '/client/dashboard', icon: <LayoutDashboard size={20} /> },
@@ -43,8 +57,8 @@ const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
                             key={item.path}
                             to={item.path}
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive(item.path)
-                                    ? 'bg-[#F97316] text-white shadow-lg'
-                                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                ? 'bg-[#F97316] text-white shadow-lg'
+                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                                 }`}
                         >
                             {item.icon}
