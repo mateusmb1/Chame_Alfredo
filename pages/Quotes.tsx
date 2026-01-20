@@ -130,7 +130,7 @@ const Quotes: React.FC = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         <button
-                          onClick={() => handleAction('Visualizar')}
+                          onClick={() => navigate(`/quotes/${item.id}`)}
                           className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
                           <span className="material-symbols-outlined text-base">visibility</span>

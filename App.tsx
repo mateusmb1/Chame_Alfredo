@@ -17,6 +17,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Quotes from './pages/Quotes';
 import CreateQuote from './pages/CreateQuote';
+import QuoteDetail from './pages/QuoteDetail';
 import Contracts from './pages/Contracts';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
@@ -59,6 +60,7 @@ const AppLayout: React.FC = () => {
         <Route path="/orders/:id" element={<OrderDetail />} />
         <Route path="/quotes" element={<Quotes />} />
         <Route path="/quotes/new" element={<CreateQuote />} />
+        <Route path="/quotes/:id" element={<QuoteDetail />} />
         <Route path="/invoices" element={<InvoiceList />} />
         <Route path="/invoices/new" element={<InvoiceForm />} />
         <Route path="/invoices/:id" element={<InvoicePreview />} />
