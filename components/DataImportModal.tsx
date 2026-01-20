@@ -162,21 +162,22 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                 for (let i = 0; i < selected.length; i++) {
                     const { data } = selected[i];
                     try {
+                        // Convert type to match DB schema (pf/pj instead of person/legal_entity)
+                        const dbType = data.type === 'legal_entity' ? 'pj' : 'pf';
+                        // Use cpfCnpj as the DB field (combine cnpj and cpf)
+                        const cpfCnpj = data.cnpj || data.cpf || '';
+
                         const { error } = await supabase.from('clients').insert({
                             name: data.name,
-                            company_name: data.company_name,
-                            email: data.email,
-                            phone: data.phone,
-                            cnpj: data.cnpj,
-                            cpf: data.cpf,
-                            address: data.address,
-                            city: data.city,
-                            state: data.state,
-                            zip_code: data.zip_code,
-                            type: data.type,
+                            email: data.email || null,
+                            phone: data.phone || null,
+                            address: data.address || null,
+                            cpf_cnpj: cpfCnpj,
+                            type: dbType,
+                            status: 'active',
                         });
                         if (error) {
-                            console.error(`Error inserting client ${data.name}:`, error);
+                            console.error(`Error inserting client ${data.name}:`, error.message, error.details);
                             errorCount++;
                         } else {
                             successCount++;
