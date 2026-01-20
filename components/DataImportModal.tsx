@@ -10,12 +10,14 @@ import {
     mapClientFromAgendaBoa,
     mapMaterialFromAgendaBoa,
     mapServiceFromAgendaBoa,
+    mapOrderFromAgendaBoa,
     AgendaBoaClient,
     AgendaBoaMaterial,
     AgendaBoaService,
     ImportedClient,
     ImportedInventoryItem,
     ImportedService,
+    ImportedOrder,
     ValidationResult,
     ImportType,
 } from '../utils/csvImporters';
@@ -46,6 +48,7 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
     const [clientRows, setClientRows] = useState<ImportRow<ImportedClient>[]>([]);
     const [materialRows, setMaterialRows] = useState<ImportRow<ImportedInventoryItem>[]>([]);
     const [serviceRows, setServiceRows] = useState<ImportRow<ImportedService>[]>([]);
+    const [orderRows, setOrderRows] = useState<ImportRow<ImportedOrder>[]>([]);
 
     const resetState = () => {
         setImportState('idle');
@@ -54,6 +57,7 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
         setClientRows([]);
         setMaterialRows([]);
         setServiceRows([]);
+        setOrderRows([]);
         setImportProgress({ current: 0, total: 0 });
     };
 
@@ -113,6 +117,13 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                     return { data, validation, selected: validation.valid };
                 });
                 setServiceRows(mapped);
+            } else if (detectedType === 'orders') {
+                const records = parseCSV<any>(content);
+                const mapped = records.map(record => {
+                    const { data, validation } = mapOrderFromAgendaBoa(record);
+                    return { data, validation, selected: validation.valid };
+                });
+                setOrderRows(mapped);
             }
 
             setImportState('preview');
@@ -146,6 +157,7 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
         if (importType === 'clients') return clientRows.filter(r => r.selected).length;
         if (importType === 'materials') return materialRows.filter(r => r.selected).length;
         if (importType === 'services') return serviceRows.filter(r => r.selected).length;
+        if (importType === 'orders') return orderRows.filter(r => r.selected).length;
         return 0;
     };
 
@@ -228,6 +240,21 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                         price: data.price,
                         unit: data.unit,
                         type: 'service',
+                    });
+                    setImportProgress({ current: i + 1, total: selected.length });
+                }
+            } else if (importType === 'orders') {
+                const selected = orderRows.filter(r => r.selected);
+                setImportProgress({ current: 0, total: selected.length });
+
+                for (let i = 0; i < selected.length; i++) {
+                    const { data } = selected[i];
+                    await supabase.from('orders').insert({
+                        client_name: data.client_name,
+                        value: data.total_price,
+                        status: data.status,
+                        service_type: data.description || 'Importado',
+                        scheduled_date: data.job_date || new Date().toISOString(),
                     });
                     setImportProgress({ current: i + 1, total: selected.length });
                 }
@@ -391,6 +418,33 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                                         })));
                                     }}
                                     allSelected={serviceRows.filter(r => r.validation.valid).every(r => r.selected)}
+                                />
+                            )}
+
+                            {importType === 'orders' && (
+                                <ImportPreviewTable
+                                    data={orderRows}
+                                    columns={[
+                                        { key: 'client_name', label: 'Cliente' },
+                                        { key: 'total_price', label: 'Valor' },
+                                        { key: 'status', label: 'Status' },
+                                        { key: 'description', label: 'Serviço' },
+                                        { key: 'job_date', label: 'Data' },
+                                    ]}
+                                    onToggleSelect={(index) => {
+                                        const updated = [...orderRows];
+                                        updated[index].selected = !updated[index].selected;
+                                        setOrderRows(updated);
+                                    }}
+                                    onSelectAll={() => {
+                                        const allValid = orderRows.filter(r => r.validation.valid);
+                                        const allSelected = allValid.every(r => r.selected);
+                                        setOrderRows(orderRows.map(r => ({
+                                            ...r,
+                                            selected: r.validation.valid ? !allSelected : false,
+                                        })));
+                                    }}
+                                    allSelected={orderRows.filter(r => r.validation.valid).every(r => r.selected)}
                                 />
                             )}
                         </div>

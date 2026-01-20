@@ -288,23 +288,85 @@ export function mapServiceFromAgendaBoa(record: AgendaBoaService): { data: Impor
     };
 }
 
+export interface ImportedOrder {
+    client_name: string;
+    total_price: number;
+    status: string;
+    description: string;
+    job_date: string;
+    external_id: string;
+}
+
+export function mapOrderFromAgendaBoa(record: any): { data: ImportedOrder; validation: ValidationResult } {
+    const validation: ValidationResult = { valid: true, warnings: [], errors: [] };
+
+    // Common header variations for orders in Agenda Boa
+    const clientName = record.clientName || record['Cliente'] || record['cliente'] || '';
+    const totalPriceStr = record.totalPrice || record['Valor total'] || record['valor total'] || '0';
+    const status = record.jobStatus || record['Status'] || record['status'] || 'pendente';
+    const title = record.jobTitle || record['Tópico'] || record['tópico'] || record['Título'] || '';
+    const date = record.jobDate || record['Data'] || record['data'] || '';
+    const id = record.id || record['ID do job'] || record['id'] || '';
+
+    if (!clientName) {
+        validation.errors.push('Cliente é obrigatório');
+        validation.valid = false;
+    }
+
+    // Parse price
+    const parsePrice = (priceStr: string): number => {
+        if (!priceStr) return 0;
+        return parseFloat(
+            priceStr
+                .replace('R$', '')
+                .replace(/\./g, '')
+                .replace(',', '.')
+                .trim()
+        ) || 0;
+    };
+
+    return {
+        data: {
+            client_name: clientName,
+            total_price: parsePrice(totalPriceStr),
+            status: status.toLowerCase(),
+            description: title,
+            job_date: date,
+            external_id: id,
+        },
+        validation,
+    };
+}
+
 // ===== IMPORT TYPE DETECTION =====
 
 export type ImportType = 'clients' | 'materials' | 'services' | 'orders' | 'unknown';
 
 export function detectImportType(headers: string[]): ImportType {
-    const headerSet = new Set(headers.map(h => h.toLowerCase()));
+    const headerSet = new Set(headers.map(h => h.toLowerCase().trim()));
 
-    if (headerSet.has('cnpj') || headerSet.has('cpf') || headerSet.has('corporatename')) {
+    // Clients
+    if (headerSet.has('cnpj') || headerSet.has('cpf') || headerSet.has('corporatename') ||
+        headerSet.has('nome') || headerSet.has('razão social')) {
+        // Double check it's not orders if 'cliente' is present
+        if (headerSet.has('id do job') || headerSet.has('valor total')) return 'orders';
         return 'clients';
     }
-    if (headerSet.has('trademark') || headerSet.has('barcode') || headerSet.has('internalcode')) {
+
+    // Materials
+    if (headerSet.has('trademark') || headerSet.has('barcode') || headerSet.has('internalcode') ||
+        headerSet.has('marca') || headerSet.has('código de barras')) {
         return 'materials';
     }
+
+    // Services
     if (headerSet.has('unitprice') && headerSet.has('unittype') && !headerSet.has('trademark')) {
         return 'services';
     }
-    if (headerSet.has('clientid') || headerSet.has('jobstatus') || headerSet.has('jobtitle')) {
+
+    // Orders
+    if (headerSet.has('clientid') || headerSet.has('jobstatus') || headerSet.has('jobtitle') ||
+        headerSet.has('id do job') || headerSet.has('valor total') || headerSet.has('status')) {
         return 'orders';
     }
 

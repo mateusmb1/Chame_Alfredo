@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useToast } from '../contexts/ToastContext';
 import { Conversation, Message } from '../types/communication';
@@ -13,15 +13,46 @@ const Communication: React.FC = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [showMobileChat, setShowMobileChat] = useState(false);
 
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const imageInputRef = React.useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const filteredMessages = currentConversationId
-        ? allMessages.filter(m => m.conversationId === currentConversationId)
-            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-        : [];
+    // Filter and sort messages
+    const filteredMessages = useMemo(() => {
+        if (!currentConversationId) return [];
+        return allMessages
+            .filter(m => m.conversationId === currentConversationId)
+            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    }, [currentConversationId, allMessages]);
 
-    React.useEffect(() => {
+    // Group messages by date
+    const groupedMessages = useMemo(() => {
+        const groups: { date: string; label: string; messages: Message[] }[] = [];
+        let currentDate = '';
+
+        filteredMessages.forEach(msg => {
+            const msgDate = new Date(msg.createdAt).toLocaleDateString('pt-BR');
+            if (msgDate !== currentDate) {
+                currentDate = msgDate;
+                const today = new Date().toLocaleDateString('pt-BR');
+                const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('pt-BR');
+                let label = msgDate;
+                if (msgDate === today) label = 'Hoje';
+                else if (msgDate === yesterday) label = 'Ontem';
+                groups.push({ date: msgDate, label, messages: [msg] });
+            } else {
+                groups[groups.length - 1].messages.push(msg);
+            }
+        });
+        return groups;
+    }, [filteredMessages]);
+
+    // Auto-scroll to bottom when new messages arrive
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [filteredMessages.length]);
+
+    useEffect(() => {
         if (selectedContact && activeTab === 'team') {
             getOrCreateConversation(selectedContact.id).then(id => {
                 setCurrentConversationId(id);
@@ -270,51 +301,65 @@ const Communication: React.FC = () => {
                         </div>
 
                         {/* Messages */}
-                        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-gray-50 dark:bg-gray-900">
-                            {filteredMessages.length === 0 ? (
+                        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-gray-50 dark:bg-gray-900">
+                            {groupedMessages.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 dark:text-gray-400">
                                     <span className="material-symbols-outlined text-5xl mb-2">chat_bubble</span>
                                     <p>Nenhuma mensagem ainda</p>
                                     <p className="text-sm">Envie a primeira mensagem!</p>
                                 </div>
                             ) : (
-                                filteredMessages.map((msg) => (
-                                    <div
-                                        key={msg.id}
-                                        className={`flex items-end gap-2 ${msg.senderType === 'admin' ? 'justify-end' : 'justify-start'}`}
-                                    >
-                                        {msg.senderType !== 'admin' && (
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                                {selectedContact.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
-                                            </div>
-                                        )}
-                                        <div className={`flex flex-col ${msg.senderType === 'admin' ? 'items-end' : 'items-start'} max-w-[80%] md:max-w-[70%]`}>
-                                            <div className={`p-3 rounded-2xl ${msg.senderType === 'admin'
-                                                ? 'bg-primary text-white rounded-br-md'
-                                                : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-bl-md shadow-sm'
-                                                }`}>
-                                                {msg.attachmentUrl && (
-                                                    <div className="mb-2">
-                                                        {msg.attachmentType === 'image' ? (
-                                                            <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer">
-                                                                <img src={msg.attachmentUrl} alt="Anexo" className="max-w-full rounded-lg shadow-sm cursor-zoom-in" />
-                                                            </a>
-                                                        ) : (
-                                                            <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
-                                                                <span className="material-symbols-outlined">description</span>
-                                                                <span className="text-xs truncate max-w-[120px]">Documento</span>
-                                                                <span className="material-symbols-outlined text-sm">download</span>
-                                                            </a>
-                                                        )}
+                                groupedMessages.map((group) => (
+                                    <div key={group.date} className="space-y-4">
+                                        {/* Date Separator */}
+                                        <div className="flex justify-center my-4">
+                                            <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-semibold rounded-full shadow-sm">
+                                                {group.label}
+                                            </span>
+                                        </div>
+
+                                        {group.messages.map((msg) => (
+                                            <div
+                                                key={msg.id}
+                                                className={`flex items-end gap-2 ${msg.senderType === 'admin' ? 'justify-end' : 'justify-start'}`}
+                                            >
+                                                {msg.senderType !== 'admin' && (
+                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-1 shadow-sm">
+                                                        {selectedContact.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                                                     </div>
                                                 )}
-                                                {msg.content && <p className="text-sm break-words">{msg.content}</p>}
+                                                <div className={`flex flex-col ${msg.senderType === 'admin' ? 'items-end' : 'items-start'} max-w-[85%] md:max-w-[70%]`}>
+                                                    <div className={`p-3 rounded-2xl shadow-sm ${msg.senderType === 'admin'
+                                                        ? 'bg-primary text-white rounded-br-none'
+                                                        : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-bl-none'
+                                                        }`}>
+                                                        {msg.attachmentUrl && (
+                                                            <div className="mb-2">
+                                                                {msg.attachmentType === 'image' ? (
+                                                                    <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer">
+                                                                        <img src={msg.attachmentUrl} alt="Anexo" className="max-w-full rounded-lg shadow-sm cursor-zoom-in" />
+                                                                    </a>
+                                                                ) : (
+                                                                    <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
+                                                                        <span className="material-symbols-outlined">description</span>
+                                                                        <span className="text-xs truncate max-w-[120px]">Documento</span>
+                                                                        <span className="material-symbols-outlined text-sm">download</span>
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        {msg.content && <p className="text-sm break-words whitespace-pre-wrap">{msg.content}</p>}
+                                                    </div>
+                                                    <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 px-1">
+                                                        {formatTime(msg.createdAt)}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatTime(msg.createdAt)}</span>
-                                        </div>
+                                        ))}
                                     </div>
                                 ))
                             )}
+                            <div ref={messagesEndRef} />
                         </div>
 
                         {/* Input */}
