@@ -299,7 +299,7 @@ const Orders: React.FC = () => {
                       <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{order.serviceType}</p>
                       <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
                         <button
-                          onClick={() => navigate(`/orders/detail/${order.id}`)}
+                          onClick={() => navigate(`/orders/${order.id}`)}
                           class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                           title="Ver Detalhes"
                         >

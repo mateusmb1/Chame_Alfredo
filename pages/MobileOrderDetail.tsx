@@ -64,68 +64,6 @@ const MobileOrderDetail: React.FC = () => {
         }
     }, [id, orders, navigate, photos.length, notes, signature, checkInOut.checkIn, checkInOut.checkOut]);
 
-    const handleCheckIn = async () => {
-        if ('geolocation' in navigator) {
-            setIsSaving(true);
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    const checkInData = {
-                        timestamp: new Date().toISOString(),
-                        location: {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude
-                        }
-                    };
-
-                    try {
-                        if (id) {
-                            await updateOrder(id, {
-                                checkIn: checkInData,
-                                status: 'em_andamento'
-                            });
-                            setCheckInOut(prev => ({ ...prev, checkIn: checkInData }));
-                            showToast('success', 'Check-in realizado! Ordem iniciada.');
-                        }
-                    } catch (error) {
-                        console.error('Error in check-in:', error);
-                        showToast('error', 'Erro ao salvar check-in');
-                    } finally {
-                        setIsSaving(false);
-                    }
-                },
-                (error) => {
-                    setIsSaving(false);
-                    showToast('error', 'Erro ao obter localização');
-                }
-            );
-        } else {
-            showToast('error', 'Geolocalização não disponível');
-        }
-    };
-
-    const handleCheckOut = () => {
-        if ('geolocation' in navigator) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const checkOutData = {
-                        timestamp: new Date().toISOString(),
-                        location: {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude
-                        }
-                    };
-                    setCheckInOut({ ...checkInOut, checkOut: checkOutData });
-                    if (order) {
-                        updateOrder(order.id, { checkOut: checkOutData });
-                    }
-                    showToast('success', 'Check-out realizado com sucesso!');
-                },
-                (error) => {
-                    showToast('error', 'Erro ao obter localização');
-                }
-            );
-        }
-    };
 
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -159,31 +97,54 @@ const MobileOrderDetail: React.FC = () => {
         }
     };
 
-    const handleStartOrder = () => {
-        if (order) {
-            updateOrder(order.id, { status: 'em_andamento' });
-            showToast('success', 'Ordem iniciada!');
+    const handleStartOrderIntegrated = async () => {
+        if (!('geolocation' in navigator)) {
+            showToast('error', 'Geolocalização não disponível');
+            return;
         }
+
+        setIsSaving(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const checkInData = {
+                    timestamp: new Date().toISOString(),
+                    location: {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    }
+                };
+
+                try {
+                    if (id) {
+                        await updateOrder(id, {
+                            checkIn: checkInData,
+                            status: 'em_andamento',
+                            servicePhotos: photos,
+                            serviceNotes: notes
+                        });
+                        setCheckInOut(prev => ({ ...prev, checkIn: checkInData }));
+                        showToast('success', 'Início de trabalho registrado com sucesso!');
+                    }
+                } catch (error) {
+                    console.error('Error starting order:', error);
+                    showToast('error', 'Erro ao registrar início');
+                } finally {
+                    setIsSaving(false);
+                }
+            },
+            (error) => {
+                setIsSaving(false);
+                showToast('error', 'Erro ao obter localização. Tente novamente.');
+            }
+        );
     };
 
-    const handleCompleteOrder = async () => {
+    const handleCompleteOrderIntegrated = async () => {
         const errors = [];
-
-        if (!checkInOut.checkIn) {
-            errors.push('Check-in é obrigatório');
-        }
-
-        if (photos.length === 0) {
-            errors.push('Pelo menos uma foto do serviço é obrigatória');
-        }
-
-        if (!notes.trim()) {
-            errors.push('Observações sobre o serviço são obrigatórias');
-        }
-
-        if (!signature) {
-            errors.push('Assinatura do cliente é obrigatória');
-        }
+        if (!checkInOut.checkIn) errors.push('Check-in inicial não encontrado');
+        if (photos.length === 0) errors.push('Adicione pelo menos uma foto');
+        if (!notes.trim()) errors.push('Adicione um relatório/observação');
+        if (!signature) errors.push('Assinatura do cliente é obrigatória');
 
         if (errors.length > 0) {
             errors.forEach(err => showToast('error', err));
@@ -193,27 +154,48 @@ const MobileOrderDetail: React.FC = () => {
             return;
         }
 
-        if (order) {
-            try {
-                await updateOrder(order.id, {
-                    status: 'concluida',
-                    completedDate: new Date().toISOString(),
-                    checkIn: checkInOut.checkIn,
-                    checkOut: checkInOut.checkOut || {
-                        timestamp: new Date().toISOString(),
-                        location: checkInOut.checkIn?.location
-                    },
-                    servicePhotos: photos,
-                    serviceNotes: notes,
-                    customerSignature: signature || undefined
-                });
-                showToast('success', 'Ordem concluída com sucesso!');
-                setTimeout(() => navigate('/mobile/dashboard'), 1500);
-            } catch (error) {
-                console.error('Error completing order:', error);
-                showToast('error', 'Erro ao concluir ordem');
-            }
+        if (!('geolocation' in navigator)) {
+            showToast('error', 'Geolocalização não disponível');
+            return;
         }
+
+        setIsSaving(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const checkOutData = {
+                    timestamp: new Date().toISOString(),
+                    location: {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    }
+                };
+
+                try {
+                    if (id) {
+                        await updateOrder(id, {
+                            status: 'concluida',
+                            completedDate: new Date().toISOString(),
+                            checkIn: checkInOut.checkIn,
+                            checkOut: checkOutData,
+                            servicePhotos: photos,
+                            serviceNotes: notes,
+                            customerSignature: signature || undefined
+                        });
+                        showToast('success', 'Serviço finalizado com sucesso!');
+                        setTimeout(() => navigate('/mobile/dashboard'), 1500);
+                    }
+                } catch (error) {
+                    console.error('Error completing order:', error);
+                    showToast('error', 'Erro ao finalizar serviço');
+                } finally {
+                    setIsSaving(false);
+                }
+            },
+            (error) => {
+                setIsSaving(false);
+                showToast('error', 'Erro ao obter localização para o check-out');
+            }
+        );
     };
 
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -294,18 +276,6 @@ const MobileOrderDetail: React.FC = () => {
         }
     };
 
-    const handleSaveNotes = async () => {
-        if (!id) return;
-        setIsSaving(true);
-        try {
-            await updateOrder(id, { serviceNotes: notes });
-            showToast('success', 'Observações salvas!');
-        } catch (error) {
-            showToast('error', 'Erro ao salvar observações');
-        } finally {
-            setIsSaving(false);
-        }
-    };
 
     if (!order || !technician) {
         return null;
@@ -334,192 +304,260 @@ const MobileOrderDetail: React.FC = () => {
             </div>
 
             <div className="p-4 space-y-4">
-                {/* Order Info */}
+                {/* Order Information Card */}
                 <div className="bg-white rounded-xl shadow-md p-4">
-                    <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">info</span>
-                        Informações do Serviço
+                    <h2 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary">description</span>
+                        Resumo do Pedido
                     </h2>
-                    <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                            <span className="text-gray-600">Tipo:</span>
-                            <span className="font-semibold text-gray-900">{order.serviceType}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-gray-600">Prioridade:</span>
-                            <span className="font-semibold text-gray-900">{order.priority}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-gray-600">Status:</span>
-                            <span className="font-semibold text-gray-900">{order.status}</span>
-                        </div>
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                        <p className="text-sm text-gray-700">{order.description}</p>
+                    <p className="text-sm text-gray-600 mb-2">{order.description}</p>
+                    <div className="flex gap-2">
+                        <span className="px-2 py-1 bg-gray-100 rounded text-xs font-semibold text-gray-600 uppercase tracking-wider">{order.serviceType}</span>
+                        <span className={`px-2 py-1 rounded text-xs font-semibold uppercase tracking-wider ${order.priority === 'urgente' ? 'bg-red-100 text-red-600' :
+                                order.priority === 'alta' ? 'bg-orange-100 text-orange-600' :
+                                    'bg-blue-100 text-blue-600'
+                            }`}>{order.priority}</span>
                     </div>
                 </div>
 
-                {/* Check-in/Check-out */}
-                <div className="bg-white rounded-xl shadow-md p-4">
-                    <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">location_on</span>
-                        Check-in / Check-out
-                    </h2>
-                    <div className="grid grid-cols-2 gap-3">
+                {/* Unified Workflow State Machine */}
+                {order.status === 'nova' ? (
+                    <div className="space-y-4">
+                        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                            <h2 className="font-bold text-blue-800 flex items-center gap-2">
+                                <span className="material-symbols-outlined">login</span>
+                                PASSO 1: Dando Início
+                            </h2>
+                            <p className="text-xs text-blue-600 mt-1">Registre fotos do local e uma observação de como o serviço está começando.</p>
+                        </div>
+
+                        {/* Initial Photos section */}
+                        <div className="bg-white rounded-xl shadow-md p-4">
+                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary">add_a_photo</span>
+                                Fotos do Início
+                            </h3>
+                            <div className="grid grid-cols-3 gap-2 mb-3">
+                                {photos.map(photo => (
+                                    <div key={photo.id} className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                                        <img src={photo.url} alt="Início" className="w-full h-full object-cover" />
+                                    </div>
+                                ))}
+                            </div>
+                            <label className="flex items-center justify-center gap-2 w-full py-3 bg-blue-50 text-primary font-bold rounded-lg border-2 border-dashed border-primary cursor-pointer active:bg-blue-100 transition-colors">
+                                {isUploadingPhoto ? (
+                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-white" />
+                                ) : (
+                                    <span className="material-symbols-outlined">camera_enhance</span>
+                                )}
+                                <span>{isUploadingPhoto ? 'Enviando...' : 'Tirar Foto do Início'}</span>
+                                <input type="file" accept="image/*" capture="environment" onChange={handlePhotoUpload} className="hidden" />
+                            </label>
+                        </div>
+
+                        {/* Initial Notes section */}
+                        <div className="bg-white rounded-xl shadow-md p-4">
+                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary">edit_note</span>
+                                Texto de Início
+                            </h3>
+                            <textarea
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                rows={3}
+                                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                placeholder="Descreva o início (ex: 'Dando início dos trabalhos com...')"
+                            />
+                        </div>
+
                         <button
-                            onClick={handleCheckIn}
-                            disabled={!!checkInOut.checkIn}
-                            className={`h-12 rounded-lg font-semibold flex items-center justify-center gap-2 ${checkInOut.checkIn
-                                ? 'bg-green-100 text-green-700 cursor-not-allowed'
-                                : 'bg-primary text-white hover:bg-primary/90'
-                                }`}
+                            onClick={handleStartOrderIntegrated}
+                            disabled={isSaving}
+                            className="w-full h-14 bg-primary text-white font-bold rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all text-lg"
                         >
-                            {isSaving && !checkInOut.checkIn ? (
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            {isSaving ? (
+                                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
                             ) : (
-                                <span className="material-symbols-outlined text-lg">login</span>
+                                <span className="material-symbols-outlined">play_circle</span>
                             )}
-                            {checkInOut.checkIn ? formatTime(checkInOut.checkIn.timestamp) : 'Check-in'}
-                        </button>
-                        <button
-                            onClick={handleCheckOut}
-                            disabled={!checkInOut.checkIn || !!checkInOut.checkOut}
-                            className={`h-12 rounded-lg font-semibold flex items-center justify-center gap-2 ${checkInOut.checkOut
-                                ? 'bg-green-100 text-green-700 cursor-not-allowed'
-                                : checkInOut.checkIn
-                                    ? 'bg-orange-500 text-white hover:bg-orange-600'
-                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                }`}
-                        >
-                            <span className="material-symbols-outlined text-lg">logout</span>
-                            {checkInOut.checkOut ? formatTime(checkInOut.checkOut.timestamp) : 'Check-out'}
+                            Fazer Check-in e Iniciar
                         </button>
                     </div>
-                </div>
+                ) : order.status === 'em_andamento' ? (
+                    <div className="space-y-4">
+                        <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+                            <h2 className="font-bold text-green-800 flex items-center gap-2">
+                                <span className="material-symbols-outlined">task_alt</span>
+                                PASSO 2: Finalizando Trabalho
+                            </h2>
+                            <p className="text-xs text-green-600 mt-1">Adicione as fotos finais, o relatório do que foi feito e colha a assinatura do cliente.</p>
+                        </div>
 
-                {/* Photos */}
-                <div className="bg-white rounded-xl shadow-md p-4">
-                    <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">photo_camera</span>
-                        Fotos do Serviço
-                    </h2>
-
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                        {photos.map(photo => (
-                            <div key={photo.id} className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-                                <img src={photo.url} alt="Foto do serviço" className="w-full h-full object-cover" />
+                        {/* Photos during/finish */}
+                        <div className="bg-white rounded-xl shadow-md p-4">
+                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary">add_photo_alternate</span>
+                                Fotos do Serviço / Final
+                            </h3>
+                            <div className="grid grid-cols-3 gap-2 mb-3">
+                                {photos.map(photo => (
+                                    <div key={photo.id} className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                                        <img src={photo.url} alt="Serviço" className="w-full h-full object-cover" />
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                            <label className="flex items-center justify-center gap-2 w-full py-3 bg-green-50 text-green-700 font-bold rounded-lg border-2 border-dashed border-green-400 cursor-pointer active:bg-green-100 transition-colors">
+                                {isUploadingPhoto ? (
+                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-green-700 border-t-white" />
+                                ) : (
+                                    <span className="material-symbols-outlined">camera_enhance</span>
+                                )}
+                                <span>{isUploadingPhoto ? 'Enviando...' : 'Adicionar Mais Fotos'}</span>
+                                <input type="file" accept="image/*" capture="environment" onChange={handlePhotoUpload} className="hidden" />
+                            </label>
+                        </div>
+
+                        {/* Relay notes during finish */}
+                        <div className="bg-white rounded-xl shadow-md p-4">
+                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary">rate_review</span>
+                                Relatório Final / Observações
+                            </h3>
+                            <textarea
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                rows={4}
+                                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-green-100 outline-none transition-all"
+                                placeholder="Relate o que foi feito (ex: 'Finalizado com ajuste de...')"
+                            />
+                        </div>
+
+                        {/* Signature section */}
+                        <div className="bg-white rounded-xl shadow-md p-4">
+                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary">draw</span>
+                                Assinatura do Cliente
+                            </h3>
+                            {signature ? (
+                                <div className="bg-green-100 border border-green-300 rounded-xl p-4 flex items-center justify-center gap-3 text-green-800">
+                                    <span className="material-symbols-outlined text-3xl">verified</span>
+                                    <div>
+                                        <p className="font-bold">Assinatura Coletada</p>
+                                        <button onClick={() => setIsSignatureModalOpen(true)} className="text-xs underline">Mudar assinatura</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setIsSignatureModalOpen(true)}
+                                    className="w-full py-4 bg-purple-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+                                >
+                                    <span className="material-symbols-outlined">gesture</span>
+                                    Colher Assinatura Agora
+                                </button>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={handleCompleteOrderIntegrated}
+                            disabled={isSaving}
+                            className="w-full h-16 bg-green-600 text-white font-bold rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all text-xl"
+                        >
+                            {isSaving ? (
+                                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
+                            ) : (
+                                <span className="material-symbols-outlined text-2xl">check_circle</span>
+                            )}
+                            Fazer Check-out e CONCLUIR
+                        </button>
                     </div>
+                ) : (
+                    <div className="space-y-4 pb-10">
+                        <div className="bg-green-600 rounded-2xl shadow-lg p-6 text-center text-white">
+                            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <span className="material-symbols-outlined text-4xl">verified</span>
+                            </div>
+                            <h2 className="text-xl font-bold">Serviço Concluído</h2>
+                            <p className="text-sm text-white/80">Finalizado em {order.completedDate && new Date(order.completedDate).toLocaleDateString()} às {order.completedDate && new Date(order.completedDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
 
-                    <label className="flex items-center justify-center gap-2 h-12 bg-blue-50 text-primary font-semibold rounded-lg border-2 border-dashed border-primary hover:bg-blue-100 transition-colors cursor-pointer">
-                        {isUploadingPhoto ? (
-                            <>
-                                <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-                                <span>Enviando...</span>
-                            </>
-                        ) : (
-                            <>
-                                <span className="material-symbols-outlined">add_a_photo</span>
-                                <span>Adicionar Foto</span>
-                            </>
-                        )}
-                        <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            onChange={handlePhotoUpload}
-                            className="hidden"
-                        />
-                    </label>
-                </div>
-
-                {/* Notes */}
-                <div className="bg-white rounded-xl shadow-md p-4">
-                    <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">edit_note</span>
-                        Observações
-                    </h2>
-                    <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        rows={4}
-                        className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3"
-                        placeholder="Adicione observações sobre o serviço..."
-                    />
-                    <button
-                        onClick={handleSaveNotes}
-                        disabled={isSaving}
-                        className="w-full h-10 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                    >
-                        {isSaving ? (
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        ) : (
-                            <span className="material-symbols-outlined text-lg">save</span>
-                        )}
-                        <span>Salvar Observações</span>
-                    </button>
-                </div>
-
-                {/* Signature */}
-                <div className="bg-white rounded-xl shadow-md p-4">
-                    <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">draw</span>
-                        Assinatura do Cliente
-                    </h2>
-                    {signature ? (
-                        <div className="border-2 border-green-500 rounded-lg p-4 bg-green-50">
-                            <div className="flex items-center justify-center gap-2 text-green-700">
-                                <span className="material-symbols-outlined">check_circle</span>
-                                <span className="font-semibold">Assinatura Capturada</span>
+                        {/* Summary of what was done */}
+                        <div className="bg-white rounded-xl shadow-md p-4">
+                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary">analytics</span>
+                                Relatório do Serviço
+                            </h3>
+                            <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-700 italic border-l-4 border-gray-300">
+                                {order.serviceNotes || 'Nenhuma observação registrada.'}
                             </div>
                         </div>
-                    ) : (
-                        <button
-                            onClick={() => setIsSignatureModalOpen(true)}
-                            className="w-full h-12 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
-                        >
-                            <span className="material-symbols-outlined">gesture</span>
-                            <span>Capturar Assinatura</span>
-                        </button>
-                    )}
-                </div>
 
-                {/* Actions */}
-                <div className="space-y-3">
-                    {order.status === 'nova' && (
-                        <button
-                            onClick={handleStartOrder}
-                            className="w-full h-12 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
-                        >
-                            <span className="material-symbols-outlined">play_arrow</span>
-                            <span>Iniciar Ordem</span>
-                        </button>
-                    )}
+                        {/* Photos section */}
+                        {photos.length > 0 && (
+                            <div className="bg-white rounded-xl shadow-md p-4">
+                                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-primary">collections</span>
+                                    fotos do Registro
+                                </h3>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {photos.map(photo => (
+                                        <div key={photo.id} className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                                            <img src={photo.url} alt="Evidência" className="w-full h-full object-cover" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
-                    {order.status === 'em_andamento' && (
+                        {/* SIGNATURE VISUALIZATION */}
+                        <div className="bg-white rounded-xl shadow-md p-4">
+                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary">history_edu</span>
+                                Assinatura do Cliente
+                            </h3>
+                            {order.customerSignature ? (
+                                <div className="bg-gray-50 rounded-xl p-4 border-2 border-dashed border-gray-200">
+                                    <img
+                                        src={order.customerSignature}
+                                        alt="Assinatura"
+                                        className="max-h-32 mx-auto mix-blend-multiply"
+                                    />
+                                    <div className="mt-3 pt-3 border-t border-gray-100 text-center">
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase">Assinado Digitalmente pelo Cliente</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="p-4 text-center text-gray-400 italic text-sm">
+                                    Nenhuma assinatura registrada.
+                                </div>
+                            )}
+                        </div>
+
                         <button
-                            onClick={handleCompleteOrder}
-                            className="w-full h-12 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                            onClick={() => navigate('/mobile/dashboard')}
+                            className="w-full py-4 bg-gray-900 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all"
                         >
-                            <span className="material-symbols-outlined">check_circle</span>
-                            <span>Concluir Ordem</span>
+                            Voltar para o Painel
                         </button>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
-            {/* Signature Modal */}
+            {/* Signature Modal Overlay */}
             {isSignatureModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-hidden">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-                        <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Assinatura do Cliente</h3>
+                <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-[100] animate-in fade-in duration-200">
+                    <div className="bg-white rounded-t-3xl sm:rounded-3xl p-6 w-full max-w-lg shadow-2xl animate-in slide-in-from-bottom duration-300">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter italic">Assinatura Digital</h3>
+                            <button onClick={() => setIsSignatureModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
 
-                        <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl overflow-hidden mb-4 relative h-64 touch-none">
+                        <div className="bg-gray-100 border-x-2 border-t-2 border-b-4 border-gray-300 rounded-2xl overflow-hidden mb-6 relative h-64 touch-none shadow-inner border-double">
                             <canvas
                                 ref={canvasRef}
-                                width={400}
-                                height={256}
+                                width={500}
+                                height={300}
                                 className="w-full h-full cursor-crosshair"
                                 onMouseDown={startDrawing}
                                 onMouseMove={draw}
@@ -529,34 +567,28 @@ const MobileOrderDetail: React.FC = () => {
                                 onTouchMove={draw}
                                 onTouchEnd={endDrawing}
                             />
+                            <div className="absolute bottom-2 left-0 right-0 text-center text-[10px] text-gray-400 font-bold uppercase pointer-events-none">Espaço para assinatura manuscrita</div>
                         </div>
 
-                        <div className="flex flex-col gap-3">
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={clearSignature}
-                                    className="flex-1 h-12 bg-gray-100 text-gray-600 font-semibold rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <span className="material-symbols-outlined text-lg">delete</span>
-                                    Limpar
-                                </button>
-                                <button
-                                    onClick={handleSaveSignature}
-                                    className="flex-1 h-12 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    {isSaving ? (
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    ) : (
-                                        <span className="material-symbols-outlined text-lg">check</span>
-                                    )}
-                                    Confirmar
-                                </button>
-                            </div>
+                        <div className="grid grid-cols-2 gap-4">
                             <button
-                                onClick={() => setIsSignatureModalOpen(false)}
-                                className="w-full h-12 text-gray-400 font-medium text-sm"
+                                onClick={clearSignature}
+                                className="h-14 bg-gray-100 text-gray-600 font-black rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 uppercase text-sm border-b-4 border-gray-300 active:border-b-0"
                             >
-                                Cancelar
+                                <span className="material-symbols-outlined">delete_sweep</span>
+                                Limpar
+                            </button>
+                            <button
+                                onClick={handleSaveSignature}
+                                disabled={isSaving}
+                                className="h-14 bg-primary text-white font-black rounded-xl shadow-lg flex items-center justify-center gap-2 uppercase text-sm border-b-4 border-blue-800 active:border-b-0 disabled:opacity-50"
+                            >
+                                {isSaving ? (
+                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+                                ) : (
+                                    <span className="material-symbols-outlined">verified</span>
+                                )}
+                                Confirmar
                             </button>
                         </div>
                     </div>
