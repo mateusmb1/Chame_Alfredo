@@ -1,0 +1,96 @@
+﻿address.cep,52041-080
+address.city,Recife
+address.district,Encruzilhada
+address.number,Térreo
+address.state,Pernambuco (PE)
+address.street,Avenida Norte Miguel Arraes de Alencar
+address.streetNumber,3003
+cnpjInfo.estabelecimento.atividade_principal.classe,43.21-5
+cnpjInfo.estabelecimento.atividade_principal.descricao,Instalação e manutenção elétrica
+cnpjInfo.estabelecimento.atividade_principal.divisao,43
+cnpjInfo.estabelecimento.atividade_principal.grupo,43.2
+cnpjInfo.estabelecimento.atividade_principal.id,4321500
+cnpjInfo.estabelecimento.atividade_principal.secao,F
+cnpjInfo.estabelecimento.atividade_principal.subclasse,4321-5/00
+cnpjInfo.estabelecimento.atividades_secundarias.classe,62.09-1
+cnpjInfo.estabelecimento.atividades_secundarias.descricao,"Suporte técnico, manutenção e outros serviços em tecnologia da informação"
+cnpjInfo.estabelecimento.atividades_secundarias.divisao,62
+cnpjInfo.estabelecimento.atividades_secundarias.grupo,62.0
+cnpjInfo.estabelecimento.atividades_secundarias.id,6209100
+cnpjInfo.estabelecimento.atividades_secundarias.secao,J
+cnpjInfo.estabelecimento.atividades_secundarias.subclasse,6209-1/00
+cnpjInfo.estabelecimento.atividades_secundarias.classe,33.29-5
+cnpjInfo.estabelecimento.atividades_secundarias.descricao,Instalação de outros equipamentos não especificados anteriormente
+cnpjInfo.estabelecimento.atividades_secundarias.divisao,33
+cnpjInfo.estabelecimento.atividades_secundarias.grupo,33.2
+cnpjInfo.estabelecimento.atividades_secundarias.id,3329599
+cnpjInfo.estabelecimento.atividades_secundarias.secao,C
+cnpjInfo.estabelecimento.atividades_secundarias.subclasse,3329-5/99
+cnpjInfo.estabelecimento.atividades_secundarias.classe,95.11-8
+cnpjInfo.estabelecimento.atividades_secundarias.descricao,Reparação e manutenção de computadores e de equipamentos periféricos
+cnpjInfo.estabelecimento.atividades_secundarias.divisao,95
+cnpjInfo.estabelecimento.atividades_secundarias.grupo,95.1
+cnpjInfo.estabelecimento.atividades_secundarias.id,9511800
+cnpjInfo.estabelecimento.atividades_secundarias.secao,S
+cnpjInfo.estabelecimento.atividades_secundarias.subclasse,9511-8/00
+cnpjInfo.estabelecimento.atividades_secundarias.classe,95.12-6
+cnpjInfo.estabelecimento.atividades_secundarias.descricao,Reparação e manutenção de equipamentos de comunicação
+cnpjInfo.estabelecimento.atividades_secundarias.divisao,95
+cnpjInfo.estabelecimento.atividades_secundarias.grupo,95.1
+cnpjInfo.estabelecimento.atividades_secundarias.id,9512600
+cnpjInfo.estabelecimento.atividades_secundarias.secao,S
+cnpjInfo.estabelecimento.atividades_secundarias.subclasse,9512-6/00
+cnpjInfo.estabelecimento.cidade.ibge_id,2611606
+cnpjInfo.estabelecimento.cidade.id,1598
+cnpjInfo.estabelecimento.cidade.nome,Recife
+cnpjInfo.estabelecimento.cidade.siafi_id,2531
+cnpjInfo.estabelecimento.cnpj,29538091000103
+cnpjInfo.estabelecimento.data_inicio_atividade,2018-01-26
+cnpjInfo.estabelecimento.estado.ibge_id,26
+cnpjInfo.estabelecimento.estado.id,16
+cnpjInfo.estabelecimento.estado.nome,Pernambuco
+cnpjInfo.estabelecimento.estado.sigla,PE
+cnpjInfo.estabelecimento.situacao_cadastral,Ativa
+cnpjInfo.natureza_juridica.descricao,Empresário (Individual)
+cnpjInfo.natureza_juridica.id,2135
+cnpjInfo.porte.descricao,Micro Empresa
+cnpjInfo.porte.id,01
+cnpjInfo.simples.atualizado_em,2022-08-13T03:00:00.000Z
+cnpjInfo.simples.data_exclusao_Simples,
+cnpjInfo.simples.data_exclusao_mei,
+cnpjInfo.simples.data_opcao_mei,
+cnpjInfo.simples.data_opcao_simples,2019-01-01
+cnpjInfo.simples.mei,Não
+cnpjInfo.simples.simples,Não
+corporateName,MANOEL ALFREDO DA SILVA JUNIOR
+currentPayment,iugu
+details.cnpj,29.538.091/0001-03
+details.companyName,Chame Alfredo!
+details.dob,
+details.facebook,chamealfredo
+details.fieldOfWork,prestação serviços manutençao predial
+details.instagram,@chamealfrefo
+details.slogan,Facilitando sua vida!
+details.waBusiness,81.99289-2423
+email,chamealfredo@gmail.com
+firstName,Atendimento
+fop.account,13003304-4
+fop.accountType,Corrente
+fop.bank,Santander
+fop.bankSlip,true
+fop.bankTransfer,true
+fop.branch,3124
+fop.cash,true
+fop.cheque,true
+fop.cpf_cnpj,29.538.091/0001-03
+fop.creditCard,true
+fop.debitCard,true
+fop.pix,true
+fop.pixNumber,chamealfredo@gmail.com
+lastName,Suporte Técnico
+phone,+55 (81) 9289-2423
+phoneWA,true
+picture,https://firebasestorage.googleapis.com/v0/b/agendaboa-5e5c7.appspot.com/o/SfbI7YEgzYfZ1I5LOj00rN83nLx1.jpg?alt=media&token=bc32e039-eaab-445e-8b4c-54630b82b12c
+pop,free_trial_25/09/2025
+signature,https://firebasestorage.googleapis.com/v0/b/agendaboa-5e5c7.appspot.com/o/signatures%2FSfbI7YEgzYfZ1I5LOj00rN83nLx1.jpg?alt=media&token=a662c4dd-99d3-44e0-9554-4c1ef783af03
+updateProfileTime,1731460660356

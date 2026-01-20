@@ -109,3 +109,27 @@ CREATE POLICY "Enable read access for all users" ON project_activities FOR SELEC
 CREATE POLICY "Enable insert access for all users" ON project_activities FOR INSERT WITH CHECK (true);
 CREATE POLICY "Enable update access for all users" ON project_activities FOR UPDATE USING (true);
 CREATE POLICY "Enable delete access for all users" ON project_activities FOR DELETE USING (true);
+
+-- Create Company Settings Table
+CREATE TABLE IF NOT EXISTS company_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_name TEXT,
+  cnpj TEXT,
+  email TEXT,
+  phone TEXT,
+  logo_url TEXT,
+  cep TEXT,
+  street TEXT,
+  number TEXT,
+  complement TEXT,
+  city TEXT,
+  state TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE company_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Enable read access for all users" ON company_settings FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON company_settings FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON company_settings FOR UPDATE USING (true);
+CREATE POLICY "Enable delete access for all users" ON company_settings FOR DELETE USING (true);
