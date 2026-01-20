@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { useApp, Contract } from '../contexts/AppContext';
+import { useApp } from '../contexts/AppContext';
+import { Contract } from '../types/contract';
 import { useToast } from '../contexts/ToastContext';
 
 const Contracts: React.FC = () => {
@@ -20,7 +21,7 @@ const Contracts: React.FC = () => {
         contractType: 'manutencao' as 'manutencao' | 'instalacao' | 'consultoria' | 'suporte' | 'outro',
         description: '',
         value: '',
-        periodicity: 'mensal' as 'mensal' | 'trimestral' | 'semestral' | 'anual',
+        billingFrequency: 'mensal' as 'mensal' | 'trimestral' | 'semestral' | 'anual',
         startDate: '',
         endDate: '',
         status: 'ativo' as 'ativo' | 'suspenso' | 'cancelado' | 'expirado',
@@ -56,7 +57,7 @@ const Contracts: React.FC = () => {
             contractType: contract.contractType,
             description: contract.description,
             value: String(contract.value),
-            periodicity: contract.periodicity,
+            billingFrequency: contract.periodicity || contract.billingFrequency,
             startDate: contract.startDate,
             endDate: contract.endDate,
             status: contract.status,
@@ -142,13 +143,13 @@ const Contracts: React.FC = () => {
         }
     };
 
-    const getPeriodicityLabel = (periodicity: string) => {
-        switch (periodicity) {
+    const getPeriodicityLabel = (billingFrequency: string) => {
+        switch (billingFrequency) {
             case 'mensal': return 'Mensal';
             case 'trimestral': return 'Trimestral';
             case 'semestral': return 'Semestral';
             case 'anual': return 'Anual';
-            default: return periodicity;
+            default: return billingFrequency;
         }
     };
 
@@ -245,8 +246,8 @@ const Contracts: React.FC = () => {
                         <div>
                             <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Periodicidade *</label>
                             <select
-                                value={formData.periodicity}
-                                onChange={(e) => setFormData({ ...formData, periodicity: e.target.value as any })}
+                                value={formData.billingFrequency}
+                                onChange={(e) => setFormData({ ...formData, billingFrequency: e.target.value as any })}
                                 class="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                                 required
                             >
@@ -389,8 +390,8 @@ const Contracts: React.FC = () => {
                                     key={contract.id}
                                     onClick={() => setSelectedContract(contract)}
                                     class={`p-4 rounded-lg border cursor-pointer transition-all ${selectedContract?.id === contract.id
-                                            ? 'border-primary bg-primary/5 dark:bg-primary/10'
-                                            : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
+                                        ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                                        : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                                         }`}
                                 >
                                     <div class="flex items-start justify-between mb-2">
@@ -404,7 +405,7 @@ const Contracts: React.FC = () => {
                                     </div>
                                     <div class="flex items-center justify-between text-sm">
                                         <span class="text-gray-600 dark:text-gray-400">{getContractTypeLabel(contract.contractType)}</span>
-                                        <span class="font-semibold text-primary">{formatCurrency(contract.value)}/{getPeriodicityLabel(contract.periodicity)}</span>
+                                        <span class="font-semibold text-primary">{formatCurrency(contract.value)}/{getPeriodicityLabel(contract.billingFrequency || contract.periodicity)}</span>
                                     </div>
                                 </div>
                             ))}
@@ -453,7 +454,7 @@ const Contracts: React.FC = () => {
                                     </div>
                                     <div>
                                         <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Periodicidade</label>
-                                        <p class="text-base font-semibold text-gray-900 dark:text-white">{getPeriodicityLabel(selectedContract.periodicity)}</p>
+                                        <p class="text-base font-semibold text-gray-900 dark:text-white">{getPeriodicityLabel(selectedContract.billingFrequency || selectedContract.periodicity)}</p>
                                     </div>
                                     <div>
                                         <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Dia de Pagamento</label>

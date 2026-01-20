@@ -19,6 +19,7 @@ export interface Quote {
   notes: string;
   createdAt: string;
   updatedAt: string;
+  signatureData?: string;
 }
 
 export interface CreateQuoteData {

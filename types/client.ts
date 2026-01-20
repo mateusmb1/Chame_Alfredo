@@ -11,4 +11,11 @@ export interface Client {
   contracts: string[];
   notes?: string;
   type?: 'pf' | 'pj';
+  password?: string;
+  username?: string;
+  lastLogin?: string;
+  preferences?: {
+    notifications: boolean;
+    emailAlerts: boolean;
+  };
 }

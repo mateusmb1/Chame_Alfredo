@@ -38,9 +38,14 @@ import InvoicePreview from './downloader/pages/invoices/InvoicePreview';
 import InvoicePrintConfig from './downloader/pages/invoices/InvoicePrintConfig';
 import ProductList from './downloader/pages/products/ProductList';
 import ProductForm from './downloader/pages/products/ProductForm';
-import ContractList from './downloader/pages/contracts/ContractList';
-import ContractForm from './downloader/pages/contracts/ContractForm';
-import ContractDetails from './downloader/pages/contracts/ContractDetails';
+
+// Client Portal Pages
+import ClientLayout from './components/ClientLayout';
+import ClientDashboard from './pages/client/ClientDashboard';
+import ClientQuotes from './pages/client/ClientQuotes';
+import ClientInvoices from './pages/client/ClientInvoices';
+import ClientChat from './pages/client/ClientChat';
+import ClientReports from './pages/client/ClientReports';
 
 // Layout wrapper to handle sidebar visibility
 const AppLayout: React.FC = () => {
@@ -58,13 +63,12 @@ const AppLayout: React.FC = () => {
         <Route path="/invoices/new" element={<InvoiceForm />} />
         <Route path="/invoices/:id" element={<InvoicePreview />} />
         <Route path="/invoices/:id/print-config" element={<InvoicePrintConfig />} />
-        <Route path="/contracts" element={<ContractList />} />
-        <Route path="/contracts/new" element={<ContractForm />} />
-        <Route path="/contracts/:id" element={<ContractDetails />} />
+        <Route path="/contracts" element={<Contracts />} />
+        <Route path="/contracts/new" element={<Contracts />} />
+        <Route path="/contracts/:id" element={<Contracts />} />
         <Route path="/products" element={<ProductList />} />
         <Route path="/products/new" element={<ProductForm />} />
         <Route path="/clients" element={<Clients />} />
-        <Route path="/contracts" element={<Contracts />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/inventory" element={<Inventory />} />
@@ -76,6 +80,20 @@ const AppLayout: React.FC = () => {
         <Route path="/settings" element={<Settings />} />
       </Routes>
     </Layout>
+  );
+};
+
+const ClientAppLayout: React.FC = () => {
+  return (
+    <ClientLayout>
+      <Routes>
+        <Route path="/dashboard" element={<ClientDashboard />} />
+        <Route path="/quotes" element={<ClientQuotes />} />
+        <Route path="/invoices" element={<ClientInvoices />} />
+        <Route path="/chat" element={<ClientChat />} />
+        <Route path="/reports" element={<ClientReports />} />
+      </Routes>
+    </ClientLayout>
   );
 };
 
@@ -95,6 +113,7 @@ const App: React.FC = () => {
             <Route path="/mobile/chat" element={<MobileChat />} />
             <Route path="/mobile/profile" element={<MobileProfile />} />
             <Route path="/mobile/order/new" element={<MobileCreateOrder />} />
+            <Route path="/client/*" element={<ClientAppLayout />} />
             <Route path="/*" element={<AppLayout />} />
           </Routes>
         </BrowserRouter>

@@ -64,16 +64,16 @@ const Landing: React.FC = () => {
     try {
       // 1. Check if client exists by phone
       const cleanPhone = formData.whatsapp.replace(/\D/g, '')
-      let clientId = null
+      let client = null
 
       const { data: existingClients } = await supabase
         .from('clients')
-        .select('id')
+        .select('*')
         .eq('phone', cleanPhone)
         .limit(1)
 
       if (existingClients && existingClients.length > 0) {
-        clientId = existingClients[0].id
+        client = existingClients[0]
       } else {
         // 2. Create new client
         const { data: newClient, error: clientError } = await supabase
@@ -82,13 +82,15 @@ const Landing: React.FC = () => {
             name: formData.name,
             phone: cleanPhone,
             type: 'pf',
-            status: 'active'
+            status: 'active',
+            username: cleanPhone, // Default username is phone
+            password: '123' // Default password for demo
           }])
           .select()
           .single()
 
         if (clientError) throw clientError
-        clientId = newClient.id
+        client = newClient
       }
 
       // 3. Map service to priority and description
@@ -105,7 +107,7 @@ const Landing: React.FC = () => {
       const { data: newOrder, error: orderError } = await supabase
         .from('orders')
         .insert([{
-          client_id: clientId,
+          client_id: client.id,
           client_name: formData.name,
           service_type: serviceInfo.serviceType,
           description: `Solicitação via site - ${serviceInfo.serviceType}`,

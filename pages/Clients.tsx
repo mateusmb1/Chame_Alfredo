@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useApp } from '../contexts/AppContext';
@@ -6,7 +7,7 @@ import { Client } from '../types/client';
 import { useToast } from '../contexts/ToastContext';
 
 const Clients: React.FC = () => {
-  const { clients, addClient, updateClient, deleteClient } = useApp();
+  const { clients, contracts, addClient, updateClient, deleteClient } = useApp();
   const { showToast } = useToast();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -494,6 +495,40 @@ const Clients: React.FC = () => {
                       ) : (
                         <p className="text-sm text-gray-500 italic">Nenhum serviço registrado.</p>
                       )}
+                    </div>
+
+                    {/* Contracts Section */}
+                    <div>
+                      <div className="flex items-center justify-between mb-3 mt-4">
+                        <h4 className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Contratos de Manutenção</h4>
+                        <Link to="/contracts" className="text-[10px] font-bold text-primary hover:underline">Ver Todos</Link>
+                      </div>
+                      {(() => {
+                        const clientContracts = contracts.filter(c => c.clientId === selectedClient.id);
+                        return clientContracts.length > 0 ? (
+                          <div className="space-y-2">
+                            {clientContracts.map(contract => (
+                              <Link key={contract.id} to={`/contracts`} className="block p-3 rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 hover:border-primary/30 transition-all">
+                                <div className="flex justify-between items-start mb-1">
+                                  <p className="text-sm font-bold text-gray-900 dark:text-white capitalize">{contract.contractType || 'Contrato'}</p>
+                                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase ${contract.status === 'ativo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                                    }`}>
+                                    {contract.status}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500">Valor: R$ {contract.value.toLocaleString()}</p>
+                              </Link>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="p-4 rounded-xl border-2 border-dashed border-gray-100 dark:border-gray-800 text-center">
+                            <p className="text-xs text-gray-500 mb-2">Sem contratos ativos</p>
+                            <Link to="/contracts" className="text-xs font-bold text-primary inline-flex items-center gap-1">
+                              <span className="material-symbols-outlined text-sm">add</span> Gerar Contrato
+                            </Link>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>

@@ -31,6 +31,7 @@ interface AppContextType {
     addClient: (client: Omit<Client, 'id' | 'status' | 'createdAt'>) => Promise<void>;
     updateClient: (id: string, updatedClient: Partial<Client>) => Promise<void>;
     deleteClient: (id: string) => Promise<void>;
+    authenticateClient: (username: string, password: string) => Client | null;
 
     // Order operations
     addOrder: (order: Omit<Order, 'id' | 'status' | 'createdAt'>) => Promise<void>;
@@ -46,6 +47,7 @@ interface AppContextType {
     addQuote: (quote: Omit<Quote, 'id' | 'createdAt'>) => void;
     updateQuote: (id: string, updates: Partial<Quote>) => void;
     deleteQuote: (id: string) => void;
+    saveQuoteSignature: (id: string, signature: string) => Promise<void>;
 
     // Contract operations
     addContract: (contract: Omit<Contract, 'id' | 'createdAt'>) => void;
@@ -235,6 +237,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         createdAt: data.created_at,
         // Ensure arrays are initialized
         contracts: data.contracts || [],
+        lastLogin: data.last_login,
+        preferences: data.preferences,
     });
 
     // Helper to map App client to DB client
@@ -244,6 +248,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...rest,
             ...(cpfCnpj !== undefined && { cpf_cnpj: cpfCnpj }),
             ...(serviceHistory !== undefined && { service_history: serviceHistory }),
+            ...(client.lastLogin !== undefined && { last_login: client.lastLogin }),
+            ...(client.preferences !== undefined && { preferences: client.preferences }),
             // createdAt is usually handled by DB default, but if passed:
             ...(createdAt !== undefined && { created_at: createdAt }),
         };
@@ -828,6 +834,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     }, [contracts, orders, supabase]);
 
+    const authenticateClient = React.useCallback((username: string, password: string): Client | null => {
+        const client = clients.find(c => c.username === username && c.password === password);
+        if (client) {
+            // Update last login in background
+            updateClient(client.id, { lastLogin: new Date().toISOString() });
+        }
+        return client || null;
+    }, [clients, updateClient]);
+
+    const saveQuoteSignature = React.useCallback(async (id: string, signature: string) => {
+        const { error } = await supabase
+            .from('quotes')
+            .update({ signature_data: signature, status: 'approved', updated_at: new Date().toISOString() })
+            .eq('id', id);
+        if (error) console.error('Error saving signature:', error);
+    }, [supabase]);
+
     const value: AppContextType = React.useMemo(() => ({
         clients,
         orders,
@@ -847,6 +870,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addClient,
         updateClient,
         deleteClient,
+        authenticateClient,
 
         // Order operations
         addOrder,
@@ -862,6 +886,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addQuote,
         updateQuote,
         deleteQuote,
+        saveQuoteSignature,
 
         // Contract operations
         addContract,
@@ -902,8 +927,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }), [
         clients, orders, inventory, quotes, contracts, technicians, projects, projectActivities,
         products, invoices, appointments, conversations, messages, onNewOrderCallback,
-        addClient, updateClient, deleteClient, addOrder, updateOrder, deleteOrder,
-        addInventoryItem, updateInventoryItem, deleteInventoryItem, addQuote, updateQuote, deleteQuote,
+        addClient, updateClient, deleteClient, authenticateClient, addOrder, updateOrder, deleteOrder,
+        addInventoryItem, updateInventoryItem, deleteInventoryItem, addQuote, updateQuote, deleteQuote, saveQuoteSignature,
         addContract, updateContract, deleteContract, addTechnician, updateTechnician, deleteTechnician,
         authenticateTechnician, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
         addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder,
