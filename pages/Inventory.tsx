@@ -4,9 +4,25 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { useApp } from '../contexts/AppContext';
 import { useToast } from '../contexts/ToastContext';
 import { InventoryItem } from '../types/inventory';
-import { Search, Filter, Plus, Edit2, Trash2, Package, AlertTriangle, DollarSign } from 'lucide-react';
+import {
+    Search,
+    Filter,
+    Plus,
+    Edit2,
+    Trash2,
+    Package,
+    AlertTriangle,
+    DollarSign,
+    ChevronRight,
+    Archive,
+    MapPin,
+    TrendingDown,
+    Layers,
+    CheckCircle2,
+    XCircle
+} from 'lucide-react';
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 12;
 
 const Inventory: React.FC = () => {
     const { inventory, addInventoryItem, updateInventoryItem, deleteInventoryItem } = useApp();
@@ -24,7 +40,6 @@ const Inventory: React.FC = () => {
         name: '', sku: '', quantity: '', location: '', minQuantity: '', unit: '', category: '', price: '', supplier: ''
     });
 
-    // Filter and paginate
     const filteredItems = inventory.filter(item =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.sku.toLowerCase().includes(searchTerm.toLowerCase())
@@ -36,7 +51,6 @@ const Inventory: React.FC = () => {
         currentPage * ITEMS_PER_PAGE
     );
 
-    // Stats
     const totalItems = inventory.length;
     const lowStockItems = inventory.filter(i => i.quantity > 0 && i.quantity <= i.minQuantity).length;
     const outOfStock = inventory.filter(i => i.quantity === 0).length;
@@ -72,10 +86,10 @@ const Inventory: React.FC = () => {
 
         if (isEditMode && editingItemId) {
             updateInventoryItem(editingItemId, itemData);
-            showToast('success', 'Item atualizado com sucesso!');
+            showToast('success', 'Item atualizado!');
         } else {
             addInventoryItem(itemData);
-            showToast('success', 'Item adicionado ao estoque!');
+            showToast('success', 'Item adicionado!');
         }
         setIsModalOpen(false);
     };
@@ -94,273 +108,299 @@ const Inventory: React.FC = () => {
     };
 
     const getStockStatus = (item: InventoryItem) => {
-        if (item.quantity === 0) return 'esgotado';
-        if (item.quantity <= item.minQuantity) return 'baixo';
-        return 'ok';
+        if (item.quantity === 0) return { label: 'Esgotado', color: 'text-red-600 bg-red-50 dark:bg-red-500/10', icon: XCircle };
+        if (item.quantity <= item.minQuantity) return { label: 'Estoque Baixo', color: 'text-amber-600 bg-amber-50 dark:bg-amber-500/10', icon: TrendingDown };
+        return { label: 'Em Estoque', color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10', icon: CheckCircle2 };
     };
 
     const formatCurrency = (value: number) =>
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
     return (
-        <div className="p-6 max-w-full overflow-hidden">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gerenciamento de Inventário</h1>
+        <div className="space-y-6">
+            {/* Header Area */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-[#0d121b] dark:text-white tracking-tight">Inventário</h1>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Controle de peças, ferramentas e equipamentos.</p>
+                </div>
                 <button
                     onClick={handleOpenNewItemModal}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                    className="flex items-center justify-center gap-2 bg-primary text-white px-5 py-2.5 rounded-2xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95"
                 >
-                    <Plus className="w-4 h-4" /> Adicionar Item
+                    <Plus className="w-5 h-5" />
+                    <span>Novo Item</span>
                 </button>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                            <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                    { label: 'Total Itens', value: totalItems, icon: Package, color: 'text-blue-600', bg: 'bg-blue-500/10' },
+                    { label: 'Estoque Baixo', value: lowStockItems, icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-500/10' },
+                    { label: 'Esgotados', value: outOfStock, icon: XCircle, color: 'text-red-600', bg: 'bg-red-500/10' },
+                    { label: 'Valor Total', value: formatCurrency(totalValue), icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-500/10' }
+                ].map((stat, i) => (
+                    <div key={i} className="bg-white dark:bg-[#101622] p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-3">
+                        <div className={`p-2 rounded-xl ${stat.bg} ${stat.color}`}>
+                            <stat.icon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalItems}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Total de Itens</p>
+                            <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider leading-none mb-1">{stat.label}</p>
+                            <p className="text-lg font-bold text-[#0d121b] dark:text-white leading-none">{stat.value}</p>
                         </div>
                     </div>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
-                            <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{lowStockItems}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Estoque Baixo</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                            <Package className="w-5 h-5 text-red-600 dark:text-red-400" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{outOfStock}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Esgotados</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                            <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Valor em Estoque</p>
-                        </div>
-                    </div>
-                </div>
+                ))}
             </div>
 
-            {/* Search & Filters */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            {/* Search & Tabs Overlay */}
+            <div className="bg-white dark:bg-[#101622] rounded-3xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row md:items-center gap-4">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                         type="text"
                         value={searchTerm}
                         onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                        className="w-full h-10 pl-10 pr-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm focus:ring-primary focus:border-primary"
                         placeholder="Buscar por nome ou SKU..."
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-white/5 border-none rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 dark:text-white"
                     />
                 </div>
-                <button className="flex items-center gap-2 h-10 px-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <Filter className="w-4 h-4" /> Filtros
+                <button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-white/10 transition-all">
+                    <Filter className="w-4 h-4" />
+                    <span>Filtros</span>
                 </button>
             </div>
 
-            {/* Table */}
-            {inventory.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <Package className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Nenhum item no estoque</h2>
-                    <p className="text-gray-500 dark:text-gray-400 mb-4 text-sm">Comece adicionando seu primeiro item.</p>
-                    <button onClick={handleOpenNewItemModal} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm">
-                        Adicionar Item
-                    </button>
-                </div>
-            ) : (
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Produto</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">SKU</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Qtd</th>
-                                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Preço</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Status</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                {paginatedItems.map(item => {
-                                    const status = getStockStatus(item);
-                                    return (
-                                        <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                        <Package className="w-5 h-5 text-gray-400" />
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{item.name}</p>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.category || 'Sem categoria'}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 font-mono">{item.sku}</td>
-                                            <td className="px-4 py-3 text-center">
-                                                <span className={`inline-flex items-center justify-center min-w-[60px] px-2 py-1 rounded-full text-xs font-bold ${status === 'ok' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                        status === 'baixo' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                                            'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                    }`}>
-                                                    {item.quantity} {item.unit || 'un'}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
-                                                {formatCurrency(item.price || 0)}
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${status === 'ok' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                        status === 'baixo' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                                            'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                    }`}>
-                                                    {status === 'ok' ? 'Em Estoque' : status === 'baixo' ? 'Baixo' : 'Esgotado'}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center justify-center gap-1">
-                                                    <button onClick={() => handleOpenEditModal(item)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" title="Editar">
-                                                        <Edit2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                                    </button>
-                                                    <button onClick={() => handleDeleteClick(item.id)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" title="Excluir">
-                                                        <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+            {/* Grid of Items */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                {paginatedItems.length === 0 ? (
+                    <div className="col-span-full py-20 bg-white dark:bg-[#101622] rounded-3xl border border-dashed border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center text-gray-400">
+                        <Archive className="w-12 h-12 mb-4 opacity-20" />
+                        <p className="font-medium text-sm text-gray-500">Nenhum item encontrado</p>
                     </div>
-
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1} a {Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)} de {filteredItems.length}
-                            </p>
-                            <div className="flex gap-1">
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                    className="px-3 py-1 rounded border border-gray-200 dark:border-gray-600 text-sm disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                >
-                                    Anterior
-                                </button>
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                    const page = i + 1;
-                                    return (
-                                        <button
-                                            key={page}
-                                            onClick={() => setCurrentPage(page)}
-                                            className={`px-3 py-1 rounded text-sm ${currentPage === page ? 'bg-primary text-white' : 'border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                                        >
-                                            {page}
+                ) : (
+                    paginatedItems.map(item => {
+                        const status = getStockStatus(item);
+                        return (
+                            <div
+                                key={item.id}
+                                className="group bg-white dark:bg-[#101622] rounded-3xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all relative overflow-hidden"
+                            >
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className={`p-3 rounded-2xl ${status.color}`}>
+                                        <Package className="w-6 h-6" />
+                                    </div>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => handleOpenEditModal(item)} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/5 rounded-xl transition-all">
+                                            <Edit2 className="w-4 h-4" />
                                         </button>
-                                    );
-                                })}
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage === totalPages}
-                                    className="px-3 py-1 rounded border border-gray-200 dark:border-gray-600 text-sm disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                >
-                                    Próximo
-                                </button>
+                                        <button onClick={() => handleDeleteClick(item.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/5 rounded-xl transition-all">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1 mb-4">
+                                    <h3 className="font-bold text-[#0d121b] dark:text-white leading-tight truncate">{item.name}</h3>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.sku}</span>
+                                        <span className="w-1 h-1 rounded-full bg-gray-200 dark:bg-gray-800" />
+                                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{item.category}</span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-2xl">
+                                        <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block mb-1">Quantidade</span>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-xl font-black text-[#0d121b] dark:text-white">{item.quantity}</span>
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase">{item.unit || 'un'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-2xl">
+                                        <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider block mb-1">Preço Un.</span>
+                                        <p className="text-sm font-bold text-emerald-600">{formatCurrency(item.price || 0)}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-800">
+                                    <div className="flex items-center gap-1.5">
+                                        <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                                        <span className="text-xs font-bold text-gray-500">{item.location || 'Sem local'}</span>
+                                    </div>
+                                    <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${status.color} border-transparent`}>
+                                        {status.label}
+                                    </span>
+                                </div>
+
+                                {/* Min Quantity Indicator */}
+                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-100 dark:bg-gray-800">
+                                    <div
+                                        className={`h-full transition-all duration-500 ${item.quantity <= item.minQuantity ? 'bg-amber-500' : 'bg-primary'}`}
+                                        style={{ width: `${Math.min(100, (item.quantity / (item.minQuantity * 2 || 1)) * 100)}%` }}
+                                    />
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        );
+                    })
+                )}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-8">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`w-10 h-10 rounded-2xl font-bold text-sm transition-all
+                 ${currentPage === page
+                                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                                    : 'bg-white dark:bg-[#101622] text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 border border-gray-100 dark:border-gray-800'}`}
+                        >
+                            {page}
+                        </button>
+                    ))}
                 </div>
             )}
 
-            {/* Modal */}
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={isEditMode ? 'Editar Item' : 'Novo Item'} size="md"
-                footer={
-                    <>
-                        <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
-                        <button onClick={handleSubmit} className="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90">{isEditMode ? 'Atualizar' : 'Adicionar'}</button>
-                    </>
-                }
-            >
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
-                        <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" required />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">SKU</label>
-                            <input type="text" value={formData.sku} onChange={(e) => setFormData({ ...formData, sku: e.target.value })} className="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" required />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantidade</label>
-                            <input type="number" min="0" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: e.target.value })} className="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" required />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Localização</label>
-                            <input type="text" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estoque Mínimo</label>
-                            <input type="number" min="0" value={formData.minQuantity} onChange={(e) => setFormData({ ...formData, minQuantity: e.target.value })} className="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Unidade</label>
-                            <input type="text" value={formData.unit} onChange={(e) => setFormData({ ...formData, unit: e.target.value })} className="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" placeholder="un, kg, m" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
-                            <input type="text" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Preço</label>
-                            <input type="number" min="0" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} className="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fornecedor</label>
-                        <input type="text" value={formData.supplier} onChange={(e) => setFormData({ ...formData, supplier: e.target.value })} className="w-full h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm" />
-                    </div>
-                </form>
-            </Modal>
-
+            {/* Delete Confirmation */}
             <ConfirmDialog
                 isOpen={isDeleteDialogOpen}
                 onClose={() => setIsDeleteDialogOpen(false)}
                 onConfirm={handleConfirmDelete}
                 title="Excluir Item"
-                message="Tem certeza que deseja excluir este item?"
-                confirmText="Excluir"
-                cancelText="Cancelar"
+                message="Deseja realmente excluir este item do inventário? Esta ação é irreversível."
+                confirmText="Sim, Excluir"
+                cancelText="Manter Item"
                 type="danger"
             />
+
+            {/* Modal */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={isEditMode ? 'Editar Item' : 'Novo Item'}
+                size="md"
+                footer={
+                    <div className="flex items-center justify-end gap-3 w-full">
+                        <button
+                            onClick={() => setIsModalOpen(false)}
+                            className="px-6 py-2.5 rounded-2xl text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            className="px-6 py-2.5 bg-primary text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 flex items-center gap-2"
+                        >
+                            <Layers className="w-4 h-4" />
+                            <span>{isEditMode ? 'Salvar Alterações' : 'Adicionar Item'}</span>
+                        </button>
+                    </div>
+                }
+            >
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Nome do Produto</label>
+                        <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
+                            placeholder="Ex: Câmera Intelbras"
+                            required
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">SKU / Código</label>
+                            <input
+                                type="text"
+                                value={formData.sku}
+                                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                                className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
+                                placeholder="PROD-001"
+                                required
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Quantidade</label>
+                            <input
+                                type="number"
+                                min="0"
+                                value={formData.quantity}
+                                onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                                className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Localização</label>
+                            <input
+                                type="text"
+                                value={formData.location}
+                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
+                                placeholder="Ex: Prateleira A1"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Estoque Mínimo</label>
+                            <input
+                                type="number"
+                                min="0"
+                                value={formData.minQuantity}
+                                onChange={(e) => setFormData({ ...formData, minQuantity: e.target.value })}
+                                className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Unidade</label>
+                            <input
+                                type="text"
+                                value={formData.unit}
+                                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                                className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
+                                placeholder="un, kg, m"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Categoria</label>
+                            <input
+                                type="text"
+                                value={formData.category}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Preço</label>
+                            <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={formData.price}
+                                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
+                            />
+                        </div>
+                    </div>
+                </form>
+            </Modal>
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}} />
         </div>
     );
 };

@@ -6,6 +6,21 @@ import OrderItemSelector, { OrderLineItem } from '../components/OrderItemSelecto
 import { useApp } from '../contexts/AppContext';
 import { Order } from '../types/order';
 import { useToast } from '../contexts/ToastContext';
+import {
+  Plus,
+  Search,
+  Filter,
+  ChevronRight,
+  Edit2,
+  Trash2,
+  Eye,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  MoreVertical,
+  Calendar,
+  DollarSign
+} from 'lucide-react';
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +32,8 @@ const Orders: React.FC = () => {
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('todas');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [formData, setFormData] = useState({
     clientId: '',
@@ -61,7 +78,6 @@ const Orders: React.FC = () => {
       priority: order.priority as any,
       observations: order.observations || ''
     });
-    // Load existing items if available
     setOrderItems(order.items?.map((item: any) => ({
       id: item.id || `item-${Date.now()}`,
       type: item.type || 'service',
@@ -77,12 +93,9 @@ const Orders: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     const selectedClient = clients.find(c => c.id === formData.clientId);
     const selectedTech = technicians.find(t => t.id === formData.technicianId);
-
     const originalOrder = isEditMode && editingOrderId ? orders.find(o => o.id === editingOrderId) : null;
-
     const totalValue = orderItems.reduce((sum, item) => sum + item.total, 0);
 
     const orderData: any = {
@@ -93,14 +106,8 @@ const Orders: React.FC = () => {
       completedDate: originalOrder?.completedDate || null,
       value: totalValue,
       items: orderItems.map(item => ({
-        id: item.id,
-        type: item.type,
-        name: item.name,
-        description: item.description,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        total: item.total,
-        sourceId: item.sourceId
+        id: item.id, type: item.type, name: item.name, description: item.description,
+        quantity: item.quantity, unitPrice: item.unitPrice, total: item.total, sourceId: item.sourceId
       }))
     };
 
@@ -110,24 +117,13 @@ const Orders: React.FC = () => {
 
     if (isEditMode && editingOrderId) {
       updateOrder(editingOrderId, orderData);
-      showToast('success', 'Ordem de serviço atualizada com sucesso!');
+      showToast('success', 'Ordem de serviço atualizada!');
     } else {
       addOrder(orderData);
-      showToast('success', 'Ordem de serviço criada com sucesso!');
+      showToast('success', 'Ordem de serviço criada!');
     }
 
     setIsModalOpen(false);
-    setFormData({
-      clientId: '',
-      clientName: '',
-      serviceType: '',
-      technicianId: '',
-      technicianName: '',
-      description: '',
-      priority: 'media',
-      observations: ''
-    });
-    setOrderItems([]);
   };
 
   const handleDeleteClick = (orderId: string) => {
@@ -138,91 +134,210 @@ const Orders: React.FC = () => {
   const handleConfirmDelete = () => {
     if (orderToDelete) {
       deleteOrder(orderToDelete);
-      showToast('success', 'Ordem de serviço excluída com sucesso!');
+      showToast('success', 'Ordem de serviço excluída!');
     }
     setOrderToDelete(null);
   };
 
-  const handleAddNewProduct = (product: any) => {
-    addInventoryItem(product);
-    showToast('success', `Produto "${product.name}" adicionado ao estoque!`);
-  };
+  const filteredOrders = orders.filter(o => {
+    const matchesSearch = o.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTab = activeTab === 'todas' || o.status === activeTab;
+    return matchesSearch && matchesTab;
+  });
 
-  const getStatusColor = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
-      case 'nova': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
-      case 'em_andamento': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-      case 'pendente': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
-      case 'concluida': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'nova': return { color: 'text-gray-500 bg-gray-50 dark:bg-gray-800/50', label: 'Nova', icon: Plus };
+      case 'em_andamento': return { color: 'text-blue-600 bg-blue-50 dark:bg-blue-500/10', label: 'Em Andamento', icon: Clock };
+      case 'pendente': return { color: 'text-amber-600 bg-amber-50 dark:bg-amber-500/10', label: 'Pendente', icon: AlertCircle };
+      case 'concluida': return { color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10', label: 'Concluída', icon: CheckCircle2 };
+      default: return { color: 'text-gray-500 bg-gray-50', label: status, icon: AlertCircle };
     }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'nova': return 'Nova';
-      case 'em_andamento': return 'Em Andamento';
-      case 'pendente': return 'Pendente';
-      case 'concluida': return 'Concluída';
-      default: return status;
-    }
-  };
-
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-
-  const groupedOrders = {
-    nova: orders.filter(o => o.status === 'nova'),
-    pendente: orders.filter(o => o.status === 'pendente'),
-    em_andamento: orders.filter(o => o.status === 'em_andamento'),
-    concluida: orders.filter(o => o.status === 'concluida')
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-4 sm:px-6 lg:px-10 py-6">
-        <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-          <h1 className="text-gray-900 dark:text-white text-3xl font-black tracking-tight">Gerenciamento de Ordens de Serviço</h1>
-          <button
-            onClick={handleOpenNewOrderModal}
-            className="flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors"
-          >
-            <span className="material-symbols-outlined text-lg">add</span>
-            <span className="truncate">Nova Ordem de Serviço</span>
-          </button>
+    <div className="space-y-6">
+      {/* Header Area */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#0d121b] dark:text-white tracking-tight">Ordens de Serviço</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Gerencie e acompanhe todos os serviços.</p>
+        </div>
+        <button
+          onClick={handleOpenNewOrderModal}
+          className="flex items-center justify-center gap-2 bg-primary text-white px-5 py-2.5 rounded-2xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95"
+        >
+          <Plus className="w-5 h-5" />
+          <span>Nova OS</span>
+        </button>
+      </div>
+
+      {/* Filters & Search */}
+      <div className="bg-white dark:bg-[#101622] rounded-3xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row md:items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar por cliente ou ID..."
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-white/5 border-none rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 dark:text-white"
+          />
         </div>
 
-        {/* New/Edit Order Modal */}
-        <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title={isEditMode ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}
-          size="xl"
-          footer={
-            <>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+        {/* Mobile Tabs Wrapper */}
+        <div className="flex overflow-x-auto pb-1 sm:pb-0 gap-2 no-scrollbar">
+          {['todas', 'nova', 'pendente', 'em_andamento', 'concluida'].map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all uppercase tracking-wider
+                ${activeTab === tab
+                  ? 'bg-primary text-white shadow-md shadow-primary/20'
+                  : 'bg-gray-50 dark:bg-white/5 text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10'}`}
+            >
+              {tab === 'todas' ? 'Todas' : getStatusConfig(tab).label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Orders Grid/List */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredOrders.length === 0 ? (
+          <div className="col-span-full py-20 bg-white dark:bg-[#101622] rounded-3xl border border-dashed border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center text-gray-400">
+            <Search className="w-12 h-12 mb-4 opacity-20" />
+            <p className="font-medium text-sm text-gray-500">Nenhuma ordem encontrada</p>
+          </div>
+        ) : (
+          filteredOrders.map(order => {
+            const config = getStatusConfig(order.status);
+            return (
+              <div
+                key={order.id}
+                className="group bg-white dark:bg-[#101622] rounded-3xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all relative overflow-hidden"
               >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSubmit}
-                className="flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-white hover:bg-primary/90"
-              >
-                <span className="material-symbols-outlined text-lg">save</span>
-                <span>{isEditMode ? 'Atualizar' : 'Criar'} Ordem</span>
-              </button>
-            </>
-          }
-        >
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Cliente</label>
+                {/* Status Bar */}
+                <div className="flex items-center justify-between mb-4">
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${config.color}`}>
+                    <config.icon className="w-3 h-3" />
+                    {config.label}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => navigate(`/orders/${order.id}`)}
+                      className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleOpenEditModal(order)}
+                      className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-500/5 rounded-xl transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(order.id)}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1 mb-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-[#0d121b] dark:text-white leading-tight">
+                      {order.clientName}
+                    </h3>
+                    {order.priority === 'urgente' && (
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{order.serviceType}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-gray-50 dark:bg-white/5 rounded-lg text-gray-400">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-gray-400 font-bold uppercase">Criada em</span>
+                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        {new Date(order.createdAt).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-gray-50 dark:bg-white/5 rounded-lg text-gray-400">
+                      <DollarSign className="w-4 h-4" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-gray-400 font-bold uppercase">Valor</span>
+                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.value)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-50 dark:border-gray-800">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold">
+                    {order.technicianName?.substring(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-gray-400 font-bold uppercase leading-none mb-0.5">Técnico</span>
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate max-w-[120px]">
+                      {order.technicianName}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => navigate(`/orders/${order.id}`)}
+                    className="ml-auto w-8 h-8 rounded-lg bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400 hover:text-primary transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Modals & Dialogs */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={isEditMode ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}
+        size="xl"
+        footer={
+          <div className="flex items-center gap-3 justify-end w-full">
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="px-6 py-2.5 rounded-2xl text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSubmit}
+              className="px-6 py-2.5 bg-primary text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>{isEditMode ? 'Salvar Alterações' : 'Criar Ordem'}</span>
+            </button>
+          </div>
+        }
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Cliente</label>
               <select
                 value={formData.clientId}
                 onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
                 required
               >
                 <option value="">Selecione um cliente</option>
@@ -232,171 +347,102 @@ const Orders: React.FC = () => {
               </select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de Serviço</label>
-                <select
-                  value={formData.serviceType}
-                  onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
-                  className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  required
-                >
-                  <option value="">Selecione o tipo</option>
-                  <option value="Manutenção Preventiva">Manutenção Preventiva</option>
-                  <option value="Instalação">Instalação</option>
-                  <option value="Reparo">Reparo</option>
-                  <option value="Substituição">Substituição</option>
-                  <option value="Consultoria">Consultoria</option>
-                </select>
-              </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Técnico</label>
+              <select
+                value={formData.technicianId}
+                onChange={(e) => setFormData({ ...formData, technicianId: e.target.value })}
+                className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
+                required
+              >
+                <option value="">Selecione um técnico</option>
+                {technicians.map(tech => (
+                  <option key={tech.id} value={tech.id}>{tech.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Técnico Responsável</label>
-                <select
-                  value={formData.technicianId}
-                  onChange={(e) => setFormData({ ...formData, technicianId: e.target.value })}
-                  className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  required
-                >
-                  <option value="">Selecione um técnico</option>
-                  {technicians.map(tech => (
-                    <option key={tech.id} value={tech.id}>{tech.name}</option>
-                  ))}
-                </select>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Serviço</label>
+              <select
+                value={formData.serviceType}
+                onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
+                className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
+                required
+              >
+                <option value="">Selecione o tipo</option>
+                <option value="Manutenção Preventiva">Manutenção Preventiva</option>
+                <option value="Instalação">Instalação</option>
+                <option value="Reparo">Reparo</option>
+                <option value="Substituição">Substituição</option>
+              </select>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Prioridade</label>
-              <div className="flex gap-4">
-                {(['baixa', 'media', 'alta', 'urgente'] as const).map(priority => (
-                  <label key={priority} className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="priority"
-                      value={priority}
-                      checked={formData.priority === priority}
-                      onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                      className="h-4 w-4 text-primary focus:ring-primary"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">{priority}</span>
-                  </label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Prioridade</label>
+              <div className="flex gap-2 p-1 bg-gray-50 dark:bg-white/5 rounded-2xl">
+                {(['baixa', 'media', 'alta', 'urgente'] as const).map(p => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, priority: p })}
+                    className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all
+                      ${formData.priority === p
+                        ? 'bg-white dark:bg-gray-800 shadow-sm text-primary'
+                        : 'text-gray-400'}`}
+                  >
+                    {p}
+                  </button>
                 ))}
               </div>
             </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Descrição do Serviço</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                placeholder="Descreva os detalhes do serviço a ser realizado..."
-                required
-              />
-            </div>
-
-            {/* Products & Services Selection */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <OrderItemSelector
-                items={orderItems}
-                onItemsChange={setOrderItems}
-                inventory={inventory}
-                productsServices={[]}
-                onAddNewProduct={handleAddNewProduct}
-              />
-            </div>
-          </form>
-        </Modal>
-
-        {/* Filters */}
-        <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="relative w-full sm:max-w-xs">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">search</span>
-              <input type="text" className="w-full h-10 pl-10 pr-4 rounded-lg bg-background-light dark:bg-background-dark border-gray-200 dark:border-gray-700 focus:ring-primary focus:border-primary" placeholder="Buscar por ID, cliente..." />
-            </div>
           </div>
-        </div>
 
-        {/* Kanban Board */}
-        <div className="flex overflow-x-auto gap-6 pb-6">
-          {Object.entries(groupedOrders).map(([status, statusOrders]) => (
-            <div key={status} className="flex flex-col w-full sm:w-72 min-w-0">
-              <div className="flex items-center justify-between py-2 mb-4">
-                <h3 className="text-base font-bold text-gray-800 dark:text-gray-200">{getStatusLabel(status)}</h3>
-                <span className="px-2 py-0.5 text-sm font-semibold text-gray-600 bg-gray-200 dark:text-gray-300 dark:bg-gray-700 rounded-md">{statusOrders.length}</span>
-              </div>
-              <div className="flex flex-col gap-4 flex-1 p-1">
-                {statusOrders.length === 0 ? (
-                  <div className="flex items-center justify-center min-h-32 sm:min-h-40 md:min-h-48 bg-gray-50 dark:bg-transparent rounded-lg border border-dashed border-gray-200 dark:border-gray-800">
-                    <span className="text-sm text-gray-400">Nenhuma ordem</span>
-                  </div>
-                ) : (
-                  statusOrders.map(order => (
-                    <div key={order.id} className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-2">
-                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">#{(order.id || '').substring(0, 8)}</p>
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(order.status)}`}>
-                          <span className="size-1.5 rounded-full bg-current"></span>{getStatusLabel(order.status)}
-                        </span>
-                      </div>
-                      <p className="text-base font-bold text-gray-900 dark:text-white mb-1">{order.clientName}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{order.serviceType}</p>
-                      {order.value > 0 && (
-                        <p className="text-sm font-bold text-primary mb-2">{formatCurrency(order.value)}</p>
-                      )}
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
-                        {order.invoiced && (
-                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                            <span className="material-symbols-outlined text-[10px]">receipt</span>Faturado
-                          </span>
-                        )}
-                        <div className="flex items-center gap-2 ml-auto">
-                          <button
-                            onClick={() => navigate(`/orders/${order.id}`)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title="Ver Detalhes"
-                          >
-                            <span className="material-symbols-outlined text-base text-gray-600 dark:text-gray-400">visibility</span>
-                          </button>
-                          <button
-                            onClick={() => handleOpenEditModal(order)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title="Editar"
-                          >
-                            <span className="material-symbols-outlined text-base text-blue-600 dark:text-blue-400">edit</span>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(order.id)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title="Excluir"
-                          >
-                            <span className="material-symbols-outlined text-base text-red-600 dark:text-red-400">delete</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Descrição</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+              className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white placeholder:text-gray-400"
+              placeholder="Descreva os detalhes do serviço..."
+              required
+            />
+          </div>
 
-      {/* Delete Confirmation Dialog */}
+          <div className="border-t border-gray-100 dark:border-gray-800 pt-6">
+            <OrderItemSelector
+              items={orderItems}
+              onItemsChange={setOrderItems}
+              inventory={inventory}
+              productsServices={[]}
+              onAddNewProduct={(p) => {
+                addInventoryItem(p);
+                showToast('success', 'Produto adicionado ao estoque!');
+              }}
+            />
+          </div>
+        </form>
+      </Modal>
+
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
-        title="Excluir Ordem de Serviço"
-        message="Tem certeza que deseja excluir esta ordem de serviço? Esta ação não pode ser desfeita."
-        confirmText="Excluir"
-        cancelText="Cancelar"
+        title="Excluir Ordem"
+        message="Deseja realmente excluir esta ordem de serviço? Esta ação é irreversível."
+        confirmText="Sim, Excluir"
+        cancelText="Manter Ordem"
         type="danger"
       />
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}} />
     </div>
   );
 };

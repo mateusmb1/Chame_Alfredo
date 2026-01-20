@@ -1,407 +1,315 @@
 import React, { useMemo, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useToast } from '../contexts/ToastContext';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
 import { useNavigate } from 'react-router-dom';
+import {
+  TrendingUp,
+  Users,
+  Receipt,
+  Clock,
+  AlertCircle,
+  Calendar,
+  Package,
+  ArrowUpRight,
+  TrendingDown,
+  ChevronRight,
+  Search,
+  Bell
+} from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { orders, clients, contracts, inventory, setOnNewOrder } = useApp();
   const { showToast } = useToast();
 
-  // Set up notification for new orders
   useEffect(() => {
     setOnNewOrder((newOrder) => {
-      showToast('success', `🔔 Nova Ordem Recebida: ${newOrder.clientName} - ${newOrder.serviceType}`, 5000);
-
-      // Optional: Audio notification
+      showToast('success', `🔔 Nova Ordem: ${newOrder.clientName} - ${newOrder.serviceType}`, 5000);
       try {
         const audio = new Audio('/notification.mp3');
-        audio.play().catch(() => console.log('Audio playback failed'));
-      } catch (e) {
-        console.log('Audio notification not available');
-      }
+        audio.play().catch(() => { });
+      } catch (e) { }
     });
   }, [setOnNewOrder, showToast]);
 
-  // Calculate metrics
   const metrics = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-
-    // Orders metrics
     const totalOrders = orders.length;
     const pendingOrders = orders.filter(o => o.status === 'nova' || o.status === 'pendente').length;
     const inProgressOrders = orders.filter(o => o.status === 'em_andamento').length;
     const completedOrders = orders.filter(o => o.status === 'concluida').length;
 
-    // Calculate overdue orders (simulated - orders created more than 7 days ago and not completed)
     const overdueOrders = orders.filter(o => {
       const createdDate = new Date(o.createdAt);
       const daysDiff = Math.floor((new Date().getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
       return daysDiff > 7 && o.status !== 'concluida';
     }).length;
 
-    // Scheduled orders (simulated - pending orders)
-    const scheduledOrders = pendingOrders;
-
-    // Clients metrics
     const totalClients = clients.length;
-    const activeClients = clients.filter(c => c.status === 'active').length;
     const condominiums = clients.filter(c => c.type === 'pj').length;
     const individuals = clients.filter(c => c.type === 'pf').length;
-
-    // Contracts metrics
     const activeContracts = contracts.filter(c => c.status === 'ativo').length;
-    const totalContractValue = contracts
-      .filter(c => c.status === 'ativo')
-      .reduce((sum, c) => sum + c.value, 0);
-
-    // Simulated overdue payments (30% of active contracts)
-    const overduePayments = Math.floor(activeContracts * 0.3);
-    const overdueAmount = Math.floor(totalContractValue * 0.15);
-
-    // Inventory alerts
+    const totalContractValue = contracts.filter(c => c.status === 'ativo').reduce((sum, c) => sum + c.value, 0);
     const lowStockItems = inventory.filter(i => i.status === 'estoque_baixo' || i.status === 'esgotado').length;
 
     return {
-      totalOrders,
-      pendingOrders,
-      inProgressOrders,
-      completedOrders,
-      overdueOrders,
-      scheduledOrders,
-      totalClients,
-      activeClients,
-      condominiums,
-      individuals,
-      activeContracts,
-      totalContractValue,
-      overduePayments,
-      overdueAmount,
-      lowStockItems
+      totalOrders, pendingOrders, inProgressOrders, completedOrders, overdueOrders,
+      totalClients, condominiums, individuals, activeContracts, totalContractValue, lowStockItems
     };
   }, [orders, clients, contracts, inventory]);
 
-  // Chart data for orders by week
   const weeklyOrdersData = [
-    { name: 'Seg', value: 12 },
-    { name: 'Ter', value: 19 },
-    { name: 'Qua', value: 15 },
-    { name: 'Qui', value: 22 },
-    { name: 'Sex', value: 18 },
-    { name: 'Sáb', value: 8 },
-    { name: 'Dom', value: 5 },
+    { name: 'Seg', value: 12 }, { name: 'Ter', value: 19 }, { name: 'Qua', value: 15 },
+    { name: 'Qui', value: 22 }, { name: 'Sex', value: 18 }, { name: 'Sáb', value: 8 }, { name: 'Dom', value: 5 },
   ];
 
-  // Chart data for order status
   const orderStatusData = [
-    { name: 'Pendentes', value: metrics.pendingOrders, color: '#FFC107' },
-    { name: 'Em Andamento', value: metrics.inProgressOrders, color: '#007BFF' },
-    { name: 'Concluídas', value: metrics.completedOrders, color: '#28A745' },
-    { name: 'Atrasadas', value: metrics.overdueOrders, color: '#DC3545' },
+    { name: 'Pendente', value: metrics.pendingOrders, color: '#F59E0B' },
+    { name: 'Em Curso', value: metrics.inProgressOrders, color: '#3B82F6' },
+    { name: 'Concluído', value: metrics.completedOrders, color: '#10B981' },
+    { name: 'Atrasado', value: metrics.overdueOrders, color: '#EF4444' },
   ];
 
-  // Pie chart data for client types
-  const clientTypeData = [
-    { name: 'Condomínios', value: metrics.condominiums, color: '#4A90E2' },
-    { name: 'Pessoas Físicas', value: metrics.individuals, color: '#50C878' },
-  ];
-
-  // Simulated overdue clients
-  const overdueClients = [
-    { name: 'Condomínio Residencial Jardim das Flores', amount: 2500, days: 15, type: 'Contrato' },
-    { name: 'Condomínio Empresarial Torre Sul', amount: 8000, days: 5, type: 'Contrato' },
-    { name: 'Paula Lima', amount: 1200, days: 22, type: 'Serviço' },
-  ];
+  const StatCard = ({ title, value, subtitle, icon: Icon, color, onClick }: any) => (
+    <div
+      onClick={onClick}
+      className="bg-white dark:bg-[#101622] rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all cursor-pointer group"
+    >
+      <div className="flex items-start justify-between mb-4">
+        <div className={`p-3 rounded-2xl ${color} bg-opacity-10 dark:bg-opacity-20`}>
+          <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
+        </div>
+        <div className="flex items-center gap-1 text-emerald-500 font-medium text-xs">
+          <TrendingUp className="w-3 h-3" />
+          <span>+12%</span>
+        </div>
+      </div>
+      <div>
+        <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">{title}</h3>
+        <p className="text-2xl font-bold text-[#0d121b] dark:text-white leading-none mb-2">{value}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">{subtitle}</p>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="space-y-6 md:space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Dashboard Geral</h2>
-          <p className="text-gray-600 mt-1">Visão completa do seu negócio</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#0d121b] dark:text-white tracking-tight">Overview</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Bom dia! Veja como estão as operações hoje.</p>
         </div>
-        <div className="flex gap-4">
-          <div className="flex items-center gap-2 bg-white p-2 rounded-lg shadow-sm border border-gray-200">
-            <span className="material-symbols-outlined text-gray-500">search</span>
-            <input type="text" placeholder="Busca global..." className="bg-transparent border-none outline-none text-sm w-48" />
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar..."
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-[#101622] border border-gray-100 dark:border-gray-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white"
+            />
           </div>
-        </div>
-      </div>
-
-      {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Total Orders */}
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow cursor-pointer" onClick={() => navigate('/orders')}>
-          <div className="flex items-center justify-between mb-4">
-            <span className="material-symbols-outlined text-4xl opacity-80">assignment</span>
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
-              <span className="text-xs font-semibold">Total</span>
-            </div>
-          </div>
-          <p className="text-4xl font-bold mb-2">{metrics.totalOrders}</p>
-          <p className="text-blue-100 text-sm">Ordens de Serviço</p>
-        </div>
-
-        {/* Pending Orders */}
-        <div className="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-          <div className="flex items-center justify-between mb-4">
-            <span className="material-symbols-outlined text-4xl opacity-80">pending_actions</span>
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
-              <span className="text-xs font-semibold">Pendentes</span>
-            </div>
-          </div>
-          <p className="text-4xl font-bold mb-2">{metrics.pendingOrders}</p>
-          <p className="text-orange-100 text-sm">Aguardando Início</p>
-        </div>
-
-        {/* Overdue Orders */}
-        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-          <div className="flex items-center justify-between mb-4">
-            <span className="material-symbols-outlined text-4xl opacity-80">schedule</span>
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
-              <span className="text-xs font-semibold">Atrasadas</span>
-            </div>
-          </div>
-          <p className="text-4xl font-bold mb-2">{metrics.overdueOrders}</p>
-          <p className="text-red-100 text-sm">Ordens em Atraso</p>
-        </div>
-
-        {/* Scheduled Orders */}
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-          <div className="flex items-center justify-between mb-4">
-            <span className="material-symbols-outlined text-4xl opacity-80">event</span>
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
-              <span className="text-xs font-semibold">Agendadas</span>
-            </div>
-          </div>
-          <p className="text-4xl font-bold mb-2">{metrics.scheduledOrders}</p>
-          <p className="text-purple-100 text-sm">Ordens Agendadas</p>
+          <button className="p-2 bg-white dark:bg-[#101622] border border-gray-100 dark:border-gray-800 rounded-xl text-gray-500">
+            <Bell className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
-      {/* Clients & Contracts Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Total Clients */}
-        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/clients')}>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <span className="material-symbols-outlined text-green-600 text-2xl">groups</span>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{metrics.totalClients}</p>
-              <p className="text-sm text-gray-600">Total de Clientes</p>
-            </div>
-          </div>
-          <div className="flex gap-4 text-xs">
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-gray-600">{metrics.condominiums} Condomínios</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-gray-600">{metrics.individuals} PF</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Active Contracts */}
-        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/contracts')}>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <span className="material-symbols-outlined text-blue-600 text-2xl">description</span>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{metrics.activeContracts}</p>
-              <p className="text-sm text-gray-600">Contratos Ativos</p>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500">Valor Total: R$ {metrics.totalContractValue.toLocaleString('pt-BR')}/mês</p>
-        </div>
-
-        {/* Overdue Payments */}
-        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 shadow-md border-2 border-red-200 hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-red-200 rounded-lg flex items-center justify-center">
-              <span className="material-symbols-outlined text-red-700 text-2xl">payments</span>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-red-700">{metrics.overduePayments}</p>
-              <p className="text-sm text-red-600">Faturas em Atraso</p>
-            </div>
-          </div>
-          <p className="text-xs text-red-600 font-semibold">R$ {metrics.overdueAmount.toLocaleString('pt-BR')} a receber</p>
-        </div>
-
-        {/* Inventory Alerts */}
-        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/inventory')}>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <span className="material-symbols-outlined text-orange-600 text-2xl">inventory_2</span>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{metrics.lowStockItems}</p>
-              <p className="text-sm text-gray-600">Alertas de Estoque</p>
-            </div>
-          </div>
-          <p className="text-xs text-orange-600">Itens com estoque baixo</p>
-        </div>
+      {/* Main Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <StatCard
+          title="Total de Ordens"
+          value={metrics.totalOrders}
+          subtitle="Geral na plataforma"
+          icon={Receipt}
+          color="bg-blue-500"
+          onClick={() => navigate('/orders')}
+        />
+        <StatCard
+          title="Pendentes"
+          value={metrics.pendingOrders}
+          subtitle="Aguardando atribuição"
+          icon={Clock}
+          color="bg-amber-500"
+        />
+        <StatCard
+          title="Em Atraso"
+          value={metrics.overdueOrders}
+          subtitle="Críticas no sistema"
+          icon={AlertCircle}
+          color="bg-red-500"
+        />
+        <StatCard
+          title="Faturamento"
+          value={`R$ ${(metrics.totalContractValue / 1000).toFixed(1)}k`}
+          subtitle="Mensal projetado"
+          icon={TrendingUp}
+          color="bg-emerald-500"
+        />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Weekly Orders Chart */}
-        <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-md">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Ordens de Serviço por Dia da Semana</h3>
-          <div className="h-48 sm:h-56 md:h-64 lg:h-72">
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="bg-white dark:bg-[#101622] rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm col-span-1 lg:col-span-1">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-bold text-gray-900 dark:text-white">Clientes</h3>
+            <Users className="w-5 h-5 text-gray-400" />
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="text-sm text-gray-500">Condomínios</span>
+              </div>
+              <span className="font-semibold text-gray-900 dark:text-white">{metrics.condominiums}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary" />
+                <span className="text-sm text-gray-500">Pessoas Físicas</span>
+              </div>
+              <span className="font-semibold text-gray-900 dark:text-white">{metrics.individuals}</span>
+            </div>
+          </div>
+          <div className="mt-8 pt-6 border-t border-gray-50 dark:border-gray-800">
+            <button
+              onClick={() => navigate('/clients')}
+              className="w-full py-2 bg-primary/5 hover:bg-primary/10 text-primary text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              Ver Todos
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#101622] rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm col-span-1 lg:col-span-3">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-bold text-gray-900 dark:text-white">Produtividade Semanal</h3>
+            <div className="flex items-center gap-1 text-primary text-xs font-semibold">
+              <TrendingUp className="w-4 h-4" />
+              <span>+8.4% de média</span>
+            </div>
+          </div>
+          <div className="h-[240px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={weeklyOrdersData}>
                 <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4A90E2" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#4A90E2" stopOpacity={0} />
+                  <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#135bec" stopOpacity={0.1} />
+                    <stop offset="95%" stopColor="#135bec" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  itemStyle={{ color: '#333' }}
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#64748b', fontSize: 12 }}
+                  dy={10}
                 />
-                <Area type="monotone" dataKey="value" stroke="#4A90E2" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                <YAxis hide />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    borderRadius: '12px',
+                    border: 'none',
+                    padding: '8px 12px',
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#135bec"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorOrders)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Order Status Chart */}
-        <div className="bg-white rounded-xl p-6 shadow-md">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Status das Ordens</h3>
-          <div className="h-48 sm:h-56 md:h-64 lg:h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={orderStatusData}>
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={80} />
-                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                  {orderStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
       </div>
 
-      {/* Overdue Payments & Client Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Overdue Payments List */}
-        <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-md">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-900">Clientes com Pagamentos em Atraso</h3>
-            <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">{overdueClients.length} clientes</span>
-          </div>
-          <div className="space-y-4">
-            {overdueClients.map((client, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200 hover:bg-red-100 transition-colors cursor-pointer">
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900">{client.name}</p>
-                  <div className="flex items-center gap-4 mt-1">
-                    <span className="text-xs text-gray-600">Tipo: {client.type}</span>
-                    <span className="text-xs text-red-600 font-semibold">{client.days} dias de atraso</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-red-700">R$ {client.amount.toLocaleString('pt-BR')}</p>
-                  <button className="mt-2 px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition-colors">
-                    Cobrar
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Client Type Distribution */}
-        <div className="bg-white rounded-xl p-6 shadow-md">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Distribuição de Clientes</h3>
-          <div className="h-48 md:h-56">
+      {/* Status & Recent */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Status Pie */}
+        <div className="bg-white dark:bg-[#101622] rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm">
+          <h3 className="font-bold text-gray-900 dark:text-white mb-6">Status Operacional</h3>
+          <div className="h-[200px] w-full relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={clientTypeData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  data={orderStatusData}
+                  innerRadius={60}
                   outerRadius={80}
-                  fill="#8884d8"
+                  paddingAngle={5}
                   dataKey="value"
                 >
-                  {clientTypeData.map((entry, index) => (
+                  {orderStatusData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-2xl font-bold text-gray-900 dark:text-white leading-none">{metrics.totalOrders}</span>
+              <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Total</span>
+            </div>
           </div>
-          <div className="mt-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Condomínios</span>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {orderStatusData.map((item) => (
+              <div key={item.name} className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                <span className="text-[11px] text-gray-500 font-medium truncate">{item.name}</span>
               </div>
-              <span className="text-sm font-semibold text-gray-900">{metrics.condominiums}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Pessoas Físicas</span>
-              </div>
-              <span className="text-sm font-semibold text-gray-900">{metrics.individuals}</span>
-            </div>
+            ))}
           </div>
         </div>
-      </div>
 
-      {/* Recent Activity */}
-      <div className="bg-white rounded-xl p-6 shadow-md">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Atividade Recente</h3>
-        <div className="space-y-3">
-          {orders.slice(0, 5).map((order) => (
-            <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => navigate(`/orders/${order.id}`)}>
-              <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${order.status === 'concluida' ? 'bg-green-100' :
-                  order.status === 'em_andamento' ? 'bg-blue-100' :
-                    'bg-yellow-100'
-                  }`}>
-                  <span className={`material-symbols-outlined ${order.status === 'concluida' ? 'text-green-600' :
-                    order.status === 'em_andamento' ? 'text-blue-600' :
-                      'text-yellow-600'
-                    }`}>
-                    {order.status === 'concluida' ? 'check_circle' : 'pending'}
+        {/* Recent Activity */}
+        <div className="bg-white dark:bg-[#101622] rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm lg:col-span-2">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-bold text-gray-900 dark:text-white">Últimas Atividades</h3>
+            <button
+              onClick={() => navigate('/orders')}
+              className="text-primary text-xs font-semibold hover:underline"
+            >
+              Ver histórico
+            </button>
+          </div>
+          <div className="space-y-4">
+            {orders.slice(0, 5).map((order) => (
+              <div
+                key={order.id}
+                onClick={() => navigate(`/orders/${order.id}`)}
+                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-transparent hover:border-gray-100 dark:hover:border-gray-800 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center 
+                    ${order.status === 'concluida' ? 'bg-emerald-100 text-emerald-600' :
+                      order.status === 'em_andamento' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}`}>
+                    {order.status === 'concluida' ? <TrendingUp className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-900 dark:text-white">OS #{order.id}</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px] sm:max-w-none">
+                      {order.clientName} • {order.serviceType}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
+                    ${order.status === 'concluida' ? 'bg-emerald-500/10 text-emerald-600' :
+                      order.status === 'em_andamento' ? 'bg-blue-500/10 text-blue-600' : 'bg-amber-500/10 text-amber-600'}`}>
+                    {order.status}
                   </span>
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">OS #{order.id}</p>
-                  <p className="text-sm text-gray-600">{order.clientName} - {order.serviceType}</p>
+                  <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
                 </div>
               </div>
-              <div className="text-right">
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${order.status === 'concluida' ? 'bg-green-100 text-green-700' :
-                  order.status === 'em_andamento' ? 'bg-blue-100 text-blue-700' :
-                    'bg-yellow-100 text-yellow-700'
-                  }`}>
-                  {order.status === 'concluida' ? 'Concluída' :
-                    order.status === 'em_andamento' ? 'Em Andamento' :
-                      'Pendente'}
-                </span>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

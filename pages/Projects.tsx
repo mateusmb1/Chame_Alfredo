@@ -9,6 +9,26 @@ import ProjectForm from '../components/ProjectForm';
 import { useApp } from '../contexts/AppContext';
 import { useToast } from '../contexts/ToastContext';
 import { Project } from '../types/project';
+import {
+  Search,
+  Filter,
+  Plus,
+  Eye,
+  Edit2,
+  Trash2,
+  LayoutGrid,
+  List,
+  Clock,
+  User,
+  Briefcase,
+  ChevronRight,
+  TrendingUp,
+  TrendingDown,
+  MoreVertical,
+  Calendar,
+  Layers,
+  CheckCircle2
+} from 'lucide-react';
 
 const Projects: React.FC = () => {
   const { projects, clients, technicians, addProject, updateProject, deleteProject } = useApp();
@@ -19,12 +39,11 @@ const Projects: React.FC = () => {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
-  
-  // Filters
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const handleOpenNewProjectModal = () => {
     setIsEditMode(false);
@@ -51,323 +70,225 @@ const Projects: React.FC = () => {
     setProjectToDelete(null);
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'planejamento': return 'Planejamento';
-      case 'em_andamento': return 'Em Andamento';
-      case 'pendente': return 'Pendente';
-      case 'concluido': return 'Concluído';
-      case 'arquivado': return 'Arquivado';
-      default: return status;
-    }
-  };
-
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'instalacao': return 'Instalação';
-      case 'manutencao': return 'Manutenção';
-      case 'consultoria': return 'Consultoria';
-      case 'suporte': return 'Suporte';
-      case 'inspecao': return 'Inspeção';
-      case 'treinamento': return 'Treinamento';
-      case 'outro': return 'Outro';
-      default: return type;
-    }
-  };
-
-  // Filter projects
   const filteredProjects = useMemo(() => {
     return projects.filter(project => {
       const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           project.id.toLowerCase().includes(searchTerm.toLowerCase());
-      
+        project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.id.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
       const matchesType = typeFilter === 'all' || project.type === typeFilter;
-
       return matchesSearch && matchesStatus && matchesType;
     });
   }, [projects, searchTerm, statusFilter, typeFilter]);
 
-  // Group projects by status for kanban view
-  const groupedProjects = useMemo(() => {
-    const groups = {
-      planejamento: filteredProjects.filter(p => p.status === 'planejamento'),
-      em_andamento: filteredProjects.filter(p => p.status === 'em_andamento'),
-      em_pausa: filteredProjects.filter(p => p.status === 'em_pausa'),
-      concluido: filteredProjects.filter(p => p.status === 'concluido'),
-      cancelado: filteredProjects.filter(p => p.status === 'cancelado'),
-      arquivado: filteredProjects.filter(p => p.status === 'arquivado')
-    };
-    return groups;
-  }, [filteredProjects]);
+  const activeProjects = projects.filter(p => p.status === 'em_andamento').length;
+  const completedProjects = projects.filter(p => p.status === 'concluido').length;
+  const avgProgress = projects.length > 0
+    ? Math.round(projects.reduce((sum, p) => sum + (p.progress || 0), 0) / projects.length)
+    : 0;
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Projetos</h1>
-          <button
-            onClick={handleOpenNewProjectModal}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <span className="material-symbols-outlined mr-2">add</span>
-            Novo Projeto
-          </button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-[#0d121b] dark:text-white tracking-tight">Projetos</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Gestão de obras, instalações e contratos de longo prazo.</p>
         </div>
+        <button
+          onClick={handleOpenNewProjectModal}
+          className="flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 group"
+        >
+          <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+          <span>Novo Projeto</span>
+        </button>
+      </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Buscar projetos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-            />
+      {/* Stats Quick View */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Projetos Ativos', value: activeProjects, icon: Briefcase, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+          { label: 'Concluídos', value: completedProjects, icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+          { label: 'Progresso Médio', value: `${avgProgress}%`, icon: TrendingUp, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+          { label: 'Total Projetos', value: projects.length, icon: Layers, color: 'text-gray-500', bg: 'bg-gray-500/10' },
+        ].map((stat, i) => (
+          <div key={i} className="bg-white dark:bg-[#101622] p-4 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-3">
+            <div className={`p-2 rounded-xl ${stat.bg} ${stat.color}`}>
+              <stat.icon className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider leading-none mb-1">{stat.label}</p>
+              <p className="text-lg font-bold text-[#0d121b] dark:text-white leading-none">{stat.value}</p>
+            </div>
           </div>
-          
+        ))}
+      </div>
+
+      {/* Filters & View Controls */}
+      <div className="bg-white dark:bg-[#101622] rounded-3xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row md:items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar projetos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-white/5 border-none rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 dark:text-white"
+          />
+        </div>
+        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1 md:pb-0">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+            className="bg-gray-50 dark:bg-white/5 border-none rounded-xl px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider focus:ring-2 focus:ring-primary/20 dark:text-white cursor-pointer"
           >
-            <option value="all">Todos os Status</option>
-            <option value="planejamento">Planejamento</option>
-            <option value="em_andamento">Em Andamento</option>
-            <option value="pendente">Pendente</option>
-            <option value="concluido">Concluído</option>
-            <option value="arquivado">Arquivado</option>
+            <option value="all">TODOS STATUS</option>
+            <option value="planejamento">PLANEJAMENTO</option>
+            <option value="em_andamento">EM ANDAMENTO</option>
+            <option value="em_pausa">EM PAUSA</option>
+            <option value="concluido">CONCLUÍDO</option>
           </select>
-
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-          >
-            <option value="all">Todos os Tipos</option>
-            <option value="instalacao">Instalação</option>
-            <option value="manutencao">Manutenção</option>
-            <option value="consultoria">Consultoria</option>
-            <option value="suporte">Suporte</option>
-            <option value="outro">Outro</option>
-          </select>
-
-          <div className="flex border border-gray-300 rounded-lg overflow-hidden dark:border-gray-600">
+          <div className="flex items-center bg-gray-50 dark:bg-white/5 rounded-xl p-1">
             <button
-              onClick={() => setViewMode('kanban')}
-              className={`px-3 py-2 text-sm ${viewMode === 'kanban' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300'}`}
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-[#101622] text-primary shadow-sm' : 'text-gray-400'}`}
             >
-              Kanban
+              <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`px-3 py-2 text-sm ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300'}`}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-[#101622] text-primary shadow-sm' : 'text-gray-400'}`}
             >
-              Lista
+              <List className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Projects Display */}
-      {viewMode === 'kanban' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Object.entries(groupedProjects).map(([status, statusProjects]) => (
-            <div key={status} className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900 dark:text-white">{getStatusLabel(status)}</h3>
-                <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs px-2 py-1 rounded-full">
-                  {statusProjects.length}
-                </span>
-              </div>
-              
-              <div className="flex flex-col gap-4 flex-1 p-1">
-                {statusProjects.length === 0 ? (
-                  <div className="flex items-center justify-center min-h-40 md:min-h-48 bg-gray-50 dark:bg-transparent rounded-lg border border-dashed border-gray-200 dark:border-gray-800">
-                    <span className="text-sm text-gray-400">Nenhum projeto</span>
-                  </div>
-                ) : (
-                  statusProjects.map(project => {
-                    const client = clients.find(c => c.id === project.clientId);
-                    const manager = technicians.find(t => t.id === project.responsibleId);
-                    const progress = project.progress || 0;
-                    
-                    return (
-                      <div key={project.id} className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <ProjectTypeIcon type={project.type} size="sm" />
-                            <div>
-                              <Link 
-                                to={`/projects/${project.id}`}
-                                className="text-base font-bold text-gray-900 dark:text-white hover:text-primary transition-colors"
-                              >
-                                {project.name}
-                              </Link>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">#{project.id}</p>
-                            </div>
-                          </div>
-                          <ProjectStatusBadge status={project.status} size="sm" />
-                        </div>
-                        
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                          {project.description}
-                        </p>
-                        
-                        <div className="space-y-2 mb-3">
-                          <div className="flex items-center justify-between text-xs text-gray-500">
-                            <span>Progresso</span>
-                            <span>{progress}%</span>
-                          </div>
-                          <ProjectProgressBar progress={progress} size="sm" showLabel={false} />
-                        </div>
-                        
-                        <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
-                          <div className="text-xs text-gray-500">
-                            <p>Cliente: <span className="font-medium">{client?.name || 'N/A'}</span></p>
-                            <p>Gerente: <span className="font-medium">{manager?.name || 'N/A'}</span></p>
-                          </div>
-                          <div className="flex items-center gap-1" />
-                        </div>
-                        
-                        <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-800 mt-3">
-                          <Link
-                            to={`/projects/${project.id}`}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title="Ver Detalhes"
-                          >
-                            <span className="material-symbols-outlined text-base text-blue-600 dark:text-blue-400">visibility</span>
-                          </Link>
-                          <button
-                            onClick={() => handleOpenEditModal(project)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title="Editar"
-                          >
-                            <span className="material-symbols-outlined text-base text-blue-600 dark:text-blue-400">edit</span>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(project.id)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title="Excluir"
-                          >
-                            <span className="material-symbols-outlined text-base text-red-600 dark:text-red-400">delete</span>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Projeto</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cliente</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tipo</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Progresso</th>
-                  
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data Final</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                {filteredProjects.map(project => {
-                  const client = clients.find(c => c.id === project.clientId);
-                  const progress = project.progress || 0;
-                  
-                  return (
-                    <tr key={project.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <ProjectTypeIcon type={project.type} size="sm" />
-                          <div className="ml-3">
-                            <Link 
-                              to={`/projects/${project.id}`}
-                              className="text-sm font-medium text-gray-900 dark:text-white hover:text-primary"
-                            >
-                              {project.name}
-                            </Link>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">#{project.id}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {client?.name || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900 dark:text-white">{getTypeLabel(project.type)}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <ProjectStatusBadge status={project.status} />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-1">
-                            <ProjectProgressBar progress={progress} size="sm" showLabel={false} />
-                          </div>
-                          <span className="ml-2 text-sm text-gray-900 dark:text-white">{progress}%</span>
-                        </div>
-                      </td>
-                      
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {new Date(project.endDate).toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex items-center gap-2">
-                          <Link
-                            to={`/projects/${project.id}`}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title="Ver Detalhes"
-                          >
-                            <span className="material-symbols-outlined text-base text-blue-600 dark:text-blue-400">visibility</span>
-                          </Link>
-                          <button
-                            onClick={() => handleOpenEditModal(project)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title="Editar"
-                          >
-                            <span className="material-symbols-outlined text-base text-blue-600 dark:text-blue-400">edit</span>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(project.id)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title="Excluir"
-                          >
-                            <span className="material-symbols-outlined text-base text-red-600 dark:text-red-400">delete</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+      {/* Grid of Projects */}
+      <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6" : "space-y-4"}>
+        {filteredProjects.length === 0 ? (
+          <div className="col-span-full py-20 bg-white dark:bg-[#101622] rounded-3xl border border-dashed border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center text-gray-400">
+            <Layers className="w-12 h-12 mb-4 opacity-20" />
+            <p className="font-medium text-sm text-gray-500">Nenhum projeto encontrado</p>
           </div>
-        </div>
-      )}
+        ) : (
+          filteredProjects.map(project => {
+            const client = clients.find(c => c.id === project.clientId);
+            const manager = technicians.find(t => t.id === project.responsibleId);
+            const progress = project.progress || 0;
 
-      {/* Delete Confirmation Dialog */}
+            if (viewMode === 'list') {
+              return (
+                <div key={project.id} className="bg-white dark:bg-[#101622] rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4 group">
+                  <div className="p-3 rounded-xl bg-gray-50 dark:bg-white/5">
+                    <ProjectTypeIcon type={project.type} size="sm" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <Link to={`/projects/${project.id}`} className="font-bold text-[#0d121b] dark:text-white truncate hover:text-primary transition-colors">
+                        {project.name}
+                      </Link>
+                      <ProjectStatusBadge status={project.status} size="sm" />
+                    </div>
+                    <p className="text-xs text-gray-400 font-medium truncate">{client?.name || 'Cliente indefinido'}</p>
+                  </div>
+                  <div className="hidden md:block w-32 px-4">
+                    <div className="flex items-center justify-between text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+                      <span>Progresso</span>
+                      <span>{progress}%</span>
+                    </div>
+                    <ProjectProgressBar progress={progress} size="sm" showLabel={false} />
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Link to={`/projects/${project.id}`} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/5 rounded-lg">
+                      <Eye className="w-4 h-4" />
+                    </Link>
+                    <button onClick={() => handleOpenEditModal(project)} className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDeleteClick(project.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/5 rounded-lg">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div key={project.id} className="bg-white dark:bg-[#101622] rounded-3xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 rounded-2xl bg-gray-50 dark:bg-white/5 text-[#0d121b] dark:text-white">
+                    <ProjectTypeIcon type={project.type} size="md" />
+                  </div>
+                  <ProjectStatusBadge status={project.status} />
+                </div>
+
+                <div className="space-y-1 mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">PROJ-{project.id.slice(0, 4)}</span>
+                    <span className="w-1 h-1 rounded-full bg-gray-200 dark:bg-gray-800 mb-1" />
+                    <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none mb-1">{project.type}</span>
+                  </div>
+                  <Link to={`/projects/${project.id}`} className="block font-bold text-lg text-[#0d121b] dark:text-white leading-tight group-hover:text-primary transition-colors truncate">
+                    {project.name}
+                  </Link>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium line-clamp-2">{project.description}</p>
+                </div>
+
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center justify-between text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                    <span>Conclusão</span>
+                    <span className="text-[#0d121b] dark:text-white">{progress}%</span>
+                  </div>
+                  <ProjectProgressBar progress={progress} size="md" showLabel={false} />
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/5 rounded-2xl mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-black">
+                      {manager?.name.charAt(0) || 'U'}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider leading-none">Responsável</span>
+                      <span className="text-xs font-bold text-[#0d121b] dark:text-white leading-none mt-1">{manager?.name.split(' ')[0] || 'N/A'}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider leading-none">Prazo</span>
+                    <span className="text-xs font-bold text-[#0d121b] dark:text-white leading-none mt-1">{new Date(project.endDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Link to={`/projects/${project.id}`} className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-gray-50 dark:bg-white/5 text-[#0d121b] dark:text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+                    <Eye className="w-4 h-4" />
+                    <span>Ver Mais</span>
+                  </Link>
+                  <button onClick={() => handleOpenEditModal(project)} className="p-2.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => handleDeleteClick(project.id)} className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/5 rounded-xl transition-all">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Excluir Projeto"
-        message="Tem certeza que deseja excluir este projeto? Esta ação não pode ser desfeita."
-        confirmText="Excluir"
-        cancelText="Cancelar"
+        message="Deseja realmente excluir este projeto? Esta ação removerá permanentemente todos os dados associados, incluindo ordens de serviço e cronograma."
+        confirmText="Sim, Excluir"
+        cancelText="Manter Projeto"
         type="danger"
       />
 
-      {/* Project Form Modal */}
       {isModalOpen && (
         <ProjectForm
           project={isEditMode && editingProjectId ? projects.find(p => p.id === editingProjectId) : undefined}
@@ -376,16 +297,22 @@ const Projects: React.FC = () => {
           onSave={(projectData) => {
             if (isEditMode && editingProjectId) {
               updateProject(editingProjectId, projectData);
-              showToast('success', 'Projeto atualizado com sucesso!');
+              showToast('success', 'Projeto atualizado!');
             } else {
               addProject(projectData);
-              showToast('success', 'Projeto criado com sucesso!');
+              showToast('success', 'Projeto criado!');
             }
             setIsModalOpen(false);
           }}
           onCancel={() => setIsModalOpen(false)}
         />
       )}
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}} />
     </div>
   );
 };
