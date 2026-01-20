@@ -4,6 +4,7 @@ import { useApp } from '../contexts/AppContext';
 import { Technician } from '../types/technician';
 import { Order } from '../types/order';
 import { useToast } from '../contexts/ToastContext';
+import OrderItemSelector, { OrderLineItem } from '../components/OrderItemSelector';
 
 interface ServicePhoto {
     id: string;
@@ -26,7 +27,7 @@ interface CheckInOut {
 const MobileOrderDetail: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
-    const { orders, updateOrder, uploadFile } = useApp();
+    const { orders, updateOrder, uploadFile, inventory, products } = useApp();
     const { showToast } = useToast();
 
     const [technician, setTechnician] = useState<Technician | null>(null);
@@ -34,6 +35,7 @@ const MobileOrderDetail: React.FC = () => {
     const [photos, setPhotos] = useState<ServicePhoto[]>([]);
     const [checkInOut, setCheckInOut] = useState<CheckInOut>({});
     const [notes, setNotes] = useState('');
+    const [additionalItems, setAdditionalItems] = useState<OrderLineItem[]>([]);
     const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
     const [signature, setSignature] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -60,6 +62,9 @@ const MobileOrderDetail: React.FC = () => {
             }
             if (foundOrder.checkOut && !checkInOut.checkOut) {
                 setCheckInOut(prev => ({ ...prev, checkOut: foundOrder.checkOut }));
+            }
+            if (foundOrder.items && additionalItems.length === 0) {
+                setAdditionalItems(foundOrder.items);
             }
         }
     }, [id, orders, navigate, photos.length, notes, signature, checkInOut.checkIn, checkInOut.checkOut]);
@@ -179,6 +184,8 @@ const MobileOrderDetail: React.FC = () => {
                             checkOut: checkOutData,
                             servicePhotos: photos,
                             serviceNotes: notes,
+                            items: additionalItems,
+                            value: additionalItems.reduce((sum, item) => sum + item.total, 0),
                             customerSignature: signature || undefined
                         });
                         showToast('success', 'Serviço finalizado com sucesso!');
@@ -545,52 +552,75 @@ const MobileOrderDetail: React.FC = () => {
             {/* Signature Modal Overlay */}
             {isSignatureModalOpen && (
                 <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-[100] animate-in fade-in duration-200">
-                    <div className="bg-white rounded-t-3xl sm:rounded-3xl p-6 w-full max-w-lg shadow-2xl animate-in slide-in-from-bottom duration-300">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter italic">Assinatura Digital</h3>
-                            <button onClick={() => setIsSignatureModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                <span className="material-symbols-outlined">close</span>
-                            </button>
-                        </div>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter italic">Assinatura Digital</h3>
+                        <button onClick={() => setIsSignatureModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <span className="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
 
-                        <div className="bg-gray-100 border-x-2 border-t-2 border-b-4 border-gray-300 rounded-2xl overflow-hidden mb-6 relative h-64 touch-none shadow-inner border-double">
-                            <canvas
-                                ref={canvasRef}
-                                width={500}
-                                height={300}
-                                className="w-full h-full cursor-crosshair"
-                                onMouseDown={startDrawing}
-                                onMouseMove={draw}
-                                onMouseUp={endDrawing}
-                                onMouseLeave={endDrawing}
-                                onTouchStart={startDrawing}
-                                onTouchMove={draw}
-                                onTouchEnd={endDrawing}
-                            />
-                            <div className="absolute bottom-2 left-0 right-0 text-center text-[10px] text-gray-400 font-bold uppercase pointer-events-none">Espaço para assinatura manuscrita</div>
+                    {/* Budget Approval Summary */}
+                    {additionalItems.length > 0 && (
+                        <div className="mb-6 bg-gray-50 rounded-xl p-4 border border-gray-200">
+                            <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Resumo do Orçamento</h4>
+                            <div className="space-y-2 max-h-32 overflow-y-auto mb-3">
+                                {additionalItems.map((item, idx) => (
+                                    <div key={idx} className="flex justify-between text-sm">
+                                        <span className="text-gray-700">{item.quantity}x {item.name}</span>
+                                        <span className="font-medium text-gray-900">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.total)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
+                                <span className="font-bold text-gray-900">Total a Aprovar:</span>
+                                <span className="text-lg font-black text-primary">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                        additionalItems.reduce((sum, item) => sum + item.total, 0)
+                                    )}
+                                </span>
+                            </div>
                         </div>
+                    )}
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <button
-                                onClick={clearSignature}
-                                className="h-14 bg-gray-100 text-gray-600 font-black rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 uppercase text-sm border-b-4 border-gray-300 active:border-b-0"
-                            >
-                                <span className="material-symbols-outlined">delete_sweep</span>
-                                Limpar
-                            </button>
-                            <button
-                                onClick={handleSaveSignature}
-                                disabled={isSaving}
-                                className="h-14 bg-primary text-white font-black rounded-xl shadow-lg flex items-center justify-center gap-2 uppercase text-sm border-b-4 border-blue-800 active:border-b-0 disabled:opacity-50"
-                            >
-                                {isSaving ? (
-                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
-                                ) : (
-                                    <span className="material-symbols-outlined">verified</span>
-                                )}
-                                Confirmar
-                            </button>
-                        </div>
+                    <div className="bg-gray-100 border-x-2 border-t-2 border-b-4 border-gray-300 rounded-2xl overflow-hidden mb-6 relative h-64 touch-none shadow-inner border-double">
+                        <canvas
+                            ref={canvasRef}
+                            width={500}
+                            height={300}
+                            className="w-full h-full cursor-crosshair"
+                            onMouseDown={startDrawing}
+                            onMouseMove={draw}
+                            onMouseUp={endDrawing}
+                            onMouseLeave={endDrawing}
+                            onTouchStart={startDrawing}
+                            onTouchMove={draw}
+                            onTouchEnd={endDrawing}
+                        />
+                        <div className="absolute bottom-2 left-0 right-0 text-center text-[10px] text-gray-400 font-bold uppercase pointer-events-none">Espaço para assinatura manuscrita</div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <button
+                            onClick={clearSignature}
+                            className="h-14 bg-gray-100 text-gray-600 font-black rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 uppercase text-sm border-b-4 border-gray-300 active:border-b-0"
+                        >
+                            <span className="material-symbols-outlined">delete_sweep</span>
+                            Limpar
+                        </button>
+                        <button
+                            onClick={handleSaveSignature}
+                            disabled={isSaving}
+                            className="h-14 bg-primary text-white font-black rounded-xl shadow-lg flex items-center justify-center gap-2 uppercase text-sm border-b-4 border-blue-800 active:border-b-0 disabled:opacity-50"
+                        >
+                            {isSaving ? (
+                                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+                            ) : (
+                                <span className="material-symbols-outlined">verified</span>
+                            )}
+                            Confirmar
+                        </button>
                     </div>
                 </div>
             )}

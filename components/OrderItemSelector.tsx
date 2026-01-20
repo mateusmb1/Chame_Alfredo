@@ -12,6 +12,7 @@ export interface OrderLineItem {
     unitPrice: number;
     total: number;
     sourceId?: string; // ID from inventory or products_services
+    approved?: boolean;
 }
 
 interface OrderItemSelectorProps {
