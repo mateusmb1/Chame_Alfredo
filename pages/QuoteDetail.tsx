@@ -9,7 +9,8 @@ import {
     Save,
     Plus,
     Trash2,
-    ImagePlus
+    Upload,
+    FileText
 } from 'lucide-react';
 
 interface QuoteItem {
@@ -28,12 +29,13 @@ const QuoteDetail: React.FC = () => {
     const [quote, setQuote] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [logoUrl, setLogoUrl] = useState<string>('');
 
-    // Editable company info
-    const [companyName, setCompanyName] = useState('ABC COMPANY, LLC');
-    const [companyAddress, setCompanyAddress] = useState('123 Sample St. LA, CA 90210');
-    const [companyPhone, setCompanyPhone] = useState('(XXX) XXX-XXXX');
-    const [companyEmail, setCompanyEmail] = useState('sample@gmail.com');
+    // Company info
+    const [companyName, setCompanyName] = useState('');
+    const [companyAddress, setCompanyAddress] = useState('');
+    const [companyPhone, setCompanyPhone] = useState('');
+    const [companyEmail, setCompanyEmail] = useState('');
 
     // Client details
     const [clientName, setClientName] = useState('');
@@ -47,14 +49,12 @@ const QuoteDetail: React.FC = () => {
     const [estStartDate, setEstStartDate] = useState('');
 
     // Technician details
-    const [techName, setTechName] = useState('John Smith');
-    const [techPhone, setTechPhone] = useState('(XXX) XXX-XXXX');
+    const [techName, setTechName] = useState('');
+    const [techPhone, setTechPhone] = useState('');
 
     // Quote items
     const [items, setItems] = useState<QuoteItem[]>([
-        { qty: '1.0', description: 'Add lighting in new room', material: 150, labor: 300, other: 0 },
-        { qty: '200 FT', description: 'Conduit Wiring', material: 250, labor: 500, other: 10 },
-        { qty: '1.0', description: 'Permits', material: 0, labor: 65, other: 250 },
+        { qty: '1', description: '', material: 0, labor: 0, other: 0 },
     ]);
 
     // Tax rate
@@ -70,10 +70,12 @@ const QuoteDetail: React.FC = () => {
                     .single();
 
                 if (data) {
-                    setCompanyName(data.company_name || 'ABC COMPANY, LLC');
-                    setCompanyAddress(`${data.street || ''}, ${data.number || ''} ${data.city || ''}, ${data.state || ''} ${data.cep || ''}`);
-                    setCompanyPhone(data.phone || '(XXX) XXX-XXXX');
-                    setCompanyEmail(data.email || 'sample@gmail.com');
+                    setCompanyName(data.company_name || '');
+                    const addr = [data.street, data.number, data.city, data.state, data.cep].filter(Boolean).join(', ');
+                    setCompanyAddress(addr);
+                    setCompanyPhone(data.phone || '');
+                    setCompanyEmail(data.email || '');
+                    setLogoUrl(data.logo_url || '');
                 }
             } catch (err) {
                 console.error('Error loading company settings:', err);
@@ -103,18 +105,21 @@ const QuoteDetail: React.FC = () => {
         }
 
         return () => clearTimeout(timer);
-    }, [id, quotes]);
+    }, [id, quotes, clients]);
 
     const populateFromQuote = (q: any) => {
         const client = clients.find(c => c.id === q.clientId);
 
         setClientName(q.clientName || client?.name || '');
-        setClientAddress(client ? `${client.street || ''}, ${client.city || ''} ${client.state || ''} ${client.cep || ''}` : '');
-        setClientPhone(client?.phone || '');
-        setClientEmail(client?.email || '');
+        if (client) {
+            const addr = [client.street, client.number, client.city, client.state, client.cep].filter(Boolean).join(', ');
+            setClientAddress(addr);
+            setClientPhone(client.phone || '');
+            setClientEmail(client.email || '');
+        }
 
         setEstDate(q.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0]);
-        setEstNumber(q.id?.slice(0, 8) || '1254');
+        setEstNumber(q.quoteNumber || q.id?.slice(0, 8).toUpperCase() || '');
         setEstStartDate(q.validityDate?.split('T')[0] || '');
 
         if (q.items && q.items.length > 0) {
@@ -135,7 +140,7 @@ const QuoteDetail: React.FC = () => {
     const estimateTotal = subtotal + taxAmount;
 
     const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
     const updateItem = (index: number, field: keyof QuoteItem, value: string | number) => {
         const updated = [...items];
@@ -156,7 +161,6 @@ const QuoteDetail: React.FC = () => {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // Save logic here
             showToast('success', 'Orçamento salvo com sucesso!');
         } catch (err: any) {
             showToast('error', `Erro ao salvar: ${err.message}`);
@@ -165,361 +169,366 @@ const QuoteDetail: React.FC = () => {
         }
     };
 
-    const handlePrint = () => {
-        window.print();
-    };
+    const handlePrint = () => window.print();
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="ml-3 text-gray-600 dark:text-gray-400">Carregando orçamento...</span>
+            <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-900">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+                    <span className="text-slate-600 dark:text-slate-400 font-medium">Carregando orçamento...</span>
+                </div>
             </div>
         );
     }
 
     if (!quote) {
         return (
-            <div className="flex flex-col items-center justify-center h-64 text-center p-8">
-                <span className="text-6xl mb-4">📄</span>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Orçamento não encontrado</h2>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">O orçamento com ID "{id}" não existe ou foi removido.</p>
-                <button
-                    onClick={() => navigate('/quotes')}
-                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
-                >
-                    Voltar para Orçamentos
-                </button>
+            <div className="flex flex-col items-center justify-center h-screen bg-slate-50 dark:bg-slate-900 p-8">
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-12 text-center max-w-md">
+                    <FileText className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-6" />
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Orçamento não encontrado</h2>
+                    <p className="text-slate-500 dark:text-slate-400 mb-8">O orçamento com ID "{id}" não existe ou foi removido.</p>
+                    <button
+                        onClick={() => navigate('/quotes')}
+                        className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl"
+                    >
+                        Voltar para Orçamentos
+                    </button>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="bg-[#f8fafc] dark:bg-[#0f172a] min-h-screen py-10 px-4 md:px-0 print:bg-white print:p-0">
-            {/* Header Actions - Hidden on print */}
-            <div className="max-w-5xl mx-auto mb-6 flex justify-between items-center px-4 print:hidden">
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                    <span className="material-icons text-primary">description</span>
-                    Novo Orçamento
-                </h1>
-                <div className="flex gap-3">
-                    <button
-                        onClick={() => navigate('/quotes')}
-                        className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center gap-2"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> Voltar
-                    </button>
-                    <button
-                        onClick={handlePrint}
-                        className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center gap-2"
-                    >
-                        <Printer className="w-4 h-4" /> Imprimir
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className="px-6 py-2 bg-primary text-white rounded-md text-sm font-medium hover:opacity-90 shadow-lg transition flex items-center gap-2 disabled:opacity-50"
-                    >
-                        <Save className="w-4 h-4" /> {isSaving ? 'Salvando...' : 'Salvar Orçamento'}
-                    </button>
+        <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 py-8 px-4 print:bg-white print:p-0">
+            {/* Header Actions */}
+            <div className="max-w-5xl mx-auto mb-8 print:hidden">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate('/quotes')}
+                            className="p-2 rounded-xl bg-white dark:bg-slate-800 shadow-md hover:shadow-lg transition-all border border-slate-200 dark:border-slate-700"
+                        >
+                            <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Orçamento</h1>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">#{estNumber}</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={handlePrint}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-md hover:shadow-lg"
+                        >
+                            <Printer className="w-4 h-4" /> Imprimir
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-primary to-blue-600 text-white rounded-xl text-sm font-semibold hover:from-primary/90 hover:to-blue-600/90 transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
+                        >
+                            <Save className="w-4 h-4" /> {isSaving ? 'Salvando...' : 'Salvar'}
+                        </button>
+                    </div>
                 </div>
             </div>
 
             {/* Main Document */}
-            <main className="max-w-5xl mx-auto bg-white dark:bg-gray-900 shadow-2xl rounded-sm overflow-hidden border border-gray-200 dark:border-gray-700 print:shadow-none print:border-0">
-                <div className="p-8 md:p-12 space-y-10">
-                    {/* Header with Logo and Company Info */}
-                    <header className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-                        {/* Logo Placeholder */}
-                        <div className="col-span-1">
-                            <div className="w-40 h-40 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                                <ImagePlus className="w-10 h-10 mb-2" />
-                                <span className="text-xs font-medium uppercase">Logotipo aqui</span>
+            <main className="max-w-5xl mx-auto">
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 print:shadow-none print:border-0 print:rounded-none">
+                    <div className="p-8 md:p-12 space-y-10">
+
+                        {/* Header Section */}
+                        <div className="flex flex-col md:flex-row justify-between items-start gap-8 pb-8 border-b border-slate-200 dark:border-slate-700">
+                            {/* Logo */}
+                            <div className="flex-shrink-0">
+                                {logoUrl ? (
+                                    <img src={logoUrl} alt="Logo" className="h-24 w-auto object-contain" />
+                                ) : (
+                                    <div className="w-32 h-32 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer">
+                                        <Upload className="w-8 h-8 mb-2" />
+                                        <span className="text-xs font-medium">Logo</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Company Info */}
+                            <div className="flex-1 space-y-1">
+                                <input
+                                    className="w-full text-xl font-bold text-slate-900 dark:text-white bg-transparent border-none focus:ring-2 focus:ring-primary/30 rounded-lg p-1 -ml-1"
+                                    value={companyName}
+                                    onChange={(e) => setCompanyName(e.target.value)}
+                                    placeholder="Nome da Empresa"
+                                />
+                                <input
+                                    className="w-full text-sm text-slate-600 dark:text-slate-400 bg-transparent border-none focus:ring-2 focus:ring-primary/30 rounded p-1 -ml-1"
+                                    value={companyAddress}
+                                    onChange={(e) => setCompanyAddress(e.target.value)}
+                                    placeholder="Endereço"
+                                />
+                                <input
+                                    className="w-full text-sm text-slate-600 dark:text-slate-400 bg-transparent border-none focus:ring-2 focus:ring-primary/30 rounded p-1 -ml-1"
+                                    value={companyPhone}
+                                    onChange={(e) => setCompanyPhone(e.target.value)}
+                                    placeholder="Telefone"
+                                />
+                                <input
+                                    className="w-full text-sm text-slate-600 dark:text-slate-400 bg-transparent border-none focus:ring-2 focus:ring-primary/30 rounded p-1 -ml-1"
+                                    value={companyEmail}
+                                    onChange={(e) => setCompanyEmail(e.target.value)}
+                                    placeholder="Email"
+                                />
+                            </div>
+
+                            {/* Title */}
+                            <div className="text-right">
+                                <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">
+                                    ORÇAMENTO
+                                </h2>
+                                <p className="text-lg font-mono text-slate-500 dark:text-slate-400 mt-1">#{estNumber}</p>
                             </div>
                         </div>
 
-                        {/* Company Info */}
-                        <div className="col-span-1 text-center md:text-left space-y-2">
-                            <input
-                                className="w-full bg-transparent border-none focus:ring-2 focus:ring-blue-400 rounded transition-all p-1 text-xl font-bold placeholder-gray-400 text-gray-800 dark:text-white"
-                                value={companyName}
-                                onChange={(e) => setCompanyName(e.target.value)}
-                                placeholder="ABC COMPANY, LLC"
-                            />
-                            <input
-                                className="w-full bg-transparent border-none focus:ring-2 focus:ring-blue-400 rounded transition-all p-1 text-sm text-gray-600 dark:text-gray-300"
-                                value={companyAddress}
-                                onChange={(e) => setCompanyAddress(e.target.value)}
-                                placeholder="123 Sample St. LA, CA 90210"
-                            />
-                            <input
-                                className="w-full bg-transparent border-none focus:ring-2 focus:ring-blue-400 rounded transition-all p-1 text-sm text-gray-600 dark:text-gray-300"
-                                value={companyPhone}
-                                onChange={(e) => setCompanyPhone(e.target.value)}
-                                placeholder="(XXX) XXX-XXXX"
-                            />
-                            <input
-                                className="w-full bg-transparent border-none focus:ring-2 focus:ring-blue-400 rounded transition-all p-1 text-sm text-gray-600 dark:text-gray-300"
-                                value={companyEmail}
-                                onChange={(e) => setCompanyEmail(e.target.value)}
-                                placeholder="sample@gmail.com"
-                            />
-                        </div>
-
-                        {/* Title */}
-                        <div className="col-span-1 text-right">
-                            <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Job Estimate</h2>
-                        </div>
-                    </header>
-
-                    {/* Client & Estimate Details */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                        {/* Client Details */}
-                        <div className="space-y-3">
-                            <h3 className="text-sm font-bold border-b border-primary text-primary pb-1">Client Details</h3>
-                            <div className="bg-blue-50/50 dark:bg-blue-900/20 p-3 rounded space-y-2">
-                                <input
-                                    className="w-full bg-transparent border-none focus:ring-2 focus:ring-blue-400 rounded p-1 font-bold text-gray-800 dark:text-white"
-                                    value={clientName}
-                                    onChange={(e) => setClientName(e.target.value)}
-                                    placeholder="Steve Smith"
-                                />
-                                <input
-                                    className="w-full bg-transparent border-none focus:ring-2 focus:ring-blue-400 rounded p-1 text-sm text-gray-600 dark:text-gray-300"
-                                    value={clientAddress}
-                                    onChange={(e) => setClientAddress(e.target.value)}
-                                    placeholder="123 Sample St. LA, CA 90210"
-                                />
-                                <input
-                                    className="w-full bg-transparent border-none focus:ring-2 focus:ring-blue-400 rounded p-1 text-sm text-gray-600 dark:text-gray-300"
-                                    value={clientPhone}
-                                    onChange={(e) => setClientPhone(e.target.value)}
-                                    placeholder="(XXX) XXX-XXXX"
-                                />
-                                <input
-                                    className="w-full bg-transparent border-none focus:ring-2 focus:ring-blue-400 rounded p-1 text-sm text-gray-600 dark:text-gray-300"
-                                    value={clientEmail}
-                                    onChange={(e) => setClientEmail(e.target.value)}
-                                    placeholder="sample@gmail.com"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Estimate Details */}
-                        <div className="space-y-3">
-                            <h3 className="text-sm font-bold border-b border-primary text-primary pb-1">Estimate Details</h3>
-                            <div className="space-y-1">
-                                <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 py-1">
-                                    <label className="text-xs text-gray-500 uppercase font-semibold">Est. Date</label>
+                        {/* Client & Estimate Details Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* Client */}
+                            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-6">
+                                <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <div className="w-1 h-4 bg-primary rounded-full"></div>
+                                    Dados do Cliente
+                                </h3>
+                                <div className="space-y-3">
                                     <input
-                                        type="date"
-                                        className="text-sm text-right bg-transparent border-none p-0 focus:ring-0 text-gray-700 dark:text-gray-300"
-                                        value={estDate}
-                                        onChange={(e) => setEstDate(e.target.value)}
+                                        className="w-full font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                        value={clientName}
+                                        onChange={(e) => setClientName(e.target.value)}
+                                        placeholder="Nome do cliente"
                                     />
-                                </div>
-                                <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 py-1">
-                                    <label className="text-xs text-gray-500 uppercase font-semibold">Est. Number</label>
                                     <input
-                                        type="text"
-                                        className="text-sm text-right bg-transparent border-none p-0 focus:ring-0 font-medium text-gray-700 dark:text-gray-300"
-                                        value={estNumber}
-                                        onChange={(e) => setEstNumber(e.target.value)}
+                                        className="w-full text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                        value={clientAddress}
+                                        onChange={(e) => setClientAddress(e.target.value)}
+                                        placeholder="Endereço"
                                     />
-                                </div>
-                                <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 py-1">
-                                    <label className="text-xs text-gray-500 uppercase font-semibold">Est. Start Date</label>
-                                    <input
-                                        type="date"
-                                        className="text-sm text-right bg-transparent border-none p-0 focus:ring-0 text-gray-700 dark:text-gray-300"
-                                        value={estStartDate}
-                                        onChange={(e) => setEstStartDate(e.target.value)}
-                                    />
-                                </div>
-                                <div className="flex justify-between items-center py-2">
-                                    <label className="text-xs text-gray-500 uppercase font-bold">Est. Total Amount</label>
-                                    <span className="text-lg font-bold text-primary">{formatCurrency(estimateTotal)}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Items Table */}
-                    <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
-                            <thead>
-                                <tr>
-                                    <th className="py-2 px-4 text-left text-xs font-bold uppercase tracking-wider bg-primary text-white border-r border-white/10 w-16">QTY</th>
-                                    <th className="py-2 px-4 text-left text-xs font-bold uppercase tracking-wider bg-primary text-white border-r border-white/10">Work Description</th>
-                                    <th className="py-2 px-4 text-left text-xs font-bold uppercase tracking-wider bg-primary text-white border-r border-white/10 w-24">Material $</th>
-                                    <th className="py-2 px-4 text-left text-xs font-bold uppercase tracking-wider bg-primary text-white border-r border-white/10 w-24">Labor $</th>
-                                    <th className="py-2 px-4 text-left text-xs font-bold uppercase tracking-wider bg-primary text-white border-r border-white/10 w-24">Other $</th>
-                                    <th className="py-2 px-4 text-left text-xs font-bold uppercase tracking-wider bg-primary text-white w-24">Total</th>
-                                    <th className="py-2 px-4 bg-primary text-white w-10 print:hidden"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="dark:text-gray-300">
-                                {items.map((item, idx) => (
-                                    <tr key={idx} className={idx % 2 === 0 ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700">
-                                            <input
-                                                className="w-full text-center bg-transparent border-none text-sm p-0 focus:ring-0"
-                                                value={item.qty}
-                                                onChange={(e) => updateItem(idx, 'qty', e.target.value)}
-                                            />
-                                        </td>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50/50 dark:bg-blue-900/20">
-                                            <input
-                                                className="w-full bg-transparent border-none text-sm p-0 focus:ring-0"
-                                                value={item.description}
-                                                onChange={(e) => updateItem(idx, 'description', e.target.value)}
-                                            />
-                                        </td>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700">
-                                            <input
-                                                type="number"
-                                                className="w-full text-right bg-transparent border-none text-sm p-0 focus:ring-0"
-                                                value={item.material}
-                                                onChange={(e) => updateItem(idx, 'material', parseFloat(e.target.value) || 0)}
-                                            />
-                                        </td>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700">
-                                            <input
-                                                type="number"
-                                                className="w-full text-right bg-transparent border-none text-sm p-0 focus:ring-0"
-                                                value={item.labor}
-                                                onChange={(e) => updateItem(idx, 'labor', parseFloat(e.target.value) || 0)}
-                                            />
-                                        </td>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700">
-                                            <input
-                                                type="number"
-                                                className="w-full text-right bg-transparent border-none text-sm p-0 focus:ring-0"
-                                                value={item.other}
-                                                onChange={(e) => updateItem(idx, 'other', parseFloat(e.target.value) || 0)}
-                                            />
-                                        </td>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700 text-right font-medium">
-                                            {formatCurrency(calculateItemTotal(item))}
-                                        </td>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700 print:hidden">
-                                            <button
-                                                onClick={() => removeItem(idx)}
-                                                className="text-red-500 hover:text-red-700"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {/* Empty rows for more space */}
-                                {Array.from({ length: Math.max(0, 8 - items.length) }).map((_, idx) => (
-                                    <tr key={`empty-${idx}`} className={idx % 2 === 1 ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700 h-8"></td>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50/50 dark:bg-blue-900/20 h-8"></td>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700"></td>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700"></td>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700"></td>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700 text-right text-gray-300 dark:text-gray-700 text-xs">$0.00</td>
-                                        <td className="py-2 px-4 border-b border-gray-200 dark:border-gray-700 print:hidden"></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <button
-                            onClick={addItem}
-                            className="mt-2 text-sm text-primary hover:underline flex items-center gap-1 print:hidden"
-                        >
-                            <Plus className="w-4 h-4" /> Adicionar linha
-                        </button>
-                    </div>
-
-                    {/* Bottom Section: Technician + Totals */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                        {/* Technician Details + Terms */}
-                        <div className="space-y-6">
-                            <div className="space-y-3">
-                                <h3 className="text-sm font-bold border-b border-primary text-primary pb-1">Technician Details</h3>
-                                <div className="bg-blue-50/50 dark:bg-blue-900/20 p-3 rounded grid grid-cols-1 gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-500 uppercase font-semibold w-20">Name</span>
+                                    <div className="grid grid-cols-2 gap-3">
                                         <input
-                                            className="flex-1 bg-transparent border-none focus:ring-2 focus:ring-blue-400 rounded p-1 text-sm text-gray-700 dark:text-gray-300"
+                                            className="w-full text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                            value={clientPhone}
+                                            onChange={(e) => setClientPhone(e.target.value)}
+                                            placeholder="Telefone"
+                                        />
+                                        <input
+                                            className="w-full text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                            value={clientEmail}
+                                            onChange={(e) => setClientEmail(e.target.value)}
+                                            placeholder="Email"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Estimate Info */}
+                            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-6">
+                                <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <div className="w-1 h-4 bg-primary rounded-full"></div>
+                                    Detalhes do Orçamento
+                                </h3>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700">
+                                        <span className="text-sm font-medium text-slate-500">Data</span>
+                                        <input
+                                            type="date"
+                                            className="text-sm font-medium text-slate-900 dark:text-white bg-transparent border-none text-right focus:ring-0"
+                                            value={estDate}
+                                            onChange={(e) => setEstDate(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700">
+                                        <span className="text-sm font-medium text-slate-500">Número</span>
+                                        <input
+                                            className="text-sm font-bold text-slate-900 dark:text-white bg-transparent border-none text-right focus:ring-0 font-mono"
+                                            value={estNumber}
+                                            onChange={(e) => setEstNumber(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700">
+                                        <span className="text-sm font-medium text-slate-500">Validade</span>
+                                        <input
+                                            type="date"
+                                            className="text-sm font-medium text-slate-900 dark:text-white bg-transparent border-none text-right focus:ring-0"
+                                            value={estStartDate}
+                                            onChange={(e) => setEstStartDate(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="flex justify-between items-center py-3 bg-gradient-to-r from-primary/10 to-blue-500/10 rounded-lg px-4 -mx-2">
+                                        <span className="text-sm font-bold text-primary">TOTAL</span>
+                                        <span className="text-2xl font-black text-primary">{formatCurrency(estimateTotal)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Items Table */}
+                        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="bg-gradient-to-r from-primary to-blue-600 text-white">
+                                        <th className="py-4 px-4 text-left text-xs font-bold uppercase tracking-wider w-20">Qtd</th>
+                                        <th className="py-4 px-4 text-left text-xs font-bold uppercase tracking-wider">Descrição</th>
+                                        <th className="py-4 px-4 text-right text-xs font-bold uppercase tracking-wider w-28">Material</th>
+                                        <th className="py-4 px-4 text-right text-xs font-bold uppercase tracking-wider w-28">Mão de Obra</th>
+                                        <th className="py-4 px-4 text-right text-xs font-bold uppercase tracking-wider w-28">Outros</th>
+                                        <th className="py-4 px-4 text-right text-xs font-bold uppercase tracking-wider w-28">Total</th>
+                                        <th className="py-4 px-2 w-10 print:hidden"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {items.map((item, idx) => (
+                                        <tr key={idx} className={`border-b border-slate-100 dark:border-slate-700 ${idx % 2 === 0 ? 'bg-slate-50/50 dark:bg-slate-800/30' : 'bg-white dark:bg-slate-800/10'} hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors`}>
+                                            <td className="py-3 px-4">
+                                                <input
+                                                    className="w-full text-center text-sm font-medium text-slate-700 dark:text-slate-300 bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-slate-600 focus:border-primary focus:ring-0 rounded-lg py-1"
+                                                    value={item.qty}
+                                                    onChange={(e) => updateItem(idx, 'qty', e.target.value)}
+                                                    placeholder="1"
+                                                />
+                                            </td>
+                                            <td className="py-3 px-4">
+                                                <input
+                                                    className="w-full text-sm text-slate-700 dark:text-slate-300 bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-slate-600 focus:border-primary focus:ring-0 rounded-lg py-1 px-2"
+                                                    value={item.description}
+                                                    onChange={(e) => updateItem(idx, 'description', e.target.value)}
+                                                    placeholder="Descrição do serviço ou material"
+                                                />
+                                            </td>
+                                            <td className="py-3 px-4">
+                                                <input
+                                                    type="number"
+                                                    className="w-full text-right text-sm font-medium text-slate-700 dark:text-slate-300 bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-slate-600 focus:border-primary focus:ring-0 rounded-lg py-1"
+                                                    value={item.material || ''}
+                                                    onChange={(e) => updateItem(idx, 'material', parseFloat(e.target.value) || 0)}
+                                                    placeholder="0.00"
+                                                />
+                                            </td>
+                                            <td className="py-3 px-4">
+                                                <input
+                                                    type="number"
+                                                    className="w-full text-right text-sm font-medium text-slate-700 dark:text-slate-300 bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-slate-600 focus:border-primary focus:ring-0 rounded-lg py-1"
+                                                    value={item.labor || ''}
+                                                    onChange={(e) => updateItem(idx, 'labor', parseFloat(e.target.value) || 0)}
+                                                    placeholder="0.00"
+                                                />
+                                            </td>
+                                            <td className="py-3 px-4">
+                                                <input
+                                                    type="number"
+                                                    className="w-full text-right text-sm font-medium text-slate-700 dark:text-slate-300 bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-slate-600 focus:border-primary focus:ring-0 rounded-lg py-1"
+                                                    value={item.other || ''}
+                                                    onChange={(e) => updateItem(idx, 'other', parseFloat(e.target.value) || 0)}
+                                                    placeholder="0.00"
+                                                />
+                                            </td>
+                                            <td className="py-3 px-4 text-right">
+                                                <span className="text-sm font-bold text-slate-900 dark:text-white">
+                                                    {formatCurrency(calculateItemTotal(item))}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-2 print:hidden">
+                                                <button
+                                                    onClick={() => removeItem(idx)}
+                                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <button
+                                onClick={addItem}
+                                className="w-full py-3 text-sm font-medium text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 print:hidden"
+                            >
+                                <Plus className="w-4 h-4" /> Adicionar Item
+                            </button>
+                        </div>
+
+                        {/* Bottom Section */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* Technician + Terms */}
+                            <div className="space-y-6">
+                                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-6">
+                                    <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-4 flex items-center gap-2">
+                                        <div className="w-1 h-4 bg-primary rounded-full"></div>
+                                        Técnico Responsável
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <input
+                                            className="w-full text-sm font-medium text-slate-900 dark:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                                             value={techName}
                                             onChange={(e) => setTechName(e.target.value)}
+                                            placeholder="Nome do técnico"
                                         />
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-500 uppercase font-semibold w-20">Phone #</span>
                                         <input
-                                            className="flex-1 bg-transparent border-none focus:ring-2 focus:ring-blue-400 rounded p-1 text-sm text-gray-700 dark:text-gray-300"
+                                            className="w-full text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                                             value={techPhone}
                                             onChange={(e) => setTechPhone(e.target.value)}
+                                            placeholder="Telefone do técnico"
                                         />
                                     </div>
                                 </div>
+                                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-5 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+                                    <p className="font-bold mb-2">Termos de Aceitação:</p>
+                                    As informações contidas neste orçamento não constituem uma fatura e servem apenas como estimativa para os serviços descritos. O custo final pode variar dependendo de alterações feitas após a criação do orçamento. Este orçamento é válido por 7 dias a partir da data de emissão.
+                                </div>
                             </div>
-                            <div className="border border-primary/20 bg-gray-50 dark:bg-gray-800/50 p-4 rounded text-[10px] leading-relaxed text-gray-600 dark:text-gray-400">
-                                <p className="font-bold mb-1 text-gray-800 dark:text-gray-200">Acceptance Terms:</p>
-                                The information contained in this quote is not an invoice and serves solely as an estimate for the described services. The final cost may vary depending on changes made after the estimate is created. If there are any changes, the client will be notified in advance. This estimate is valid for 7 days from the estimate date. By signing below, you acknowledge that you have read this estimate and agree to all its terms and conditions, including the cost and scope of work as outlined above.
-                            </div>
-                        </div>
 
-                        {/* Totals */}
-                        <div className="space-y-1">
-                            <div className="flex">
-                                <div className="flex-grow"></div>
-                                <div className="w-full max-w-xs space-y-px">
-                                    <div className="grid grid-cols-2 text-sm">
-                                        <span className="p-2 text-right font-medium text-gray-500">Subtotal</span>
-                                        <span className="p-2 text-right bg-blue-50/50 dark:bg-blue-900/20 text-gray-800 dark:text-gray-200">{formatCurrency(subtotal)}</span>
+                            {/* Totals */}
+                            <div className="flex flex-col justify-end">
+                                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl overflow-hidden">
+                                    <div className="p-4 space-y-3">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500">Subtotal</span>
+                                            <span className="font-semibold text-slate-700 dark:text-slate-300">{formatCurrency(subtotal)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500">Taxa ({taxRate}%)</span>
+                                            <span className="font-semibold text-slate-700 dark:text-slate-300">{formatCurrency(taxAmount)}</span>
+                                        </div>
                                     </div>
-                                    <div className="grid grid-cols-2 text-sm">
-                                        <span className="p-2 text-right font-medium text-gray-500">Tax Rate</span>
-                                        <span className="p-2 text-right bg-blue-50/50 dark:bg-blue-900/20 font-mono text-gray-800 dark:text-gray-200">{taxRate.toFixed(2)}%</span>
-                                    </div>
-                                    <div className="grid grid-cols-2 text-sm">
-                                        <span className="p-2 text-right font-medium text-gray-500">Tax Amount</span>
-                                        <span className="p-2 text-right bg-blue-50/50 dark:bg-blue-900/20 text-gray-800 dark:text-gray-200">{formatCurrency(taxAmount)}</span>
-                                    </div>
-                                    <div className="grid grid-cols-2 text-base font-bold bg-primary text-white">
-                                        <span className="p-3 text-right">Estimate Total</span>
-                                        <span className="p-3 text-right">{formatCurrency(estimateTotal)}</span>
+                                    <div className="bg-gradient-to-r from-primary to-blue-600 text-white p-4 flex justify-between items-center">
+                                        <span className="font-bold text-lg">Total do Orçamento</span>
+                                        <span className="font-black text-2xl">{formatCurrency(estimateTotal)}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Thank You */}
-                    <div className="pt-6 text-center italic font-semibold text-gray-700 dark:text-gray-300">
-                        Thank you for your business!
-                    </div>
-
-                    {/* Signatures */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">
-                        <div className="space-y-1">
-                            <div className="flex justify-between text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                                <span>Client Signature</span>
-                                <span>Date</span>
-                            </div>
-                            <div className="h-10 bg-blue-50/50 dark:bg-blue-900/20 border-b border-gray-300 dark:border-gray-700"></div>
+                        {/* Thank You */}
+                        <div className="text-center py-6">
+                            <p className="text-lg font-semibold text-slate-600 dark:text-slate-400 italic">
+                                Agradecemos a preferência!
+                            </p>
                         </div>
-                        <div className="space-y-1">
-                            <div className="flex justify-between text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                                <span>Company Representative Signature</span>
-                                <span>Date</span>
+
+                        {/* Signatures */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-200 dark:border-slate-700">
+                            <div>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Assinatura do Cliente</p>
+                                <div className="h-16 bg-slate-50 dark:bg-slate-900/50 border-b-2 border-slate-300 dark:border-slate-600 rounded-t-lg"></div>
+                                <p className="text-xs text-slate-400 mt-2 text-center">Data: ____/____/________</p>
                             </div>
-                            <div className="h-10 bg-blue-50/50 dark:bg-blue-900/20 border-b border-gray-300 dark:border-gray-700"></div>
+                            <div>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Assinatura do Representante</p>
+                                <div className="h-16 bg-slate-50 dark:bg-slate-900/50 border-b-2 border-slate-300 dark:border-slate-600 rounded-t-lg"></div>
+                                <p className="text-xs text-slate-400 mt-2 text-center">Data: ____/____/________</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </main>
-
-            {/* Footer */}
-            <footer className="max-w-5xl mx-auto mt-10 text-center text-gray-400 text-xs print:hidden">
-                © 2023 Plataforma de Gestão de Ordens de Serviço. Todos os direitos reservados.
-            </footer>
         </div>
     );
 };
