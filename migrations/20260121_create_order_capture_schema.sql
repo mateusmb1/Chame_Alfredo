@@ -64,10 +64,18 @@ ALTER TABLE clients
 -- Para segurança, vamos alterar apenas se for seguro ou usar clausula USING.
 
 ALTER TABLE clients 
+    DROP CONSTRAINT IF EXISTS clients_type_check,
+    DROP CONSTRAINT IF EXISTS clients_status_check,
+    ALTER COLUMN type DROP DEFAULT,
+    ALTER COLUMN status DROP DEFAULT;
+
+ALTER TABLE clients 
     ALTER COLUMN type TYPE client_type_enum USING type::client_type_enum,
-    ALTER COLUMN type SET DEFAULT 'pf',
-    ALTER COLUMN status TYPE client_status_enum USING status::client_status_enum,
-    ALTER COLUMN status SET DEFAULT 'active';
+    ALTER COLUMN status TYPE client_status_enum USING status::client_status_enum;
+
+ALTER TABLE clients 
+    ALTER COLUMN type SET DEFAULT 'pf'::client_type_enum,
+    ALTER COLUMN status SET DEFAULT 'active'::client_status_enum;
 
 -- Garantir constraints
 ALTER TABLE clients 
@@ -141,11 +149,22 @@ END $$;
 
 -- Atualizar status e priority para ENUMs
 -- Conversão segura simplificada (assumindo compatibilidade ou default)
+-- Normalizar dados antigos ('pendente' -> 'nova')
+UPDATE orders SET status = 'nova' WHERE status = 'pendente';
+
+ALTER TABLE orders 
+    DROP CONSTRAINT IF EXISTS orders_status_check,
+    DROP CONSTRAINT IF EXISTS orders_priority_check,
+    ALTER COLUMN status DROP DEFAULT,
+    ALTER COLUMN priority DROP DEFAULT;
+
 ALTER TABLE orders 
     ALTER COLUMN status TYPE order_status_enum USING status::order_status_enum,
-    ALTER COLUMN status SET DEFAULT 'nova',
-    ALTER COLUMN priority TYPE order_priority_enum USING priority::order_priority_enum,
-    ALTER COLUMN priority SET DEFAULT 'media';
+    ALTER COLUMN priority TYPE order_priority_enum USING priority::order_priority_enum;
+
+ALTER TABLE orders 
+    ALTER COLUMN status SET DEFAULT 'nova'::order_status_enum,
+    ALTER COLUMN priority SET DEFAULT 'media'::order_priority_enum;
 
 -- Preencher protocolos para ordens antigas que não têm
 UPDATE orders SET protocol = fn_get_protocol() WHERE protocol IS NULL;
@@ -258,6 +277,7 @@ ALTER TABLE order_timeline ENABLE ROW LEVEL SECURITY;
 
 -- Permitir leitura pública ou restrita? Requisito: "permitir se (auth.role() = 'admin') OR (has_order_from_user)"
 -- Simplificação para "anon" no insert (Landing page)
+DROP POLICY IF EXISTS "Clients Insert Anonymous" ON clients;
 CREATE POLICY "Clients Insert Anonymous" ON clients
     FOR INSERT
     TO anon, authenticated
@@ -268,6 +288,7 @@ CREATE POLICY "Clients Insert Anonymous" ON clients
 -- O requisito diz "has_order_from_user". Isso é complexo em SQL puro na policy sem join custoso.
 -- Vamos permitir que autenticados vejam clientes (operação normal de equipe) ou restringir.
 -- Vou seguir o requisito estrito: Admin pode tudo.
+DROP POLICY IF EXISTS "Clients Select Admin" ON clients;
 CREATE POLICY "Clients Select Admin" ON clients
     FOR SELECT
     TO authenticated
@@ -282,12 +303,14 @@ CREATE POLICY "Clients Select Admin" ON clients
 -- 3. Policies - ORDERS
 
 -- Inserção Pública (Landing Form)
+DROP POLICY IF EXISTS "Orders Insert Anon" ON orders;
 CREATE POLICY "Orders Insert Anon" ON orders
     FOR INSERT
     TO anon, authenticated
     WITH CHECK (true);
 
 -- Leitura: "auth.uid() = assigned_to OR auth.role() = 'admin'"
+DROP POLICY IF EXISTS "Orders Select Assigned/Admin" ON orders;
 CREATE POLICY "Orders Select Assigned/Admin" ON orders
     FOR SELECT
     TO authenticated
@@ -300,6 +323,7 @@ CREATE POLICY "Orders Select Assigned/Admin" ON orders
     );
 
 -- Update: "admin OR assigned_to"
+DROP POLICY IF EXISTS "Orders Update Assigned/Admin" ON orders;
 CREATE POLICY "Orders Update Assigned/Admin" ON orders
     FOR UPDATE
     TO authenticated
