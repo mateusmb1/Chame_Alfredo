@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
+import { useResponsive } from '../src/hooks';
 import {
   LayoutDashboard,
   Receipt,
@@ -28,11 +29,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { setOnNewMessage, companyProfile } = useApp();
-  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const { isMobile, isDesktop, breakpoint } = useResponsive();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setOnNewMessage((message) => {
-      // Admin only hears messages that are NOT from admin
       if (message.senderType !== 'admin') {
         try {
           const audio = new Audio('/notification.mp3');
@@ -58,6 +59,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/communication', label: 'Comunicação', icon: MessageSquare },
   ];
 
+  const currentPathLabel = menuItems.find(item =>
+    location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
+  )?.label || 'Alfredo';
+
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
@@ -69,19 +74,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const SidebarContent = () => (
     <div className="flex h-full flex-col bg-white dark:bg-[#101622]">
       {/* Brand Header */}
-      <div className="p-6 border-b border-gray-100 dark:border-gray-800/50">
+      <div className="p-4 md:p-6 border-b border-gray-100 dark:border-gray-800/50">
         <div className="flex items-center gap-3">
           <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden shadow-lg ${!companyProfile?.logo_url ? 'bg-gradient-to-br from-primary to-primary/60 shadow-primary/20' : ''}`}
+            className={`
+              flex items-center justify-center overflow-hidden shadow-lg transition-all duration-300
+              ${isDesktop ? 'w-10 h-10 rounded-xl' : 'w-8 h-8 rounded-lg'}
+              ${!companyProfile?.logo_url ? 'bg-gradient-to-br from-primary to-primary/60 shadow-primary/20' : ''}
+            `}
           >
             {companyProfile?.logo_url ? (
               <img src={companyProfile.logo_url} alt="Logo" className="w-full h-full object-contain bg-white" />
             ) : (
-              <span className="text-white font-bold text-xl">A</span>
+              <span className={`text-white font-bold ${isDesktop ? 'text-xl' : 'text-sm'}`}>A</span>
             )}
           </div>
-          <div className="flex flex-col">
-            <h1 className="text-[#0d121b] dark:text-white text-lg font-bold leading-tight tracking-tight">
+          <div className="flex flex-col min-w-0">
+            <h1 className="text-[#0d121b] dark:text-white text-lg font-bold leading-tight tracking-tight truncate">
               {companyProfile?.company_name || 'Alfredo'}
             </h1>
             <p className="text-[#4c669a] dark:text-gray-400 text-xs font-medium uppercase tracking-wider">Admin Panel</p>
@@ -90,7 +99,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-4 py-6 custom-scrollbar">
+      <nav className="flex-1 overflow-y-auto px-4 py-4 md:py-6 custom-scrollbar">
         <div className="space-y-1">
           {menuItems.map((item) => {
             const active = isActive(item.path);
@@ -107,11 +116,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   }
                 `}
               >
-                <div className="flex items-center gap-3">
-                  <item.icon className={`w-5 h-5 ${active ? 'text-primary' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'}`} />
-                  <span className="text-[14px] font-semibold">{item.label}</span>
+                <div className="flex items-center gap-3 min-w-0">
+                  <item.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-primary' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'}`} />
+                  <span className={`text-[14px] font-semibold truncate ${(breakpoint === 'xs' || breakpoint === 'sm') ? 'hidden md:block' : ''}`}>
+                    {item.label}
+                  </span>
                 </div>
-                {active && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                {active && <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />}
               </Link>
             );
           })}
@@ -131,8 +142,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             }
           `}
         >
-          <Settings className="w-5 h-5" />
-          <span className="text-[14px] font-semibold">Configurações</span>
+          <Settings className="w-5 h-5 flex-shrink-0" />
+          <span className={`text-[14px] font-semibold ${(breakpoint === 'xs' || breakpoint === 'sm') ? 'hidden md:block' : ''}`}>
+            Configurações
+          </span>
         </Link>
         <button
           onClick={() => {
@@ -141,8 +154,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           }}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
         >
-          <LogOut className="w-5 h-5" />
-          <span className="text-[14px] font-semibold">Sair</span>
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          <span className={`text-[14px] font-semibold ${(breakpoint === 'xs' || breakpoint === 'sm') ? 'hidden md:block' : ''}`}>
+            Sair
+          </span>
         </button>
       </div>
     </div>
@@ -151,14 +166,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8FAFC] dark:bg-[#090E1A]">
       {/* Mobile Drawer Overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-[#090E1A]/60 backdrop-blur-sm z-[60] md:hidden transition-opacity duration-300"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
+      <div
+        className={`fixed inset-0 bg-[#090E1A]/60 backdrop-blur-sm z-[60] md:hidden transition-all duration-300 ${mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setMobileOpen(false)}
+      />
 
-      {/* Sidebar - Desktop & Mobile */}
+      {/* Sidebar Container */}
       <aside
         className={`
           fixed inset-y-0 left-0 z-[70] w-[280px] bg-white dark:bg-[#101622] 
@@ -170,10 +183,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <SidebarContent />
       </aside>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-hidden">
-        {/* Top Header - Mobile only */}
-        <header className="md:hidden flex items-center justify-between h-16 px-4 bg-white/80 dark:bg-[#101622]/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50">
+        {/* Mobile Header */}
+        <header className="md:hidden flex items-center justify-between h-16 px-4 bg-white/80 dark:bg-[#101622]/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 sticky top-0 z-[50]">
           <button
             onClick={() => setMobileOpen(true)}
             className="p-2 -ml-2 rounded-xl text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5"
@@ -181,24 +194,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Menu className="w-6 h-6" />
           </button>
 
-          <div className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden ${!companyProfile?.logo_url ? 'bg-primary' : ''}`}>
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 ${!companyProfile?.logo_url ? 'bg-primary' : ''}`}>
               {companyProfile?.logo_url ? (
                 <img src={companyProfile.logo_url} alt="Logo" className="w-full h-full object-contain bg-white" />
               ) : (
                 <span className="text-white font-bold text-sm">A</span>
               )}
             </div>
-            <span className="text-[#0d121b] dark:text-white font-bold text-sm tracking-tight">
-              {companyProfile?.company_name || 'Alfredo'} Admin
+            <span className="text-[#0d121b] dark:text-white font-bold text-sm tracking-tight truncate">
+              {currentPathLabel}
             </span>
           </div>
 
-          <div className="w-10"></div> {/* Spacer for symmetry */}
+          <div className="flex items-center justify-end w-10">
+            {/* Empty space or notification badge could go here */}
+          </div>
         </header>
 
-        {/* Page Container */}
-        <main className="flex-1 w-full max-w-[1600px] mx-auto overflow-y-auto overflow-x-hidden p-4 md:p-8 pt-6">
+        {/* Dynamic Page Container */}
+        <main className={`
+          flex-1 w-full max-w-[1600px] mx-auto overflow-y-auto overflow-x-hidden
+          transition-all duration-300
+          p-3 sm:p-4 md:p-8
+        `}>
           {children}
         </main>
       </div>
