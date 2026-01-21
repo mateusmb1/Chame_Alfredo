@@ -23,10 +23,14 @@ import {
   Star,
   Quote,
   Users,
-  Check
+  Check,
+  AlertTriangle
 } from 'lucide-react'
 import { supabase } from '../src/lib/supabase'
 import LeadFormModal from '../components/LeadFormModal'
+import ServiceCard from '../components/ServiceCard'
+import MetricCard from '../components/MetricCard'
+import BrandLogo from '../components/BrandLogo'
 
 const Mascot: React.FC<{ className?: string }> = ({ className }) => {
   const [sourceIndex, setSourceIndex] = useState(0)
@@ -251,36 +255,7 @@ const Landing: React.FC = () => {
               </a>
             </div>
 
-            <div className="mt-12 grid grid-cols-2 gap-4">
-              <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/10 hover:bg-white/20 transition-colors">
-                <div className="flex items-center gap-2 mb-1">
-                  <Users className="w-5 h-5 text-[#F97316]" />
-                  <span className="font-bold text-xl">2000+</span>
-                </div>
-                <p className="text-xs text-gray-300 leading-tight">Clientes atendidos desde 2015</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/10 hover:bg-white/20 transition-colors">
-                <div className="flex items-center gap-2 mb-1">
-                  <Star className="w-5 h-5 text-[#F97316] fill-[#F97316]" />
-                  <span className="font-bold text-xl">4.8/5</span>
-                </div>
-                <p className="text-xs text-gray-300 leading-tight">Avaliação média no Google</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/10 hover:bg-white/20 transition-colors">
-                <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle2 className="w-5 h-5 text-[#F97316]" />
-                  <span className="font-bold text-xl">98%</span>
-                </div>
-                <p className="text-xs text-gray-300 leading-tight">Resolvido no 1º agendamento</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/10 hover:bg-white/20 transition-colors">
-                <div className="flex items-center gap-2 mb-1">
-                  <ShieldCheck className="w-5 h-5 text-[#F97316]" />
-                  <span className="font-bold text-xl">6 Meses</span>
-                </div>
-                <p className="text-xs text-gray-300 leading-tight">Garantia em todos serviços</p>
-              </div>
-            </div>
+
           </div>
           <div className="md:w-1/2 md:pl-12 w-full">
             <div className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl max-w-md mx-auto border-t-8 border-[#F97316]">
@@ -400,28 +375,49 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
+      {/* Social Proof Strip */}
+      <section className="bg-white py-8 border-b border-gray-100 relative z-20 -mt-8 mx-4 md:mx-0 rounded-xl md:rounded-none shadow-xl md:shadow-none">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <MetricCard
+              icon={Users}
+              number="2000+"
+              text="Clientes Atendidos"
+              subtext="Condomínios, empresas e pessoas"
+              color="text-[#F97316]"
+            />
+            <MetricCard
+              icon={Star}
+              number="4.8/5"
+              text="Avaliação Google"
+              subtext="Baseado em 100+ reviews"
+              color="text-yellow-400"
+            />
+            <MetricCard
+              icon={Clock}
+              number="30 min"
+              text="Tempo de Resposta"
+              subtext="SLA garantido em urgências"
+              color="text-green-500"
+            />
+            <MetricCard
+              icon={ShieldCheck}
+              number="6 meses"
+              text="Garantia Total"
+              subtext="Peças e mão de obra inclusas"
+              color="text-blue-500"
+            />
+          </div>
+        </div>
+      </section>
+
       <section className="bg-white py-12 border-b border-gray-100">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <p className="text-[#F97316] font-bold text-sm uppercase tracking-wider mb-2">Qualidade Garantida</p>
+          <div className="text-center mb-10">
             <h3 className="text-2xl font-bold text-gray-800 mb-2">Trabalhamos com as melhores marcas</h3>
             <p className="text-gray-500 max-w-2xl mx-auto text-sm">As mesmas marcas confiadas por grandes condomínios. Peças originais e suporte técnico garantido.</p>
           </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 items-center justify-items-center max-w-4xl mx-auto">
-            <a href="https://intelbras.com.br" target="_blank" rel="noopener noreferrer" className="group w-full flex justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110">
-              <img src="https://logo.clearbit.com/intelbras.com.br" alt="Intelbras" className="h-12 md:h-14 w-auto object-contain opacity-70 group-hover:opacity-100 transition-opacity" />
-            </a>
-            <a href="https://hikvision.com" target="_blank" rel="noopener noreferrer" className="group w-full flex justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110">
-              <img src="https://logo.clearbit.com/hikvision.com" alt="Hikvision" className="h-12 md:h-14 w-auto object-contain opacity-70 group-hover:opacity-100 transition-opacity" />
-            </a>
-            <a href="https://ppabrasil.com.br" target="_blank" rel="noopener noreferrer" className="group w-full flex justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110">
-              <img src="https://logo.clearbit.com/ppabrasil.com.br" alt="PPA" className="h-12 md:h-14 w-auto object-contain opacity-70 group-hover:opacity-100 transition-opacity" />
-            </a>
-            <a href="https://garen.com.br" target="_blank" rel="noopener noreferrer" className="group w-full flex justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110">
-              <img src="https://logo.clearbit.com/garen.com.br" alt="Garen" className="h-12 md:h-14 w-auto object-contain opacity-70 group-hover:opacity-100 transition-opacity" />
-            </a>
-          </div>
+          <BrandLogo />
         </div>
       </section>
 
@@ -432,54 +428,68 @@ const Landing: React.FC = () => {
             <h2 className="text-3xl sm:text-4xl md:text-4xl font-extrabold text-[#1e293b] mt-2 mb-4">Soluções completas para seu condomínio</h2>
             <div className="w-20 h-1.5 bg-[#F97316] mx-auto rounded-full"></div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-            <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-xl hover:border-[#F97316] transition">
-              <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-6">
-                <Wrench className="w-7 h-7 text-[#F97316]" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">Manutenção Predial</h3>
-              <p className="text-gray-600 text-sm">Reparos elétricos, hidráulicos e estruturais. Mantenha seu patrimônio valorizado e seguro.</p>
-            </div>
-            <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-xl hover:border-[#F97316] transition">
-              <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-6">
-                <Camera className="w-7 h-7 text-[#F97316]" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">Segurança Eletrônica</h3>
-              <p className="text-gray-600 text-sm">Instalação e manutenção de CFTV, câmeras IP e sistemas de monitoramento.</p>
-            </div>
-            <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-xl hover:border-[#F97316] transition">
-              <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-6">
-                <DoorOpen className="w-7 h-7 text-[#F97316]" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">Portões Automáticos</h3>
-              <p className="text-gray-600 text-sm">Motores rápidos e seguros. Manutenção preventiva para evitar imprevistos.</p>
-            </div>
-            <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-xl hover:border-[#F97316] transition">
-              <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-6">
-                <Tv className="w-7 h-7 text-[#F97316]" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">Antena Coletiva</h3>
-              <p className="text-gray-600 text-sm">Sinal digital limpo para todos os apartamentos. Cabeamento estruturado.</p>
-            </div>
-            <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-xl hover:border-[#F97316] transition">
-              <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-6">
-                <Phone className="w-7 h-7 text-[#F97316]" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">Interfonia e PABX</h3>
-              <p className="text-gray-600 text-sm">Comunicação eficiente entre portaria e apartamentos. Centrais digitais.</p>
-            </div>
-            <div className="p-6 rounded-2xl bg-[#1e293b] text-white shadow-lg relative overflow-hidden cursor-pointer">
-              <div className="relative z-10">
-                <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center mb-6">
-                  <LifeBuoy className="w-7 h-7 text-[#F97316]" />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-[#F97316]">Precisa de Ajuda Urgente?</h3>
-                <p className="text-gray-300 text-sm mb-4">Plantão 24h para emergências em portões e segurança.</p>
-                <span className="inline-flex items-center text-sm font-bold">Falar no WhatsApp <ArrowRight className="ml-2 w-4 h-4" /></span>
-              </div>
-              <div className="absolute -right-6 -bottom-6 opacity-10">
-                <Settings className="w-32 h-32" />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <ServiceCard
+              icon={DoorOpen}
+              title="Portão Travado? Consertamos em 1-2 Horas"
+              description="Seu portão parou de abrir, trava na metade ou faz barulho estranho? Alfredo diagnostica e corrige o problema. Se for motor, trilho, roldana, mola, cabo, sensor ou fotocélula - Alfredo resolve."
+              benefits={["Diagnóstico grátis por telefone", "Peças originais Garen + garantia 6 meses", "Atendimento em até 30 minutos"]}
+              ctaText="Chamar para Emergência"
+              onCtaClick={() => setLeadModalOpen(true)}
+              isEmergency={false} // User requested this as standard card 1, but with urgent title. Kept standard style to match layout request (6 cards + 1 cta).
+            />
+            <ServiceCard
+              icon={Settings}
+              title="Manutenção Preventiva: Evite Surpresas"
+              description="Portão novo quebra em 3 meses? Sensor falha toda semana? Seu condomínio paga mais caro com quebras emergenciais. Visitas periódicas de Alfredo = lubrificação, ajustes, testes de segurança."
+              benefits={["Visitas mensais/trimestrais flexíveis", "Previne acidentes e paradas", "Economiza até 40% em gastos"]}
+              ctaText="Agendar Visita"
+              onCtaClick={() => setLeadModalOpen(true)}
+            />
+            <ServiceCard
+              icon={Camera}
+              title="Monitoramento em Tempo Real 24h"
+              description="Garagens desprotegidas sofrem roubos. Alfredo instala câmeras Hikvision (HD/IP) e gravadores Intelbras. Monitore de qualquer lugar (celular ou computador) com segurança."
+              benefits={["Câmeras Hikvision Full HD", "Acesso remoto 24/7 + nuvem", "Instalação profissional inclusa"]}
+              ctaText="Solicitar Orçamento"
+              onCtaClick={() => setLeadModalOpen(true)}
+            />
+            <ServiceCard
+              icon={ShieldCheck}
+              title="Acesso Inteligente: Cartão, Biometria"
+              description="Sem chaves, sem senhas escritas na parede. Sistema Intelbras de controle de acesso integrado ao portão automático: cartão, biometria (digital), teclado numérico. Zero acessos não autorizados."
+              benefits={["Acesso por tag, biometria ou senha", "Histórico de quem entrou/saiu", "Sem chaves perdidas"]}
+              ctaText="Conhecer Sistema"
+              onCtaClick={() => setLeadModalOpen(true)}
+            />
+            <ServiceCard
+              icon={AlertTriangle}
+              title="Zero Acidentes: Barreiras Ativas"
+              description="Criança esmagada por portão? Nunca mais. Alfredo instala fotocélulas PPA e barreiras infravermelhas que PARAM o portão se detectarem obstáculo. Segurança que previne acidentes."
+              benefits={["Fotocélulas anti-esmagamento (ABNT)", "Sensor de sobrecarga automático", "Testes mensais de segurança"]}
+              ctaText="Avaliar Meu Portão"
+              onCtaClick={() => setLeadModalOpen(true)}
+            />
+            <ServiceCard
+              icon={Tv}
+              title="Sinal Digital Limpo no Prédio Todo"
+              description="Apartamentos com TV travando? Alfredo instala antena coletiva digital com cabeamento estruturado. Sinal HD limpo em todas as unidades. Sem interferência, sem antenas na fachada."
+              benefits={["Sinal digital HD em todos aptos", "Cabeamento estruturado", "Manutenção e limpeza de contatos"]}
+              ctaText="Melhorar Sinal"
+              onCtaClick={() => setLeadModalOpen(true)}
+            />
+
+            {/* Emergency Card Spanning Full Width or prominent position */}
+            <div className="md:col-span-2 lg:col-span-3 mt-4">
+              <ServiceCard
+                icon={LifeBuoy}
+                title="Emergência Agora? Plantão 24h"
+                description="Portão travado de madrugada, câmera fora, acesso bloqueado? Alfredo funciona 24 horas todos os dias. Resposta em 30 minutos. Técnico na sua porta em 1-2 horas."
+                benefits={[]}
+                ctaText="Ligar Agora: (81) 9 8841-7003"
+                onCtaClick={() => window.location.href = 'tel:5581988417003'}
+                isEmergency={true}
+              />
             </div>
           </div>
         </div>
@@ -591,12 +601,12 @@ const Landing: React.FC = () => {
             </div>
           </div>
           <div className="md:w-1/2">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e293b] mb-6">Mais que um técnico, um <span className="text-[#F97316]">Parceiro de Confiança</span></h2>
-            <p className="text-gray-600 text-lg mb-6">A Chame Alfredo nasceu para oferecer um serviço humanizado e tecnicamente impecável. Entrar na sua casa ou empresa exige confiança.</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#1e293b] mb-6">Alfredo: 10 Anos Consertando <span className="text-[#F97316]">Problemas que Ninguém Consegue</span></h2>
+            <p className="text-gray-600 text-lg mb-6">Não é só técnico. É especialista em portões automáticos desde 2015. Começou atendendo emergências à noite e virou referência. Hoje, 2000+ condomínios e empresas em Recife confiam em Alfredo porque ele resolve problema que ninguém consegue - e faz parecer simples.</p>
             <ul className="space-y-4">
-              <li className="flex items-center text-gray-700 font-medium"><CheckCircle2 className="text-green-500 w-6 h-6 mr-3" /> Equipe uniformizada e identificada</li>
-              <li className="flex items-center text-gray-700 font-medium"><CheckCircle2 className="text-green-500 w-6 h-6 mr-3" /> Garantia em todos os serviços</li>
-              <li className="flex items-center text-gray-700 font-medium"><CheckCircle2 className="text-green-500 w-6 h-6 mr-3" /> Pagamento facilitado</li>
+              <li className="flex items-center text-gray-700 font-medium"><CheckCircle2 className="text-green-500 w-6 h-6 mr-3" /> 10 anos de experiência em automação predial</li>
+              <li className="flex items-center text-gray-700 font-medium"><CheckCircle2 className="text-green-500 w-6 h-6 mr-3" /> Todas as emergências atendidas no mesmo dia</li>
+              <li className="flex items-center text-gray-700 font-medium"><CheckCircle2 className="text-green-500 w-6 h-6 mr-3" /> Equipamentos premium: Garen, Hikvision, Intelbras, PPA</li>
             </ul>
           </div>
         </div>
