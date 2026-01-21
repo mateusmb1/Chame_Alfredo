@@ -149,7 +149,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   );
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC] dark:bg-[#090E1A]">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC] dark:bg-[#090E1A]">
       {/* Mobile Drawer Overlay */}
       {mobileOpen && (
         <div
@@ -171,7 +171,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen relative overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-hidden">
         {/* Top Header - Mobile only */}
         <header className="md:hidden flex items-center justify-between h-16 px-4 bg-white/80 dark:bg-[#101622]/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50">
           <button
