@@ -337,16 +337,19 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                         }
 
                         // 2. Insert into invoices with correct fields
+                        // Database schema requires tax and discount, and does not have client_name
                         const { error } = await supabase.from('invoices').insert({
-                            client_id: clientId, // Can be null if table allows, otherwise check schema
-                            client_name: clientName,
+                            client_id: clientId,
+                            // client_name column does not exist in the invoices table
                             total: data.parsedValue,
                             subtotal: data.parsedValue,
+                            tax: 0,
+                            discount: 0,
                             status: data.revenue === '1' ? 'paid' : 'pending',
-                            due_date: formatDateToISO(data.date || (data as any).vencimento),
+                            due_date: formatDateToISO(data.date || (data as any).vencimento).split('T')[0],
                             invoice_number: `IMP-${data.id || Math.random().toString(36).substring(7).toUpperCase()}`,
-                            issue_date: new Date().toISOString(),
-                            items: [] // Initialize empty items if needed
+                            issue_date: new Date().toISOString().split('T')[0],
+                            items: [] // Initialize empty items
                         });
 
                         if (error) {
@@ -361,7 +364,12 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                     }
                     setImportProgress({ current: i + 1, total: selected.length });
                 }
-                showToast(errorCount > 0 ? 'warning' : 'success', `${successCount} registros financeiros importados (${errorCount} falhas)`);
+
+                if (errorCount === 0) {
+                    showToast('success', `${successCount} registros importados com sucesso!`);
+                } else {
+                    showToast('warning', `${successCount} registros importados, ${errorCount} falhas. Verifique o console.`);
+                }
 
             } else if (importType === 'profile') {
                 if (profileData) {
@@ -382,11 +390,12 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                     });
                     if (error) throw error;
                     setImportProgress({ current: 1, total: 1 });
+                    showToast('success', 'Perfil da empresa importado com sucesso!');
                 }
             }
 
             setImportState('complete');
-            showToast('success', `${importProgress.total} registros importados com sucesso!`);
+            // Removed redundant/incorrect final global toast. Each block handles its own specific feedback.
 
         } catch (err: any) {
             console.error('Import error:', err);

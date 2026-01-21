@@ -77,6 +77,13 @@ const OrderDetail: React.FC = () => {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigate('/orders')}
+                  className="mr-1 p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+                  title="Voltar para Ordens"
+                >
+                  <span className="material-symbols-outlined">arrow_back</span>
+                </button>
                 <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Ordem de Serviço #{order.id.substring(0, 8)}</h1>
                 <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(order.status)}`}>
                   {getStatusLabel(order.status)}

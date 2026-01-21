@@ -182,7 +182,7 @@ const Orders: React.FC = () => {
       o.id.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTab = activeTab === 'todas' || o.status === activeTab;
     return matchesSearch && matchesTab;
-  });
+  }).sort((a, b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime());
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -370,9 +370,9 @@ const Orders: React.FC = () => {
                         <Calendar className="w-4 h-4" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[10px] text-gray-400 font-bold uppercase">Criada em</span>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase">Data</span>
                         <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                          {new Date(order.createdAt).toLocaleDateString('pt-BR')}
+                          {new Date(order.scheduledDate).toLocaleDateString('pt-BR')}
                         </span>
                       </div>
                     </div>

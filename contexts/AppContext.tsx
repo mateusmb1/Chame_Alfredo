@@ -615,7 +615,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const newInvoice: any = {
             invoice_number: `FAT-${new Date().getFullYear()}${Math.floor(Math.random() * 9000 + 1000)}`,
             client_id: quote.clientId,
-            client_name: quote.clientName,
+            // client_name removed as it does not exist in DB
             issue_date: new Date().toISOString().split('T')[0],
             due_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 15 days default
             items: quote.items,
@@ -624,7 +624,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             discount: quote.discount,
             total: quote.total,
             status: 'pending',
-            type: 'service',
+            // type: 'service', // removed as it does not exist in DB
             source_quote_id: quote.id,
             source_order_id: quote.sourceOrderId
         };
