@@ -103,8 +103,7 @@ export const useLeadCapture = () => {
                         cep: formData.cep,
                         latitude: formData.latitude,
                         longitude: formData.longitude,
-                        username: cleanPhone, // Fallback
-                        password: '123' // Temp password logic from existing code
+
                     }])
                     .select()
                     .single()

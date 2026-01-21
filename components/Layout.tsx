@@ -68,7 +68,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const handleLogout = () => {
-    navigate('/login');
+    localStorage.removeItem('alfredo_user');
+    navigate('/');
   };
 
   const SidebarContent = () => (
