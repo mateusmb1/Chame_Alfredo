@@ -403,11 +403,11 @@ export function mapOrderFromAgendaBoa(record: any): { data: ImportedOrder; valid
     const validation: ValidationResult = { valid: true, warnings: [], errors: [] };
 
     // Common header variations for orders in Agenda Boa
-    const clientName = record.clientName || record['Cliente'] || record['cliente'] || '';
-    const totalPriceStr = record.totalPrice || record['Valor total'] || record['valor total'] || '0';
+    const clientName = record.clientName || record.client || record['Cliente'] || record['cliente'] || '';
+    const totalPriceStr = record.totalPrice || record['Valor total'] || record['valor total'] || record['valor'] || '0';
     const status = record.jobStatus || record['Status'] || record['status'] || 'pendente';
-    const title = record.jobTitle || record['Tópico'] || record['tópico'] || record['Título'] || '';
-    const date = record.jobTimeInMillis || record.jobDate || record['Data'] || record['data'] || '';
+    const title = record.jobTitle || record['Tópico'] || record['tópico'] || record['Título'] || record['descrição'] || record['Descrição'] || '';
+    const date = record.jobTimeInMillis || record.jobDate || record['Data'] || record['data'] || record['Vencimento'] || record['vencimento'] || '';
     const id = record.id || record['ID do job'] || record['id'] || '';
 
     if (!clientName) {
@@ -483,6 +483,12 @@ export function detectImportType(headers: string[], firstLine?: string): ImportT
     if (headerSet.has('clientid') || headerSet.has('jobstatus') || headerSet.has('jobtitle') ||
         headerSet.has('id do job') || headerSet.has('valor total') || headerSet.has('status')) {
         return 'orders';
+    }
+
+    // Heuristic for export_vencidos.csv or other financial lists
+    if ((headerSet.has('cliente') || headerSet.has('client')) &&
+        (headerSet.has('vencimento') || headerSet.has('valor') || headerSet.has('saldo'))) {
+        return 'financial';
     }
 
     return 'unknown';

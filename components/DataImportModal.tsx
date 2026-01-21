@@ -132,7 +132,8 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
             } else if (detectedType === 'financial') {
                 const records = parseCSV<AgendaBoaFinancialRecord>(content);
                 const mapped = records.map(record => {
-                    const price = parseFloat(record.value?.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
+                    const valueStr = (record as any).value || (record as any).valor || (record as any).saldo || '0';
+                    const price = parseFloat(valueStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
                     return {
                         data: { ...record, parsedValue: price },
                         validation: { valid: true, warnings: [], errors: [] },
@@ -316,18 +317,43 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
 
                 for (let i = 0; i < selected.length; i++) {
                     const { data } = selected[i];
-                    const { error } = await supabase.from('invoices').insert({
-                        client_name: data.client,
-                        value: data.parsedValue,
-                        status: data.revenue === '1' ? 'paid' : 'pending',
-                        due_date: formatDateToISO(data.date),
-                        external_id: data.id,
-                    });
-                    if (error) {
-                        console.error(`Error inserting invoice for ${data.client}:`, error);
+                    try {
+                        // 1. Try to find client_id by name
+                        const clientName = data.client || (data as any).cliente || '';
+                        let clientId = null;
+
+                        if (clientName) {
+                            const { data: clientData } = await supabase
+                                .from('clients')
+                                .select('id')
+                                .ilike('name', `%${clientName}%`)
+                                .limit(1)
+                                .single();
+                            clientId = clientData?.id;
+                        }
+
+                        // 2. Insert into invoices with correct fields
+                        const { error } = await supabase.from('invoices').insert({
+                            client_id: clientId,
+                            client_name: clientName,
+                            total: data.parsedValue,
+                            subtotal: data.parsedValue,
+                            status: data.revenue === '1' ? 'paid' : 'pending',
+                            due_date: formatDateToISO(data.date || (data as any).vencimento),
+                            invoice_number: `IMP-${data.id || Math.random().toString(36).substring(7).toUpperCase()}`,
+                            issue_date: new Date().toISOString(),
+                            items: [] // Initialize empty items if needed
+                        });
+
+                        if (error) {
+                            console.error(`Error inserting invoice for ${clientName}:`, error);
+                            errorCount++;
+                        } else {
+                            successCount++;
+                        }
+                    } catch (err) {
+                        console.error(`Exception during financial import for row ${i}:`, err);
                         errorCount++;
-                    } else {
-                        successCount++;
                     }
                     setImportProgress({ current: i + 1, total: selected.length });
                 }
