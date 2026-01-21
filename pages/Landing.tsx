@@ -199,7 +199,7 @@ const Landing: React.FC = () => {
             </div>
             <div>
               <h1 className="text-2xl font-black text-[#F97316] leading-none tracking-tight">Chame <span className="text-[#1e293b]">ALFREDO!</span></h1>
-              <p className="text-[10px] text-gray-500 font-bold tracking-[0.2em] uppercase mt-0.5">Soluções Prediais</p>
+              <p className="text-[10px] text-gray-500 font-bold tracking-[0.05em] uppercase mt-0.5">Soluções para Corporativa, Administradoras e Condomínio</p>
             </div>
           </a>
           <nav className="hidden md:flex space-x-8 font-medium text-[#1e293b]">
@@ -208,14 +208,9 @@ const Landing: React.FC = () => {
             <a href="#sobre" className="hover:text-[#F97316] transition">Sobre Nós</a>
           </nav>
           <div className="hidden md:flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <a href="/mobile/login" className="hidden md:flex items-center border border-gray-200 bg-white text-[#1e293b] hover:bg-gray-50 px-4 py-2 rounded-full font-bold transition shadow-sm text-sm">
-                <Wrench className="w-4 h-4 mr-2" /> Sou Técnico
-              </a>
-              <a href="/dashboard" className="hidden md:flex items-center bg-[#1e293b] text-white hover:bg-gray-800 px-4 py-2 rounded-full font-bold transition shadow-sm text-sm">
-                <User className="w-4 h-4 mr-2" /> Área Admin
-              </a>
-            </div>
+            <a href="/login" className="flex items-center text-[#1e293b] hover:text-[#F97316] font-bold transition text-sm px-4">
+              <User className="w-4 h-4 mr-2" /> Entrar
+            </a>
             <a href="https://wa.me/5581988417003" onClick={trackWhatsAppClick} className="flex items-center bg-[#84cc16] hover:bg-green-600 text-white px-5 py-2 rounded-full font-bold transition shadow-lg">
               <PhoneCall className="w-4 h-4 mr-2" /> (81) 9 8841-7003
             </a>
@@ -229,8 +224,7 @@ const Landing: React.FC = () => {
             <a href="#home" className="block text-[#1e293b] font-medium">Início</a>
             <a href="#servicos" className="block text-[#1e293b] font-medium">Serviços</a>
             <a href="#sobre" className="block text-[#1e293b] font-medium">Sobre Nós</a>
-            <a href="/dashboard" className="block border border-gray-200 text-center py-2 rounded font-bold flex items-center justify-center gap-2"><User className="w-4 h-4" /> Área Admin</a>
-            <a href="/mobile/login" className="block border border-gray-200 text-center py-2 rounded font-bold flex items-center justify-center gap-2 text-gray-600"><Wrench className="w-4 h-4" /> Sou Técnico</a>
+            <a href="/login" className="block border border-gray-200 text-center py-2 rounded font-bold flex items-center justify-center gap-2 text-gray-700"><User className="w-4 h-4" /> Entrar</a>
             <a href="https://wa.me/5581988417003" onClick={trackWhatsAppClick} className="block bg-[#84cc16] text-white text-center py-2 rounded font-bold">Ligar Agora</a>
           </div>
         )}
