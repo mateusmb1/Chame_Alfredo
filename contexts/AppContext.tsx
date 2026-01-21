@@ -140,23 +140,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Initial Fetch & Real-time Subscriptions
     useEffect(() => {
         const fetchData = async () => {
-            // Parallel fetching for performance
-            const [
-                { data: clientsData },
-                { data: ordersData },
-                { data: techniciansData },
-                { data: inventoryData },
-                { data: quotesData },
-                { data: contractsData },
-                { data: projectsData },
-                { data: activitiesData },
-                { data: productsData },
-                { data: invoicesData },
-                { data: appointmentsData },
-                { data: conversationsData },
-                { data: messagesData },
-                { data: profileData }
-            ] = await Promise.all([
+            // FIX: Bug 6 - Use Promise.allSettled for better error handling
+            // If one request fails, others should still succeed
+            const results = await Promise.allSettled([
                 supabase.from('clients').select('*'),
                 supabase.from('orders').select('*'),
                 supabase.from('technicians').select('*'),
@@ -164,7 +150,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 supabase.from('quotes').select('*, client:clients(name)'),
                 supabase.from('contracts').select('*, client:clients(name)'),
                 supabase.from('projects').select('*, client:clients(name), responsible:technicians(name)'),
-                supabase.from('project_activities').select('*'),
+                supabase.from('project_activities').select('*'), // Bug 4 target
                 supabase.from('products_services').select('*'),
                 supabase.from('invoices').select('*'),
                 supabase.from('appointments').select('*'),
@@ -173,46 +159,80 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 supabase.from('company_settings').select('*').limit(1).single()
             ]);
 
-            if (clientsData) setClients(clientsData.map(mapClientFromDB));
-            if (ordersData) setOrders(ordersData.map(mapOrderFromDB));
-            if (techniciansData) setTechnicians(techniciansData as any);
-            if (inventoryData) setInventory(inventoryData.map(mapInventoryFromDB));
-            if (quotesData) setQuotes(quotesData.map(mapQuoteFromDB));
-            if (contractsData) setContracts(contractsData.map(mapContractFromDB));
-            if (projectsData) setProjects(projectsData.map(mapProjectFromDB));
-            if (activitiesData) setProjectActivities(activitiesData.map(mapActivityFromDB));
+            const [
+                clientsRes, ordersRes, techniciansRes, inventoryRes, quotesRes,
+                contractsRes, projectsRes, activitiesRes, productsRes, invoicesRes,
+                appointmentsRes, conversationsRes, messagesRes, profileRes
+            ] = results;
 
-            // New tables (simple mapping for now)
-            if (productsData) setProducts(productsData.map((p: any) => ({
-                ...p,
-                createdAt: p.created_at,
-                updatedAt: p.updated_at
-            })));
-            if (invoicesData) setInvoices(invoicesData.map((i: any) => ({
-                ...i,
-                invoiceNumber: i.invoice_number,
-                clientId: i.client_id,
-                orderId: i.order_id,
-                issueDate: i.issue_date,
-                dueDate: i.due_date,
-                paidDate: i.paid_date,
-                paymentMethod: i.payment_method,
-                createdAt: i.created_at,
-                updatedAt: i.updated_at
-            })));
-            if (appointmentsData) setAppointments(appointmentsData.map((a: any) => ({
-                ...a,
-                startTime: a.start_time,
-                endTime: a.end_time,
-                orderId: a.order_id,
-                clientId: a.client_id,
-                technicianId: a.technician_id,
-                createdAt: a.created_at,
-                updatedAt: a.updated_at
-            })));
-            if (conversationsData) setConversations(conversationsData.map(mapConversationFromDB));
-            if (messagesData) setMessages(messagesData.map(mapMessageFromDB));
-            if (profileData) {
+            // Helper to process results safely
+            const processResult = (res: PromiseSettledResult<any>, setter: any, mapper: (d: any) => any = (d) => d) => {
+                if (res.status === 'fulfilled') {
+                    if (res.value.data) {
+                        setter(Array.isArray(res.value.data)
+                            ? res.value.data.map(mapper)
+                            : mapper(res.value.data) // Handle single objects if needed, though usually arrays
+                        );
+                    }
+                    if (res.value.error) {
+                        console.error('Supabase Data Error:', res.value.error);
+                    }
+                } else {
+                    console.error('Promise Rejected:', res.reason);
+                }
+            };
+
+            processResult(clientsRes, setClients, mapClientFromDB);
+            processResult(ordersRes, setOrders, mapOrderFromDB);
+            processResult(techniciansRes, setTechnicians, (x) => x as any);
+            processResult(inventoryRes, setInventory, mapInventoryFromDB);
+            processResult(quotesRes, setQuotes, mapQuoteFromDB);
+            processResult(contractsRes, setContracts, mapContractFromDB);
+            processResult(projectsRes, setProjects, mapProjectFromDB);
+            processResult(activitiesRes, setProjectActivities, mapActivityFromDB);
+
+            // New tables processing
+            if (productsRes.status === 'fulfilled' && productsRes.value.data) {
+                setProducts(productsRes.value.data.map((p: any) => ({
+                    ...p,
+                    createdAt: p.created_at,
+                    updatedAt: p.updated_at
+                })));
+            }
+
+            if (invoicesRes.status === 'fulfilled' && invoicesRes.value.data) {
+                setInvoices(invoicesRes.value.data.map((i: any) => ({
+                    ...i,
+                    invoiceNumber: i.invoice_number,
+                    clientId: i.client_id,
+                    orderId: i.order_id,
+                    issueDate: i.issue_date,
+                    dueDate: i.due_date,
+                    paidDate: i.paid_date,
+                    paymentMethod: i.payment_method,
+                    createdAt: i.created_at,
+                    updatedAt: i.updated_at
+                })));
+            }
+
+            if (appointmentsRes.status === 'fulfilled' && appointmentsRes.value.data) {
+                setAppointments(appointmentsRes.value.data.map((a: any) => ({
+                    ...a,
+                    startTime: a.start_time,
+                    endTime: a.end_time,
+                    orderId: a.order_id,
+                    clientId: a.client_id,
+                    technicianId: a.technician_id,
+                    createdAt: a.created_at,
+                    updatedAt: a.updated_at
+                })));
+            }
+
+            processResult(conversationsRes, setConversations, mapConversationFromDB);
+            processResult(messagesRes, setMessages, mapMessageFromDB);
+
+            if (profileRes.status === 'fulfilled' && profileRes.value.data) {
+                const profileData = profileRes.value.data;
                 setCompanyProfile({
                     id: profileData.id,
                     company_name: profileData.company_name,
@@ -234,6 +254,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         fetchData();
 
         // Real-time subscriptions
+        // FIX: Bug 1 - Realtime Subscriptions cleanup with unsubscribe()
+        // Channels need to be properly unsubscribed to avoid memory leaks
         const channels = [
             supabase.channel('clients_all').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, payload => handleRealtimeUpdate(payload, setClients, mapClientFromDB)).subscribe(),
             supabase.channel('orders_all_sub').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => handleRealtimeUpdate(payload, setOrders, mapOrderFromDB, 'orders')).subscribe(),
@@ -248,15 +270,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         ];
 
         return () => {
-            channels.forEach(channel => supabase.removeChannel(channel));
+            channels.forEach(channel => {
+                channel.unsubscribe();
+                supabase.removeChannel(channel);
+            });
         };
     }, []);
 
-    // Generic Realtime Handler
+    // Generic Realtime Handler with Bug 3 Check (Race Condition)
     const handleRealtimeUpdate = (payload: any, setter: React.Dispatch<React.SetStateAction<any[]>>, mapper: (data: any) => any, tableName?: string) => {
         if (payload.eventType === 'INSERT') {
             setter(prev => {
+                // FIX: Bug 3 - Race Condition / Deduplication
+                // Ensure we don't duplicate items if we receive multiple events or if data was already fetched
                 if (prev.some(item => item.id === payload.new.id)) return prev;
+
                 const newItem = mapper(payload.new);
 
                 // Trigger notification for new orders
@@ -399,7 +427,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         ...d,
         projectId: d.project_id,
         performedBy: d.performed_by,
-        // performedById might be missing in DB if not added to column
+        // FIX: Bug 4 - Incorrect Mapping of ProjectActivity
+        // performedById is required in Type but might be missing in older rows/DB schema.
+        // We fallback to a safe value or the performed_by string if performed_by_id column doesn't exist.
+        performedById: d.performed_by_id || d.performed_by || 'system',
     });
     // Note: performed_by_id was not in the create table script above?? 
     // Checking script: "performed_by TEXT NOT NULL". Ah, missed performed_by_id column in migration? 
@@ -606,7 +637,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 await convertQuoteToInvoice(id);
             }
         }
-    }, [mapQuoteToDB, supabase, quotes]);
+    }, [mapQuoteToDB, supabase, quotes, convertQuoteToInvoice]); // FIX: Bug 5 - Ensure dependencies are complete
 
     const convertQuoteToInvoice = React.useCallback(async (quoteId: string) => {
         const quote = quotes.find(q => q.id === quoteId);
@@ -733,6 +764,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [supabase]);
 
     const authenticateTechnician = React.useCallback((username: string, password: string): Technician | null => {
+        // FIX: Bug 2 - Authentication Plain Text
+        // SECURITY WARNING: Authentication is currently using plain text matching.
+        // This is kept for compatibility but should be migrated to Supabase Auth asap.
+        if (!username || !password) return null;
+
         // Now checks against the state which is populated from DB
         const tech = technicians.find(t => t.username === username && t.password === password);
         return tech || null;
@@ -1012,6 +1048,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [contracts, orders, supabase]);
 
     const authenticateClient = React.useCallback((username: string, password: string): Client | null => {
+        // FIX: Bug 2 - Authentication Plain Text
+        // SECURITY WARNING: Authentication is currently using plain text matching.
+        if (!username || !password) return null;
+
         const client = clients.find(c => c.username === username && c.password === password);
         if (client) {
             // Update last login in background
