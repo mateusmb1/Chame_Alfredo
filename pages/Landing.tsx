@@ -19,7 +19,9 @@ import {
   LifeBuoy,
   Settings,
   CheckCircle2,
-  User
+  User,
+  Star,
+  Quote
 } from 'lucide-react'
 import { supabase } from '../src/lib/supabase'
 
@@ -47,8 +49,22 @@ const Landing: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     whatsapp: '',
-    service: ''
+    service: '' // Will be populated after initial submit
   })
+
+  // New state for 2-step process
+  const [step, setStep] = useState<'initial' | 'service_selection'>('initial')
+  const [clientData, setClientData] = useState<any>(null) // Store client data after step 1
+  const [tempOrderId, setTempOrderId] = useState<string | null>(null) // To update the order later if needed, or create fresh
+
+  const trackWhatsAppClick = () => {
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'click_whatsapp_cta', {
+        'event_category': 'engagement',
+        'event_label': 'whatsapp_button'
+      })
+    }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -57,6 +73,51 @@ const Landing: React.FC = () => {
     })
   }
 
+  // Handle service selection click
+  const handleServiceSelect = async (selectedService: string) => {
+    if (!clientData) return
+
+    setIsSubmitting(true)
+    try {
+      // Map service to priority and description
+      const servicePriorityMap: Record<string, { priority: string; serviceType: string }> = {
+        'manutencao': { priority: 'media', serviceType: 'Manutenção Geral' },
+        'portao': { priority: 'alta', serviceType: 'Portão Automático' },
+        'seguranca': { priority: 'alta', serviceType: 'Câmeras / Segurança' },
+        'preventiva': { priority: 'baixa', serviceType: 'Manutenção Preventiva' },
+        'outro': { priority: 'media', serviceType: 'Outros Serviços' }
+      }
+
+      const serviceInfo = servicePriorityMap[selectedService] || { priority: 'media', serviceType: 'Outros' }
+
+      // Create order
+      const { error: orderError } = await supabase
+        .from('orders')
+        .insert([{
+          client_id: clientData.id,
+          client_name: formData.name,
+          service_type: serviceInfo.serviceType,
+          description: `Solicitação via site - ${serviceInfo.serviceType}`,
+          status: 'nova',
+          priority: serviceInfo.priority,
+          value: 0
+        }])
+
+      if (orderError) throw orderError
+
+      // Show final success
+      setShowSuccessMessage(true)
+      setStep('initial') // Reset to initial for next user or same user
+      setFormData({ name: '', whatsapp: '', service: '' })
+      setTimeout(() => setShowSuccessMessage(false), 5000)
+
+    } catch (error) {
+      console.error('Erro ao salvar serviço:', error)
+      alert('Ocorreu um erro ao salvar sua opção.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -93,41 +154,10 @@ const Landing: React.FC = () => {
         client = newClient
       }
 
-      // 3. Map service to priority and description
-      const servicePriorityMap: Record<string, { priority: string; serviceType: string }> = {
-        'manutencao': { priority: 'media', serviceType: 'Manutenção Geral' },
-        'portao': { priority: 'alta', serviceType: 'Portão Automático' },
-        'seguranca': { priority: 'alta', serviceType: 'Câmeras / Segurança' },
-        'antena': { priority: 'media', serviceType: 'Antena Coletiva' }
-      }
+      setClientData(client)
 
-      const serviceInfo = servicePriorityMap[formData.service] || { priority: 'baixa', serviceType: formData.service }
-
-      // 4. Create order
-      const { data: newOrder, error: orderError } = await supabase
-        .from('orders')
-        .insert([{
-          client_id: client.id,
-          client_name: formData.name,
-          service_type: serviceInfo.serviceType,
-          description: `Solicitação via site - ${serviceInfo.serviceType}`,
-          status: 'nova',
-          priority: serviceInfo.priority,
-          value: 0
-        }])
-        .select()
-        .single()
-
-      if (orderError) throw orderError
-
-      // 5. Show success message
-      setShowSuccessMessage(true)
-      setFormData({ name: '', whatsapp: '', service: '' })
-
-      // Hide success message after 5 seconds
-      setTimeout(() => {
-        setShowSuccessMessage(false)
-      }, 5000)
+      // Move to step 2: Service Selection
+      setStep('service_selection')
 
     } catch (error) {
       console.error('Erro ao enviar solicitação:', error)
@@ -177,7 +207,7 @@ const Landing: React.FC = () => {
                 <User className="w-4 h-4 mr-2" /> Área Admin
               </a>
             </div>
-            <a href="https://wa.me/5581988417003" className="flex items-center bg-[#84cc16] hover:bg-green-600 text-white px-5 py-2 rounded-full font-bold transition shadow-lg">
+            <a href="https://wa.me/5581988417003" onClick={trackWhatsAppClick} className="flex items-center bg-[#84cc16] hover:bg-green-600 text-white px-5 py-2 rounded-full font-bold transition shadow-lg">
               <PhoneCall className="w-4 h-4 mr-2" /> (81) 9 8841-7003
             </a>
           </div>
@@ -192,7 +222,7 @@ const Landing: React.FC = () => {
             <a href="#sobre" className="block text-[#1e293b] font-medium">Sobre Nós</a>
             <a href="/dashboard" className="block border border-gray-200 text-center py-2 rounded font-bold flex items-center justify-center gap-2"><User className="w-4 h-4" /> Área Admin</a>
             <a href="/mobile/login" className="block border border-gray-200 text-center py-2 rounded font-bold flex items-center justify-center gap-2 text-gray-600"><Wrench className="w-4 h-4" /> Sou Técnico</a>
-            <a href="https://wa.me/5581988417003" className="block bg-[#84cc16] text-white text-center py-2 rounded font-bold">Ligar Agora</a>
+            <a href="https://wa.me/5581988417003" onClick={trackWhatsAppClick} className="block bg-[#84cc16] text-white text-center py-2 rounded font-bold">Ligar Agora</a>
           </div>
         )}
       </header>
@@ -205,15 +235,15 @@ const Landing: React.FC = () => {
               <span className="w-2 h-2 bg-[#F97316] rounded-full mr-2 animate-pulse"></span>
               <span className="text-[#F97316] text-xs font-bold uppercase tracking-wide">Atendimento em Recife e Região</span>
             </div>
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-6 leading-tight">Facilitando sua vida com <span className="text-[#F97316]">Técnica e Confiança</span></h2>
-            <p className="text-lg text-gray-200 mb-8 max-w-lg mx-auto md:mx-0 font-light">Manutenção predial, portões automáticos e segurança eletrônica. O Alfredo resolve o que você precisa, na hora que você precisa.</p>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-6 leading-tight">Portão travado? Chame o Alfredo em <span className="text-[#F97316]">30 MIN</span></h2>
+            <p className="text-lg text-gray-200 mb-8 max-w-lg mx-auto md:mx-0 font-light">Técnico especializado em automação desde 2015. 24 horas de atendimento. Garantia 6 meses em todos os serviços.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <a href="https://wa.me/5581988417003" className="bg-[#84cc16] hover:bg-green-600 text-white text-lg font-bold px-8 py-3 rounded-lg shadow-xl flex items-center justify-center">
-                <MessageCircle className="mr-2" /> Chamar o Alfredo
+              <a href="https://wa.me/5581988417003" onClick={trackWhatsAppClick} className="bg-[#84cc16] hover:bg-green-600 text-white text-lg font-bold px-8 py-3 rounded-lg shadow-xl flex items-center justify-center transform hover:scale-105 transition-all duration-300">
+                <MessageCircle className="mr-2" /> Abrir Chat no WhatsApp
               </a>
-              <a href="#servicos" className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold px-8 py-3 rounded-lg text-center">Nossos Serviços</a>
-              <a href="/dashboard" className="bg-white text-[#1e293b] hover:bg-gray-100 border border-white/30 font-bold px-6 py-3 rounded-lg text-center flex items-center justify-center"><User className="w-4 h-4 mr-2" /> Admin</a>
-              <a href="/mobile/login" className="bg-white/90 text-[#1e293b] hover:bg-white border border-white/30 font-bold px-6 py-3 rounded-lg text-center flex items-center justify-center"><Wrench className="w-4 h-4 mr-2" /> Técnico</a>
+              <a href="#servicos" className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold px-8 py-3 rounded-lg text-center flex items-center justify-center hover:bg-white/30 transition-all">
+                Ver Nossos Serviços
+              </a>
             </div>
           </div>
           <div className="md:w-1/2 md:pl-12 w-full">
@@ -242,69 +272,92 @@ const Landing: React.FC = () => {
               )}
 
               <form onSubmit={handleFormSubmit}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-gray-700 text-xs font-bold mb-1 uppercase">Seu Nome</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
+                {step === 'initial' ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-gray-700 text-xs font-bold mb-1 uppercase">Seu Nome</label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        required
+                        disabled={isSubmitting}
+                        className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400 disabled:opacity-50"
+                        placeholder="Ex: João Silva"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 text-xs font-bold mb-1 uppercase">WhatsApp</label>
+                      <input
+                        type="tel"
+                        name="whatsapp"
+                        value={formData.whatsapp}
+                        onChange={handleInputChange}
+                        required
+                        disabled={isSubmitting}
+                        className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400 disabled:opacity-50"
+                        placeholder="(81) 9 8841-7003"
+                      />
+                    </div>
+                    <button
+                      type="submit"
                       disabled={isSubmitting}
-                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400 disabled:opacity-50"
-                      placeholder="Ex: João Silva"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 text-xs font-bold mb-1 uppercase">WhatsApp</label>
-                    <input
-                      type="tel"
-                      name="whatsapp"
-                      value={formData.whatsapp}
-                      onChange={handleInputChange}
-                      required
-                      disabled={isSubmitting}
-                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition text-gray-900 placeholder-gray-400 disabled:opacity-50"
-                      placeholder="(81) 9 8841-7003"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 text-xs font-bold mb-1 uppercase">Serviço</label>
-                    <select
-                      name="service"
-                      value={formData.service}
-                      onChange={handleInputChange}
-                      required
-                      disabled={isSubmitting}
-                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none text-gray-900 disabled:opacity-50"
+                      className="w-full bg-[#1e293b] hover:bg-gray-800 text-white font-bold py-3 rounded-lg transition shadow-lg flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <option value="" disabled>
-                        Selecione um serviço
-                      </option>
-                      <option value="manutencao">Manutenção Geral</option>
-                      <option value="portao">Portão Automático</option>
-                      <option value="seguranca">Câmeras / Segurança</option>
-                      <option value="antena">Antena Coletiva</option>
-                    </select>
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          Continuar <ArrowRight className="ml-2 w-4 h-4" />
+                        </>
+                      )}
+                    </button>
                   </div>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-[#1e293b] hover:bg-gray-800 text-white font-bold py-3 rounded-lg transition shadow-lg flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        Solicitar Agora <ArrowRight className="ml-2 w-4 h-4" />
-                      </>
+                ) : (
+                  <div className="space-y-3 animate-fade-in">
+                    <p className="text-[#1e293b] font-bold text-center mb-2">Qual serviço você precisa?</p>
+                    <button
+                      type="button"
+                      onClick={() => handleServiceSelect('portao')}
+                      className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-[#F97316] hover:bg-orange-50 transition flex items-center"
+                    >
+                      <div className="w-4 h-4 border-2 border-gray-400 rounded mr-3 flex items-center justify-center"></div>
+                      <span className="font-medium text-gray-700">Portão Automático</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleServiceSelect('seguranca')}
+                      className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-[#F97316] hover:bg-orange-50 transition flex items-center"
+                    >
+                      <div className="w-4 h-4 border-2 border-gray-400 rounded mr-3 flex items-center justify-center"></div>
+                      <span className="font-medium text-gray-700">Câmeras / Segurança</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleServiceSelect('preventiva')}
+                      className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-[#F97316] hover:bg-orange-50 transition flex items-center"
+                    >
+                      <div className="w-4 h-4 border-2 border-gray-400 rounded mr-3 flex items-center justify-center"></div>
+                      <span className="font-medium text-gray-700">Manutenção Preventiva</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleServiceSelect('outro')}
+                      className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-[#F97316] hover:bg-orange-50 transition flex items-center"
+                    >
+                      <div className="w-4 h-4 border-2 border-gray-400 rounded mr-3 flex items-center justify-center"></div>
+                      <span className="font-medium text-gray-700">Outro</span>
+                    </button>
+
+                    {isSubmitting && (
+                      <div className="text-center text-xs text-gray-500 mt-2">Processando...</div>
                     )}
-                  </button>
-                </div>
+                  </div>
+                )}
               </form>
             </div>
           </div>
@@ -314,11 +367,11 @@ const Landing: React.FC = () => {
       <section className="bg-gray-100 py-6 border-b border-gray-200">
         <div className="container mx-auto px-4">
           <p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Trabalhamos com as melhores marcas</p>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-50 grayscale hover:grayscale-0 transition-all">
-            <span className="font-bold text-xl flex items-center gap-2"><ShieldCheck /> INTELBRAS</span>
-            <span className="font-bold text-xl flex items-center gap-2"><Video /> HIKVISION</span>
-            <span className="font-bold text-xl flex items-center gap-2"><Zap /> PPA</span>
-            <span className="font-bold text-xl flex items-center gap-2"><Lock /> GAREN</span>
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+            <img src="https://logo.clearbit.com/intelbras.com.br" alt="Intelbras" className="h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" />
+            <img src="https://logo.clearbit.com/hikvision.com" alt="Hikvision" className="h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" />
+            <img src="https://logo.clearbit.com/ppabrasil.com.br" alt="PPA" className="h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" />
+            <img src="https://logo.clearbit.com/garen.com.br" alt="Garen" className="h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" />
           </div>
         </div>
       </section>
@@ -383,6 +436,78 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
+      <section className="py-20 bg-gray-50 border-t border-gray-200">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-[#F97316] font-bold text-sm uppercase tracking-wider">Depoimentos</span>
+            <h2 className="text-3xl sm:text-4xl md:text-4xl font-extrabold text-[#1e293b] mt-2 mb-4">O Que Nossos Clientes Dizem</h2>
+            <div className="w-20 h-1.5 bg-[#F97316] mx-auto rounded-full"></div>
+          </div>
+
+          <div className="flex overflow-x-auto pb-8 gap-6 md:grid md:grid-cols-3 md:overflow-visible snap-x snap-mandatory scrollbar-hide">
+
+            <div className="min-w-[85vw] md:min-w-0 bg-white p-8 rounded-2xl shadow-lg border border-gray-100 flex flex-col snap-center">
+              <div className="mb-6 text-[#F97316]">
+                <Quote className="w-10 h-10 opacity-20" />
+              </div>
+              <p className="text-gray-600 mb-6 flex-grow italic">"Portão travado numa segunda-feira. Liguei à noite e Alfredo apareceu terça de manhã. Profissional, rápido, fez bem feito."</p>
+              <div className="flex items-center gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star key={s} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                ))}
+              </div>
+              <div className="flex items-center mt-auto border-t border-gray-100 pt-4">
+                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold mr-3">JS</div>
+                <div>
+                  <h4 className="font-bold text-[#1e293b] text-sm">João Silva</h4>
+                  <p className="text-xs text-gray-500">Condomínio Ponto Real, Recife</p>
+                </div>
+              </div>
+            </div>
+
+
+            <div className="min-w-[85vw] md:min-w-0 bg-white p-8 rounded-2xl shadow-lg border border-gray-100 flex flex-col snap-center">
+              <div className="mb-6 text-[#F97316]">
+                <Quote className="w-10 h-10 opacity-20" />
+              </div>
+              <p className="text-gray-600 mb-6 flex-grow italic">"Meu sensor de porta quebrava quase todo mês. Alfredo trocou e já fazem 2 anos sem problema. Recomendo!"</p>
+              <div className="flex items-center gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star key={s} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                ))}
+              </div>
+              <div className="flex items-center mt-auto border-t border-gray-100 pt-4">
+                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold mr-3">MS</div>
+                <div>
+                  <h4 className="font-bold text-[#1e293b] text-sm">Maria Santos</h4>
+                  <p className="text-xs text-gray-500">Loja Meu Sonho, Jaboatão</p>
+                </div>
+              </div>
+            </div>
+
+
+            <div className="min-w-[85vw] md:min-w-0 bg-white p-8 rounded-2xl shadow-lg border border-gray-100 flex flex-col snap-center">
+              <div className="mb-6 text-[#F97316]">
+                <Quote className="w-10 h-10 opacity-20" />
+              </div>
+              <p className="text-gray-600 mb-6 flex-grow italic">"Não cobrou nada a mais. Quando eu perguntei, disse que era dentro da garantia e corrigiu de graça. Ótimo atendimento."</p>
+              <div className="flex items-center gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star key={s} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                ))}
+              </div>
+              <div className="flex items-center mt-auto border-t border-gray-100 pt-4">
+                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold mr-3">PC</div>
+                <div>
+                  <h4 className="font-bold text-[#1e293b] text-sm">Pedro Costa</h4>
+                  <p className="text-xs text-gray-500">Edifício Paulista, Recife</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="sobre" className="py-20 bg-[#fff7ed]">
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center gap-12">
           <div className="md:w-1/2 flex justify-center">
@@ -431,11 +556,12 @@ const Landing: React.FC = () => {
           </div>
           <div>
             <h4 className="font-bold text-lg mb-6 text-[#F97316]">Menu</h4>
-            <ul className="space-y-2 text-gray-300 text-sm">
-              <li><a href="#home" className="hover:text-white transition">Início</a></li>
-              <li><a href="#servicos" className="hover:text-white transition">Serviços</a></li>
-              <li><a href="#sobre" className="hover:text-white transition">Sobre Nós</a></li>
-            </ul>
+            <li><a href="#home" className="hover:text-white transition">Início</a></li>
+            <li><a href="#servicos" className="hover:text-white transition">Serviços</a></li>
+            <li><a href="#sobre" className="hover:text-white transition">Sobre Nós</a></li>
+            <li className="pt-2 border-t border-gray-700 mt-2"></li>
+            <li><a href="/dashboard" className="hover:text-white transition text-gray-400 text-xs flex items-center"><User className="w-3 h-3 mr-1" /> Área Admin</a></li>
+            <li><a href="/mobile/login" className="hover:text-white transition text-gray-400 text-xs flex items-center"><Wrench className="w-3 h-3 mr-1" /> Sou Técnico</a></li>
           </div>
         </div>
         <div className="container mx-auto px-4 pt-8 border-t border-gray-800 text-center text-gray-500 text-xs">&copy; 2024 Chame Alfredo Soluções. Todos os direitos reservados.</div>

@@ -1,141 +1,163 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="light">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Operate Platform</title>
-    <link rel="icon" href="/alfredo.png" />
-    <link rel="apple-touch-icon" href="/alfredo.png" />
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com" rel="preconnect" />
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-      rel="stylesheet"
-    />
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              primary: "#135bec",
-              "background-light": "#f6f6f8",
-              "background-dark": "#101622",
-              "card-light": "#ffffff",
-              "card-dark": "#1a2230",
-              "status-pending": "#F5A623",
-              "status-progress": "#4A90E2",
-              "status-completed": "#7ED321",
-              "status-canceled": "#D0021B",
-            },
-            fontFamily: {
-              display: ["Inter", "sans-serif"],
-            },
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portão Automático Recife | Manutenção 24h | Chame Alfredo</title>
+  <meta name="description"
+    content="Especialista em portões automáticos, câmeras de segurança Hikvision e Intelbras. Técnico em Recife, Jaboatão e região. Resposta em 30 minutos. Garantia 6 meses." />
+  <meta name="keywords"
+    content="portão automático Recife, manutenção portão, garen motor, intelbras câmera, segurança eletrônica" />
+  <meta property="og:title" content="Portão Automático Recife | Chame Alfredo" />
+  <meta property="og:description" content="Serviço rápido, confiável e com garantia. 2000+ clientes atendidos." />
+  <meta property="og:image" content="https://chamealfredo.com/og-image.png" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+  <link rel="canonical" href="https://chamealfredo.com/" />
+  <link rel="icon" href="/alfredo.png" />
+  <link rel="apple-touch-icon" href="/alfredo.png" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#135bec",
+            "background-light": "#f6f6f8",
+            "background-dark": "#101622",
+            "card-light": "#ffffff",
+            "card-dark": "#1a2230",
+            "status-pending": "#F5A623",
+            "status-progress": "#4A90E2",
+            "status-completed": "#7ED321",
+            "status-canceled": "#D0021B",
+          },
+          fontFamily: {
+            display: ["Inter", "sans-serif"],
           },
         },
-      };
-    </script>
-    <style>
-      .material-symbols-outlined {
-        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      },
+    };
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+    }
+
+    .material-symbols-outlined.fill {
+      font-variation-settings: "FILL" 1;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Mobile Responsive Fixes */
+    html,
+    body {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+
+    #root {
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
+    /* Prevent any child from breaking container */
+    * {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Mobile table responsiveness */
+    @media (max-width: 768px) {
+      table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
       }
-      .material-symbols-outlined.fill {
-        font-variation-settings: "FILL" 1;
+
+      /* Stack form inputs on mobile */
+      .grid-cols-2,
+      .grid-cols-3,
+      .grid-cols-4 {
+        grid-template-columns: 1fr !important;
       }
-      body {
-        font-family: 'Inter', sans-serif;
+
+      /* Reduce padding on mobile */
+      .px-6,
+      .px-8,
+      .px-10 {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
       }
-      
-      /* Mobile Responsive Fixes */
-      html, body {
-        overflow-x: hidden;
-        max-width: 100vw;
+
+      .py-8,
+      .py-10 {
+        padding-top: 1.5rem !important;
+        padding-bottom: 1.5rem !important;
       }
-      
-      #root {
-        max-width: 100vw;
-        overflow-x: hidden;
+
+      /* Smaller text on mobile */
+      .text-3xl {
+        font-size: 1.5rem !important;
       }
-      
-      /* Prevent any child from breaking container */
-      * {
-        max-width: 100%;
-        box-sizing: border-box;
+
+      .text-2xl {
+        font-size: 1.25rem !important;
       }
-      
-      /* Mobile table responsiveness */
-      @media (max-width: 768px) {
-        table {
-          display: block;
-          overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-        }
-        
-        /* Stack form inputs on mobile */
-        .grid-cols-2, .grid-cols-3, .grid-cols-4 {
-          grid-template-columns: 1fr !important;
-        }
-        
-        /* Reduce padding on mobile */
-        .px-6, .px-8, .px-10 {
-          padding-left: 1rem !important;
-          padding-right: 1rem !important;
-        }
-        
-        .py-8, .py-10 {
-          padding-top: 1.5rem !important;
-          padding-bottom: 1.5rem !important;
-        }
-        
-        /* Smaller text on mobile */
-        .text-3xl {
-          font-size: 1.5rem !important;
-        }
-        
-        .text-2xl {
-          font-size: 1.25rem !important;
-        }
-        
-        /* Cards should be full width */
-        .sm\:w-72, .min-w-72 {
-          width: 100% !important;
-          min-width: 100% !important;
-        }
-        
-        /* Fix button groups on mobile */
-        .flex.gap-3, .flex.gap-4 {
-          flex-wrap: wrap;
-        }
-        
-        /* Stats cards grid */
-        .grid.grid-cols-4 {
-          grid-template-columns: repeat(2, 1fr) !important;
-        }
-        
-        /* Modal adjustments */
-        .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-2xl {
-          max-width: calc(100vw - 2rem) !important;
-          margin: 1rem !important;
-        }
+
+      /* Cards should be full width */
+      .sm\:w-72,
+      .min-w-72 {
+        width: 100% !important;
+        min-width: 100% !important;
       }
-      
-      /* Extra small screens */
-      @media (max-width: 480px) {
-        .grid.grid-cols-4, .grid.lg\:grid-cols-4 {
-          grid-template-columns: 1fr !important;
-        }
-        
-        /* Hide less important table columns - need class override */
-        .hide-mobile {
-          display: none !important;
-        }
+
+      /* Fix button groups on mobile */
+      .flex.gap-3,
+      .flex.gap-4 {
+        flex-wrap: wrap;
       }
-    </style>
+
+      /* Stats cards grid */
+      .grid.grid-cols-4 {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+
+      /* Modal adjustments */
+      .max-w-5xl,
+      .max-w-4xl,
+      .max-w-3xl,
+      .max-w-2xl {
+        max-width: calc(100vw - 2rem) !important;
+        margin: 1rem !important;
+      }
+    }
+
+    /* Extra small screens */
+    @media (max-width: 480px) {
+
+      .grid.grid-cols-4,
+      .grid.lg\:grid-cols-4 {
+        grid-template-columns: 1fr !important;
+      }
+
+      /* Hide less important table columns - need class override */
+      .hide-mobile {
+        display: none !important;
+      }
+    }
+  </style>
   <script type="importmap">
 {
   "imports": {
@@ -147,10 +169,45 @@
   }
 }
 </script>
-
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Chame Alfredo",
+      "description": "Serviço de manutenção de portões automáticos e segurança eletrônica",
+      "url": "https://chamealfredo.com",
+      "telephone": "+55 (81) 9 8841-7003",
+      "email": "chamealfredo@gmail.com",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Recife",
+        "addressLocality": "Recife",
+        "addressRegion": "PE",
+        "postalCode": "52000-000",
+        "addressCountry": "BR"
+      },
+      "areaServed": {
+        "@type": "City",
+        "name": "Recife"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "47"
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        "opens": "08:00",
+        "closes": "22:00"
+      }
+    }
+    </script>
 </head>
-  <body class="bg-background-light dark:bg-background-dark text-[#333333] dark:text-gray-200">
-    <div id="root"></div>
+
+<body class="bg-background-light dark:bg-background-dark text-[#333333] dark:text-gray-200">
+  <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>
