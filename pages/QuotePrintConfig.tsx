@@ -161,7 +161,7 @@ const QuotePrintConfig: React.FC = () => {
                             {showLogo && (
                                 <div className="flex justify-end mb-2">
                                     {companyProfile?.logo_url ? (
-                                        <img src={companyProfile.logo_url} alt="Logo" className="h-12 w-auto object-contain" />
+                                        <img src={companyProfile.logo_url} alt="Logo" className="h-16 w-auto object-contain" />
                                     ) : (
                                         <div className="bg-primary text-white p-2 rounded">
                                             <Construction className="w-8 h-8" />

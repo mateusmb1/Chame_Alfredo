@@ -7,7 +7,7 @@ import { useToast } from '../contexts/ToastContext';
 
 const MobileDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const { orders, updateOrder } = useApp();
+    const { orders, updateOrder, companyProfile } = useApp();
     const { showToast } = useToast();
 
     const [technician, setTechnician] = useState<Technician | null>(null);
@@ -92,12 +92,16 @@ const MobileDashboard: React.FC = () => {
             <div className="bg-gradient-to-r from-primary to-blue-600 text-white p-6 pb-8 rounded-b-3xl shadow-lg">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <span className="material-symbols-outlined text-2xl">person</span>
+                        <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm shadow-inner flex items-center justify-center overflow-hidden border border-white/30">
+                            {companyProfile?.logo_url ? (
+                                <img src={companyProfile.logo_url} alt="Logo" className="w-full h-full object-contain p-1" />
+                            ) : (
+                                <span className="material-symbols-outlined text-3xl text-white">person</span>
+                            )}
                         </div>
-                        <div>
-                            <h1 className="text-lg font-bold">{technician.name}</h1>
-                            <p className="text-sm text-white/80">{technician.specialization[0]}</p>
+                        <div className="flex flex-col">
+                            <h1 className="text-lg font-black leading-tight">{technician.name}</h1>
+                            <p className="text-xs font-bold text-white/70 uppercase tracking-widest">{technician.specialization[0]}</p>
                         </div>
                     </div>
                     <button

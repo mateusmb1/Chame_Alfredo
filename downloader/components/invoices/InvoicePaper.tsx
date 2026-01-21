@@ -1,4 +1,5 @@
 import React from 'react';
+import { useApp } from '../../../contexts/AppContext';
 
 type Model = 'modern' | 'classic' | 'compact';
 type Paper = 'A4' | 'letter';
@@ -27,6 +28,7 @@ export default function InvoicePaper({
   showTerms = true,
   showSignature = true,
 }: Props) {
+  const { companyProfile } = useApp();
   const size = paper === 'A4' ? { width: 794, height: 1123 } : { width: 816, height: 1056 };
   const wrapperClasses =
     'bg-white shadow-lg rounded-sm border border-gray-200 flex flex-col justify-between';
@@ -35,8 +37,8 @@ export default function InvoicePaper({
     model === 'classic'
       ? 'text-4xl font-bold text-gray-300 mb-2'
       : model === 'compact'
-      ? 'text-3xl font-bold text-gray-300 mb-2'
-      : 'text-4xl font-bold text-gray-200 mb-2';
+        ? 'text-3xl font-bold text-gray-300 mb-2'
+        : 'text-4xl font-bold text-gray-200 mb-2';
 
   const sectionTitleClasses =
     model === 'compact' ? 'text-xs font-bold text-gray-400 uppercase tracking-wider mb-2' : 'text-xs font-bold text-gray-400 uppercase tracking-wider mb-2';
@@ -56,16 +58,20 @@ export default function InvoicePaper({
         <div className="flex justify-between items-start mb-12">
           <div className="flex items-center gap-3">
             {showLogo && (
-              <div className="h-12 w-12 bg-primary rounded-lg flex items-center justify-center text-white">
-                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+              <div className="h-16 w-16 flex items-center justify-center overflow-hidden">
+                {companyProfile?.logo_url ? (
+                  <img src={companyProfile.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                ) : (
+                  <div className="h-full w-full bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xl uppercase">
+                    {companyProfile?.name ? companyProfile.name.charAt(0) : 'A'}
+                  </div>
+                )}
               </div>
             )}
             <div>
-              <h2 className={model === 'classic' ? 'text-xl font-semibold text-slate-800' : 'text-xl font-bold text-slate-900'}>Sua Empresa de Serviços</h2>
-              <p className="text-sm text-gray-500">Rua Exemplo, 123</p>
-              <p className="text-sm text-gray-500">CNPJ: 00.000.000/0001-00</p>
+              <h2 className={model === 'classic' ? 'text-xl font-semibold text-slate-800' : 'text-xl font-bold text-slate-900'}>{companyProfile?.name || 'Sua Empresa'}</h2>
+              <p className="text-sm text-gray-500">{companyProfile?.address || 'Rua Exemplo, 123'}</p>
+              {companyProfile?.cnpj && <p className="text-sm text-gray-500">CNPJ: {companyProfile.cnpj}</p>}
             </div>
           </div>
           <div className="text-right">
@@ -153,7 +159,7 @@ export default function InvoicePaper({
             </div>
           )}
           <p>Obrigado pela preferência!</p>
-          <p>Dúvidas? Entre em contato: suporte@suaempresa.com</p>
+          <p>Dúvidas? Entre em contato: {companyProfile?.email || 'suporte@empresa.com'}</p>
         </div>
       </div>
     </div>

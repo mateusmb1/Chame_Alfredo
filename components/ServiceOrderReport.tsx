@@ -32,9 +32,9 @@ const ServiceOrderReport: React.FC<ServiceOrderReportProps> = ({ order, client }
             {/* Header */}
             <header className="text-center mb-6 relative flex flex-col items-center">
                 {companyProfile?.logo_url ? (
-                    <img src={companyProfile.logo_url} alt="Logo" className="h-16 w-auto object-contain mb-4" />
+                    <img src={companyProfile.logo_url} alt="Logo" className="h-20 w-auto object-contain mb-4" />
                 ) : (
-                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-lg mb-4">A</div>
+                    <div className="w-16 h-16 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-2xl mb-4 shadow-lg">A</div>
                 )}
                 <div className="absolute right-0 top-0 text-[10px] text-gray-400">1</div>
                 <h1 className="text-xl font-medium uppercase mb-1">Relatório de Visita Técnica</h1>

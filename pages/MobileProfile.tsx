@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApp, Technician } from '../contexts/AppContext';
+import { useApp } from '../contexts/AppContext';
+import { Technician } from '../types/technician';
 import { useToast } from '../contexts/ToastContext';
 
 const MobileProfile: React.FC = () => {
     const navigate = useNavigate();
-    const { orders } = useApp();
+    const { orders, companyProfile } = useApp();
     const { showToast } = useToast();
 
     const [technician, setTechnician] = useState<Technician | null>(null);
@@ -64,8 +65,12 @@ const MobileProfile: React.FC = () => {
 
                 {/* Profile Info */}
                 <div class="flex flex-col items-center">
-                    <div class="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
-                        <span class="material-symbols-outlined text-6xl">person</span>
+                    <div class="w-28 h-28 rounded-3xl bg-white/20 backdrop-blur-sm shadow-xl flex items-center justify-center mb-4 overflow-hidden border-2 border-white/40">
+                        {companyProfile?.logo_url ? (
+                            <img src={companyProfile.logo_url} alt="Logo" class="w-full h-full object-contain p-2" />
+                        ) : (
+                            <span class="material-symbols-outlined text-6xl">person</span>
+                        )}
                     </div>
                     <h2 class="text-2xl font-bold mb-1">{technician.name}</h2>
                     <p class="text-white/80 mb-2">{technician.email}</p>
@@ -134,8 +139,8 @@ const MobileProfile: React.FC = () => {
                         <button
                             onClick={() => setSelectedPeriod('week')}
                             class={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${selectedPeriod === 'week'
-                                    ? 'bg-primary text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-primary text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
                             Semana
@@ -143,8 +148,8 @@ const MobileProfile: React.FC = () => {
                         <button
                             onClick={() => setSelectedPeriod('month')}
                             class={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${selectedPeriod === 'month'
-                                    ? 'bg-primary text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-primary text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
                             Mês
@@ -152,8 +157,8 @@ const MobileProfile: React.FC = () => {
                         <button
                             onClick={() => setSelectedPeriod('year')}
                             class={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${selectedPeriod === 'year'
-                                    ? 'bg-primary text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-primary text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
                             Ano
