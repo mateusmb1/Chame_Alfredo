@@ -124,6 +124,7 @@ export const useLeadCapture = () => {
                 .from('orders')
                 .insert([{
                     client_id: clientId,
+                    client_name: formData.name,
                     service_type: formData.services.length > 0 ? formData.services[0].toLowerCase() : 'outros', // Ensure matching enum or string. Landing.tsx had mapped values. I'll rely on string for now.
                     description: description,
                     status: 'nova',

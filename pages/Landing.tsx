@@ -109,7 +109,9 @@ const Landing: React.FC = () => {
           description: `Solicitação via site - ${serviceInfo.serviceType}`,
           status: 'nova',
           priority: serviceInfo.priority,
-          value: 0
+          value: 0,
+          origin: 'landing_hero',
+          protocol: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`
         }])
 
       if (orderError) throw orderError
@@ -152,9 +154,7 @@ const Landing: React.FC = () => {
             name: formData.name,
             phone: cleanPhone,
             type: 'pf',
-            status: 'active',
-            username: cleanPhone, // Default username is phone
-            password: '123' // Default password for demo
+            status: 'active'
           }])
           .select()
           .single()
