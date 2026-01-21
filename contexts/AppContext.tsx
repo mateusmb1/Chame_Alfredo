@@ -74,9 +74,10 @@ interface AppContextType {
 
     // Technician operations
     addTechnician: (technician: Omit<Technician, 'id' | 'createdAt'>) => Promise<void>;
-    updateTechnician: (id: string, updates: Partial<Technician>) => Promise<void>;
+    updateTechnician: (id: string, updates: Partial<Technician>) => Promise<{ error: any } | { error: null }>;
     deleteTechnician: (id: string) => Promise<void>;
     authenticateTechnician: (username: string, password: string) => Technician | null;
+    checkUsernameAvailability: (username: string, excludeId?: string) => Promise<boolean>;
 
     // Project operations
     addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -768,8 +769,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const updateTechnician = React.useCallback(async (id: string, updates: Partial<Technician>) => {
         const { error } = await supabase.from('technicians').update(updates).eq('id', id);
-        if (error) console.error('Error updating technician:', error);
+        if (error) {
+            console.error('Error updating technician:', error);
+            return { error };
+        }
+        return { error: null };
     }, [supabase]);
+
+    const checkUsernameAvailability = React.useCallback(async (username: string, excludeId?: string): Promise<boolean> => {
+        // Check against local state which is synced with DB
+        const exists = technicians.some(t =>
+            t.username.toLowerCase() === username.toLowerCase() &&
+            t.id !== excludeId
+        );
+        return !exists;
+    }, [technicians]);
 
     const deleteTechnician = React.useCallback(async (id: string) => {
         const { error } = await supabase.from('technicians').delete().eq('id', id);

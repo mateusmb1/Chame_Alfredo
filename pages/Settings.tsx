@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../src/lib/supabase';
 import { useToast } from '../contexts/ToastContext';
 import { useApp } from '../contexts/AppContext';
-import { Upload, Save, X, Loader2, Database } from 'lucide-react';
+import { Upload, Save, X, Loader2, Database, Lock, Key, Shield } from 'lucide-react';
 import { DataImportModal } from '../components/DataImportModal';
 
 interface CompanySettings {
@@ -46,6 +46,30 @@ const Settings: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+
+  // Security State
+  const { updateTechnician, checkUsernameAvailability } = useApp();
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [securityForm, setSecurityForm] = useState({
+    username: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [isSavingSecurity, setIsSavingSecurity] = useState(false);
+
+  // Load current user
+  useEffect(() => {
+    const userJson = localStorage.getItem('alfredo_user');
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        setCurrentUser(user);
+        setSecurityForm(prev => ({ ...prev, username: user.username }));
+      } catch (e) {
+        console.error('Error parsing user from local storage', e);
+      }
+    }
+  }, []);
 
   // Synchronize with context data
   useEffect(() => {
@@ -92,6 +116,53 @@ const Settings: React.FC = () => {
   const handleCancel = () => {
     setSettings({ ...originalSettings });
     showToast('info', 'Alterações descartadas');
+  };
+
+  const handleSecurityChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecurityForm(prev => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handleSaveSecurity = async () => {
+    if (!currentUser?.id) return;
+    if (securityForm.password && securityForm.password !== securityForm.confirmPassword) {
+      showToast('error', 'As senhas não coincidem!');
+      return;
+    }
+
+    setIsSavingSecurity(true);
+    try {
+      // Check availability if username changed
+      if (securityForm.username !== currentUser.username) {
+        const isAvailable = await checkUsernameAvailability(securityForm.username, currentUser.id);
+        if (!isAvailable) {
+          showToast('error', 'Este nome de usuário já está em uso.');
+          setIsSavingSecurity(false);
+          return;
+        }
+      }
+
+      const updates: any = { username: securityForm.username };
+      if (securityForm.password) {
+        updates.password = securityForm.password;
+      }
+
+      const { error } = await updateTechnician(currentUser.id, updates);
+
+      if (error) throw error;
+
+      // Update local storage
+      const updatedUser = { ...currentUser, ...updates };
+      localStorage.setItem('alfredo_user', JSON.stringify(updatedUser));
+      setCurrentUser(updatedUser);
+      setSecurityForm(prev => ({ ...prev, password: '', confirmPassword: '' }));
+
+      showToast('success', 'Dados de acesso atualizados com sucesso!');
+    } catch (err: any) {
+      console.error('Error updating security:', err);
+      showToast('error', 'Erro ao atualizar dados de acesso.');
+    } finally {
+      setIsSavingSecurity(false);
+    }
   };
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -429,6 +500,93 @@ const Settings: React.FC = () => {
           </div>
         </div>
 
+        {/* Security Section (Only for authenticated users) */}
+        {currentUser && (
+          <div className="mx-auto max-w-6xl w-full mt-4">
+            <div className="rounded-xl bg-white dark:bg-[#18202F] border border-slate-200 dark:border-gray-800">
+              <div className="p-8 border-b border-slate-200 dark:border-gray-800">
+                <div className="flex items-center gap-2 mb-1">
+                  <Shield className="w-5 h-5 text-brand-orange" />
+                  <h2 className="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">
+                    Segurança de Acesso
+                  </h2>
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
+                  Altere seu login e senha de acesso ao sistema.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  <label className="flex flex-col">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">Usuário (Login)</p>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                      <input
+                        className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#131b29] focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-600 pl-10 pr-4 text-base font-normal leading-normal transition-all"
+                        value={securityForm.username}
+                        onChange={handleSecurityChange('username')}
+                        placeholder="Ex: admin"
+                      />
+                    </div>
+                  </label>
+
+                  {/* Spacer for grid alignment if needed, or leave empty */}
+                  <div className="hidden md:block"></div>
+
+                  <label className="flex flex-col">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">Nova Senha</p>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                      <input
+                        className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#131b29] focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-600 pl-10 pr-4 text-base font-normal leading-normal transition-all"
+                        type="password"
+                        value={securityForm.password}
+                        onChange={handleSecurityChange('password')}
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </label>
+
+                  <label className="flex flex-col">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">Confirmar Senha</p>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                      <input
+                        className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#131b29] focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-600 pl-10 pr-4 text-base font-normal leading-normal transition-all"
+                        type="password"
+                        value={securityForm.confirmPassword}
+                        onChange={handleSecurityChange('confirmPassword')}
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </label>
+                </div>
+
+                <div className="mt-8 flex justify-end">
+                  <button
+                    onClick={handleSaveSecurity}
+                    disabled={isSavingSecurity}
+                    className="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-6 bg-slate-900 text-white text-sm font-medium leading-normal hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed gap-2"
+                  >
+                    {isSavingSecurity ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Atualizando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        <span>Atualizar Credenciais</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Spacer */}
+        <div className="h-10"></div>
 
       </div>
 

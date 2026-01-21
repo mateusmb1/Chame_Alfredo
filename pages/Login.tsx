@@ -25,6 +25,7 @@ const Login: React.FC = () => {
       // 1. Try Technician/Admin Login
       const tech = authenticateTechnician(username, password);
       if (tech) {
+        localStorage.setItem('alfredo_user', JSON.stringify(tech));
         if (tech.username === 'martes') {
           // Admin specific logic if needed, for now both go to dashboard
           navigate('/dashboard');
