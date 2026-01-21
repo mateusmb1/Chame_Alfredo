@@ -298,6 +298,7 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                         status: data.status,
                         service_type: data.description || 'Importado',
                         scheduled_date: data.job_date, // mapper already converts it to ISO
+                        created_at: data.job_date, // Explicitly set created_at so it reflects the import date
                     });
                     if (error) {
                         console.error(`Error inserting order for ${data.client_name}:`, error);

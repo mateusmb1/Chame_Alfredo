@@ -19,7 +19,9 @@ import {
   AlertCircle,
   MoreVertical,
   Calendar,
-  DollarSign
+  DollarSign,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 
 const Orders: React.FC = () => {
@@ -35,6 +37,7 @@ const Orders: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('todas');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
 
@@ -278,269 +281,345 @@ const Orders: React.FC = () => {
             </button>
           ))}
         </div>
+
+        <div className="flex items-center bg-gray-50 dark:bg-white/5 p-1 rounded-xl border border-gray-100 dark:border-white/10">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-gray-600'}`}
+            title="Visualização em Grade"
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-gray-600'}`}
+            title="Visualização em Lista"
+          >
+            <List className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Orders Grid/List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredOrders.length === 0 ? (
-          <div className="col-span-full py-20 bg-white dark:bg-[#101622] rounded-3xl border border-dashed border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center text-gray-400">
-            <Search className="w-12 h-12 mb-4 opacity-20" />
-            <p className="font-medium text-sm text-gray-500">Nenhuma ordem encontrada</p>
-          </div>
-        ) : (
-          filteredOrders.map(order => {
-            const config = getStatusConfig(order.status);
-            return (
-              <div
-                key={order.id}
-                className="group bg-white dark:bg-[#101622] rounded-3xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all relative overflow-hidden"
-              >
-                {/* Status Bar */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
+      {filteredOrders.length === 0 ? (
+        <div className="col-span-full py-20 bg-white dark:bg-[#101622] rounded-3xl border border-dashed border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center text-gray-400">
+          <Search className="w-12 h-12 mb-4 opacity-20" />
+          <p className="font-medium text-sm text-gray-500">Nenhuma ordem encontrada</p>
+        </div>
+      ) : (
+        viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredOrders.map(order => {
+              const config = getStatusConfig(order.status);
+              return (
+                <div
+                  key={order.id}
+                  className="group bg-white dark:bg-[#101622] rounded-3xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all relative overflow-hidden"
+                >
+                  {/* Status Bar */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(order.id)}
+                        onChange={() => toggleSelectOrder(order.id)}
+                        className="w-5 h-5 rounded-lg border-2 border-gray-200 text-primary focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-800 transition-all cursor-pointer"
+                      />
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${config.color}`}>
+                        <config.icon className="w-3 h-3" />
+                        {config.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => navigate(`/orders/${order.id}`)}
+                        className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleOpenEditModal(order)}
+                        className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-500/5 rounded-xl transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(order.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 mb-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-[#0d121b] dark:text-white leading-tight">
+                        {order.clientName}
+                      </h3>
+                      {order.priority === 'urgente' && (
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{order.serviceType}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-gray-50 dark:bg-white/5 rounded-lg text-gray-400">
+                        <Calendar className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase">Criada em</span>
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          {new Date(order.createdAt).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-gray-50 dark:bg-white/5 rounded-lg text-gray-400">
+                        <DollarSign className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase">Valor</span>
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.value)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-4 border-t border-gray-50 dark:border-gray-800">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold">
+                      {order.technicianName?.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-gray-400 font-bold uppercase leading-none mb-0.5">Técnico</span>
+                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate max-w-[120px]">
+                        {order.technicianName}
+                      </span>
+                    </div>
+                  </div>
+                  );
+            })}
+                </div>
+              ) : (
+            <div className="bg-white dark:bg-[#101622] rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+              <div className="hidden md:grid grid-cols-[auto_1fr_1fr_1fr_1fr_auto] gap-4 px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 dark:border-gray-800">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.length === filteredOrders.length && filteredOrders.length > 0}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-800"
+                />
+                <span>Cliente</span>
+                <span>Serviço</span>
+                <span>Técnico</span>
+                <span>Status</span>
+                <span className="text-right">Ações</span>
+              </div>
+              {filteredOrders.map(order => {
+                const config = getStatusConfig(order.status);
+                return (
+                  <div
+                    key={order.id}
+                    className="grid grid-cols-[auto_1fr_1fr_1fr_1fr_auto] md:grid-cols-[auto_1fr_1fr_1fr_1fr_auto] items-center gap-4 px-6 py-4 border-b border-gray-100 dark:border-gray-800 last:border-b-0 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                  >
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(order.id)}
                       onChange={() => toggleSelectOrder(order.id)}
-                      className="w-5 h-5 rounded-lg border-2 border-gray-200 text-primary focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-800 transition-all cursor-pointer"
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-800"
                     />
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${config.color}`}>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-[#0d121b] dark:text-white">{order.clientName}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">ID: {order.id.substring(0, 8)}</span>
+                    </div>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{order.serviceType}</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{order.technicianName}</span>
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 w-fit ${config.color}`}>
                       <config.icon className="w-3 h-3" />
                       {config.label}
                     </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => navigate(`/orders/${order.id}`)}
-                      className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleOpenEditModal(order)}
-                      className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-500/5 rounded-xl transition-colors"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(order.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-1 mb-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-[#0d121b] dark:text-white leading-tight">
-                      {order.clientName}
-                    </h3>
-                    {order.priority === 'urgente' && (
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{order.serviceType}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-gray-50 dark:bg-white/5 rounded-lg text-gray-400">
-                      <Calendar className="w-4 h-4" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-gray-400 font-bold uppercase">Criada em</span>
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                        {new Date(order.createdAt).toLocaleDateString('pt-BR')}
-                      </span>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => navigate(`/orders/${order.id}`)}
+                        className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors"
+                        title="Ver Detalhes"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleOpenEditModal(order)}
+                        className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-500/5 rounded-xl transition-colors"
+                        title="Editar Ordem"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(order.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-colors"
+                        title="Excluir Ordem"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-gray-50 dark:bg-white/5 rounded-lg text-gray-400">
-                      <DollarSign className="w-4 h-4" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-gray-400 font-bold uppercase">Valor</span>
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.value)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 pt-4 border-t border-gray-50 dark:border-gray-800">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold">
-                    {order.technicianName?.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase leading-none mb-0.5">Técnico</span>
-                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate max-w-[120px]">
-                      {order.technicianName}
-                    </span>
-                  </div>
+                );
+              })}
+            </div>
+            )
+      )}
+            {/* Modals & Dialogs */}
+            <Modal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              title={isEditMode ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}
+              size="xl"
+              footer={
+                <div className="flex items-center gap-3 justify-end w-full">
                   <button
-                    onClick={() => navigate(`/orders/${order.id}`)}
-                    className="ml-auto w-8 h-8 rounded-lg bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400 hover:text-primary transition-colors"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-6 py-2.5 rounded-2xl text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
                   >
-                    <ChevronRight className="w-5 h-5" />
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    className="px-6 py-2.5 bg-primary text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{isEditMode ? 'Salvar Alterações' : 'Criar Ordem'}</span>
                   </button>
                 </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* Modals & Dialogs */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={isEditMode ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}
-        size="xl"
-        footer={
-          <div className="flex items-center gap-3 justify-end w-full">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="px-6 py-2.5 rounded-2xl text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+              }
             >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="px-6 py-2.5 bg-primary text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 flex items-center gap-2"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{isEditMode ? 'Salvar Alterações' : 'Criar Ordem'}</span>
-            </button>
-          </div>
-        }
-      >
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Cliente</label>
-              <select
-                value={formData.clientId}
-                onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
-                required
-              >
-                <option value="">Selecione um cliente</option>
-                {clients.map(client => (
-                  <option key={client.id} value={client.id}>{client.name}</option>
-                ))}
-              </select>
-            </div>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Cliente</label>
+                    <select
+                      value={formData.clientId}
+                      onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                      className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
+                      required
+                    >
+                      <option value="">Selecione um cliente</option>
+                      {clients.map(client => (
+                        <option key={client.id} value={client.id}>{client.name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Técnico</label>
-              <select
-                value={formData.technicianId}
-                onChange={(e) => setFormData({ ...formData, technicianId: e.target.value })}
-                className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
-                required
-              >
-                <option value="">Selecione um técnico</option>
-                {technicians.map(tech => (
-                  <option key={tech.id} value={tech.id}>{tech.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Técnico</label>
+                    <select
+                      value={formData.technicianId}
+                      onChange={(e) => setFormData({ ...formData, technicianId: e.target.value })}
+                      className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
+                      required
+                    >
+                      <option value="">Selecione um técnico</option>
+                      {technicians.map(tech => (
+                        <option key={tech.id} value={tech.id}>{tech.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Serviço</label>
-              <select
-                value={formData.serviceType}
-                onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
-                className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
-                required
-              >
-                <option value="">Selecione o tipo</option>
-                <option value="Manutenção Preventiva">Manutenção Preventiva</option>
-                <option value="Instalação">Instalação</option>
-                <option value="Reparo">Reparo</option>
-                <option value="Substituição">Substituição</option>
-              </select>
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Serviço</label>
+                    <select
+                      value={formData.serviceType}
+                      onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
+                      className="w-full h-11 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white"
+                      required
+                    >
+                      <option value="">Selecione o tipo</option>
+                      <option value="Manutenção Preventiva">Manutenção Preventiva</option>
+                      <option value="Instalação">Instalação</option>
+                      <option value="Reparo">Reparo</option>
+                      <option value="Substituição">Substituição</option>
+                    </select>
+                  </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Prioridade</label>
-              <div className="flex gap-2 p-1 bg-gray-50 dark:bg-white/5 rounded-2xl">
-                {(['baixa', 'media', 'alta', 'urgente'] as const).map(p => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, priority: p })}
-                    className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Prioridade</label>
+                    <div className="flex gap-2 p-1 bg-gray-50 dark:bg-white/5 rounded-2xl">
+                      {(['baixa', 'media', 'alta', 'urgente'] as const).map(p => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, priority: p })}
+                          className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all
                       ${formData.priority === p
-                        ? 'bg-white dark:bg-gray-800 shadow-sm text-primary'
-                        : 'text-gray-400'}`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+                              ? 'bg-white dark:bg-gray-800 shadow-sm text-primary'
+                              : 'text-gray-400'}`}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Descrição</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-              className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white placeholder:text-gray-400"
-              placeholder="Descreva os detalhes do serviço..."
-              required
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Descrição</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                    className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border-none text-sm font-medium focus:ring-2 focus:ring-primary/20 dark:text-white placeholder:text-gray-400"
+                    placeholder="Descreva os detalhes do serviço..."
+                    required
+                  />
+                </div>
+
+                <div className="border-t border-gray-100 dark:border-gray-800 pt-6">
+                  <OrderItemSelector
+                    items={orderItems}
+                    onItemsChange={setOrderItems}
+                    inventory={inventory}
+                    productsServices={[]}
+                    onAddNewProduct={(p) => {
+                      addInventoryItem(p);
+                      showToast('success', 'Produto adicionado ao estoque!');
+                    }}
+                  />
+                </div>
+              </form>
+            </Modal>
+
+            <ConfirmDialog
+              isOpen={isBulkDeleteDialogOpen}
+              onClose={() => setIsBulkDeleteDialogOpen(false)}
+              onConfirm={handleConfirmBulkDelete}
+              title="Excluir Selecionados"
+              message={`Deseja realmente excluir as ${selectedIds.length} ordens de serviço selecionadas? Esta ação é irreversível.`}
+              confirmText="Sim, Excluir Selecionadas"
+              cancelText="Cancelar"
+              type="danger"
             />
-          </div>
 
-          <div className="border-t border-gray-100 dark:border-gray-800 pt-6">
-            <OrderItemSelector
-              items={orderItems}
-              onItemsChange={setOrderItems}
-              inventory={inventory}
-              productsServices={[]}
-              onAddNewProduct={(p) => {
-                addInventoryItem(p);
-                showToast('success', 'Produto adicionado ao estoque!');
-              }}
+            <ConfirmDialog
+              isOpen={isDeleteAllDialogOpen}
+              onClose={() => setIsDeleteAllDialogOpen(false)}
+              onConfirm={handleConfirmDeleteAll}
+              title="EXCLUIR TODAS AS ORDENS"
+              message="ATENÇÃO: Deseja realmente excluir TODAS as ordens de serviço visíveis nesta lista? Esta ação é extrema e irreversível. Use apenas para limpeza total antes de uma nova importação."
+              confirmText="Sim, EXCLUIR TUDO"
+              cancelText="Cancelar"
+              type="danger"
             />
-          </div>
-        </form>
-      </Modal>
 
-      <ConfirmDialog
-        isOpen={isBulkDeleteDialogOpen}
-        onClose={() => setIsBulkDeleteDialogOpen(false)}
-        onConfirm={handleConfirmBulkDelete}
-        title="Excluir Selecionados"
-        message={`Deseja realmente excluir as ${selectedIds.length} ordens de serviço selecionadas? Esta ação é irreversível.`}
-        confirmText="Sim, Excluir Selecionadas"
-        cancelText="Cancelar"
-        type="danger"
-      />
-
-      <ConfirmDialog
-        isOpen={isDeleteAllDialogOpen}
-        onClose={() => setIsDeleteAllDialogOpen(false)}
-        onConfirm={handleConfirmDeleteAll}
-        title="EXCLUIR TODAS AS ORDENS"
-        message="ATENÇÃO: Deseja realmente excluir TODAS as ordens de serviço visíveis nesta lista? Esta ação é extrema e irreversível. Use apenas para limpeza total antes de uma nova importação."
-        confirmText="Sim, EXCLUIR TUDO"
-        cancelText="Cancelar"
-        type="danger"
-      />
-
-      <style dangerouslySetInnerHTML={{
-        __html: `
+            <style dangerouslySetInnerHTML={{
+              __html: `
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}} />
-    </div>
-  );
+          </div>
+        );
 };
 
-export default Orders;
+      export default Orders;
