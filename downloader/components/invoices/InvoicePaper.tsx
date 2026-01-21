@@ -69,8 +69,8 @@ export default function InvoicePaper({
               </div>
             )}
             <div>
-              <h2 className={model === 'classic' ? 'text-xl font-semibold text-slate-800' : 'text-xl font-bold text-slate-900'}>{companyProfile?.name || 'Sua Empresa'}</h2>
-              <p className="text-sm text-gray-500">{companyProfile?.address || 'Rua Exemplo, 123'}</p>
+              <h2 className={model === 'classic' ? 'text-xl font-semibold text-slate-800' : 'text-xl font-bold text-slate-900'}>{companyProfile?.company_name || 'Sua Empresa'}</h2>
+              <p className="text-sm text-gray-500">{[companyProfile?.street, companyProfile?.number, companyProfile?.city, companyProfile?.state].filter(Boolean).join(', ') || 'Rua Exemplo, 123'}</p>
               {companyProfile?.cnpj && <p className="text-sm text-gray-500">CNPJ: {companyProfile.cnpj}</p>}
             </div>
           </div>

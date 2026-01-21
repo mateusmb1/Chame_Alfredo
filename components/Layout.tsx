@@ -82,7 +82,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
           <div className="flex flex-col">
             <h1 className="text-[#0d121b] dark:text-white text-lg font-bold leading-tight tracking-tight">
-              {companyProfile?.name || 'Alfredo'}
+              {companyProfile?.company_name || 'Alfredo'}
             </h1>
             <p className="text-[#4c669a] dark:text-gray-400 text-xs font-medium uppercase tracking-wider">Admin Panel</p>
           </div>
@@ -190,7 +190,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               )}
             </div>
             <span className="text-[#0d121b] dark:text-white font-bold text-sm tracking-tight">
-              {companyProfile?.name || 'Alfredo'} Admin
+              {companyProfile?.company_name || 'Alfredo'} Admin
             </span>
           </div>
 

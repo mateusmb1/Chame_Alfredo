@@ -169,8 +169,8 @@ const QuotePrintConfig: React.FC = () => {
                                     )}
                                 </div>
                             )}
-                            <p className="font-bold">{companyProfile?.name || 'Alfredo'}</p>
-                            <p className="text-gray-600 text-sm">{companyProfile?.address}</p>
+                            <p className="font-bold">{companyProfile?.company_name || 'Alfredo'}</p>
+                            <p className="text-gray-600 text-sm">{[companyProfile?.street, companyProfile?.number, companyProfile?.city, companyProfile?.state].filter(Boolean).join(', ')}</p>
                             {companyProfile?.cnpj && <p className="text-gray-600 text-xs">CNPJ: {companyProfile.cnpj}</p>}
                         </div>
                     </header>

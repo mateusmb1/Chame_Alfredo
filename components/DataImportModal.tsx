@@ -336,15 +336,19 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
             } else if (importType === 'profile') {
                 if (profileData) {
                     setImportProgress({ current: 0, total: 1 });
-                    const { error } = await supabase.from('company_profile').upsert({
+                    const { error } = await supabase.from('company_settings').upsert({
                         id: 'default', // Single profile for the app
-                        name: profileData['details.companyName'] || profileData['corporateName'],
+                        company_name: profileData['details.companyName'] || profileData['corporateName'],
                         email: profileData['email'],
                         phone: profileData['phone'],
                         logo_url: profileData['picture'],
                         signature_url: profileData['signature'],
                         cnpj: profileData['details.cnpj'],
-                        address: `${profileData['address.street']}, ${profileData['address.number']}`
+                        street: profileData['address.street'],
+                        number: profileData['address.number'],
+                        city: profileData['address.city'],
+                        state: profileData['address.state'],
+                        cep: profileData['address.postalCode']
                     });
                     if (error) throw error;
                     setImportProgress({ current: 1, total: 1 });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../src/lib/supabase';
 import { useToast } from '../contexts/ToastContext';
+import { useApp } from '../contexts/AppContext';
 import { Upload, Save, X, Loader2, Database } from 'lucide-react';
 import { DataImportModal } from '../components/DataImportModal';
 
@@ -35,6 +36,7 @@ const defaultSettings: CompanySettings = {
 
 const Settings: React.FC = () => {
   const { showToast } = useToast();
+  const { companyProfile, updateCompanyProfile } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [settings, setSettings] = useState<CompanySettings>(defaultSettings);
@@ -45,94 +47,40 @@ const Settings: React.FC = () => {
   const [hasChanges, setHasChanges] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
 
-  // Fetch settings on mount
+  // Synchronize with context data
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    if (companyProfile) {
+      const profileData = {
+        id: companyProfile.id,
+        company_name: companyProfile.company_name || '',
+        cnpj: companyProfile.cnpj || '',
+        email: companyProfile.email || '',
+        phone: companyProfile.phone || '',
+        logo_url: companyProfile.logo_url || '',
+        cep: companyProfile.cep || '',
+        street: companyProfile.street || '',
+        number: companyProfile.number || '',
+        complement: companyProfile.complement || '',
+        city: companyProfile.city || '',
+        state: companyProfile.state || ''
+      };
+      setSettings(profileData);
+      setOriginalSettings(profileData);
+      setIsLoading(false);
+    }
+  }, [companyProfile]);
 
   // Track changes
   useEffect(() => {
     setHasChanges(JSON.stringify(settings) !== JSON.stringify(originalSettings));
   }, [settings, originalSettings]);
 
-  const fetchSettings = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('company_settings')
-        .select('*')
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.error('Error fetching settings:', error);
-        showToast('error', 'Erro ao carregar configurações');
-      } else if (data) {
-        setSettings(data);
-        setOriginalSettings(data);
-      }
-    } catch (err) {
-      console.error('Error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      let result;
-
-      if (settings.id) {
-        // Update existing
-        result = await supabase
-          .from('company_settings')
-          .update({
-            company_name: settings.company_name,
-            cnpj: settings.cnpj,
-            email: settings.email,
-            phone: settings.phone,
-            logo_url: settings.logo_url,
-            cep: settings.cep,
-            street: settings.street,
-            number: settings.number,
-            complement: settings.complement,
-            city: settings.city,
-            state: settings.state,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', settings.id);
-      } else {
-        // Insert new
-        result = await supabase
-          .from('company_settings')
-          .insert([{
-            company_name: settings.company_name,
-            cnpj: settings.cnpj,
-            email: settings.email,
-            phone: settings.phone,
-            logo_url: settings.logo_url,
-            cep: settings.cep,
-            street: settings.street,
-            number: settings.number,
-            complement: settings.complement,
-            city: settings.city,
-            state: settings.state
-          }])
-          .select()
-          .single();
-      }
-
-      if (result.error) {
-        throw result.error;
-      }
-
+      await updateCompanyProfile(settings);
       showToast('success', 'Configurações salvas com sucesso!');
       setOriginalSettings({ ...settings });
-      if (result.data) {
-        setSettings(result.data);
-        setOriginalSettings(result.data);
-      }
-
     } catch (err: any) {
       console.error('Error saving settings:', err);
       showToast('error', `Erro ao salvar: ${err.message}`);

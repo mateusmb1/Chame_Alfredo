@@ -14,13 +14,18 @@ import { Conversation, Message } from '../types/communication';
 
 export interface CompanyProfile {
     id: string;
-    name: string;
+    company_name: string;
     email: string;
     phone: string;
     logo_url: string;
     signature_url: string;
     cnpj: string;
-    address: string;
+    cep: string;
+    street: string;
+    number: string;
+    complement: string;
+    city: string;
+    state: string;
 }
 
 interface AppContextType {
@@ -164,7 +169,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 supabase.from('appointments').select('*'),
                 supabase.from('conversations').select('*'),
                 supabase.from('messages').select('*'),
-                supabase.from('company_profile').select('*').limit(1).single()
+                supabase.from('company_settings').select('*').limit(1).single()
             ]);
 
             if (clientsData) setClients(clientsData.map(mapClientFromDB));
@@ -209,13 +214,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             if (profileData) {
                 setCompanyProfile({
                     id: profileData.id,
-                    name: profileData.name,
+                    company_name: profileData.company_name,
                     email: profileData.email,
                     phone: profileData.phone,
                     logo_url: profileData.logo_url,
                     signature_url: profileData.signature_url,
                     cnpj: profileData.cnpj,
-                    address: profileData.address
+                    cep: profileData.cep,
+                    street: profileData.street,
+                    number: profileData.number,
+                    complement: profileData.complement,
+                    city: profileData.city,
+                    state: profileData.state
                 });
             }
         };
@@ -1012,7 +1022,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [supabase]);
 
     const updateCompanyProfile = React.useCallback(async (updates: Partial<CompanyProfile>) => {
-        const { error } = await supabase.from('company_profile').update(updates).eq('id', companyProfile?.id || 'default');
+        const { error } = await supabase.from('company_settings').update(updates).eq('id', companyProfile?.id || 'default');
         if (error) console.error('Error updating profile:', error);
         else setCompanyProfile(prev => prev ? { ...prev, ...updates } : null);
     }, [companyProfile, supabase]);
@@ -1091,6 +1101,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Communication operations
         sendMessage,
         getOrCreateConversation,
+        uploadChatFile,
         uploadFile,
         generateMonthlyInvoices,
         companyProfile,

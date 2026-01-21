@@ -282,10 +282,10 @@ const QuoteDetail: React.FC = () => {
                             {/* Company Info */}
                             <div className="flex-1 space-y-1">
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                                    {companyProfile?.name || 'Alfredo'}
+                                    {companyProfile?.company_name || 'Alfredo'}
                                 </h3>
                                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                                    {companyProfile?.address}
+                                    {[companyProfile?.street, companyProfile?.number, companyProfile?.city, companyProfile?.state].filter(Boolean).join(', ')}
                                 </p>
                                 <p className="text-sm text-slate-600 dark:text-slate-400">
                                     {companyProfile?.phone}

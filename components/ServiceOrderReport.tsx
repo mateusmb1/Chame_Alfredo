@@ -51,12 +51,12 @@ const ServiceOrderReport: React.FC<ServiceOrderReportProps> = ({ order, client }
                 <table className="w-full border-collapse border border-gray-300 text-[11px] leading-tight">
                     <tbody>
                         <tr>
-                            <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">Nome</span>{companyProfile?.name || 'Alfredo'}</td>
+                            <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">Nome</span>{companyProfile?.company_name || 'Alfredo'}</td>
                             <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">Telefone</span>{companyProfile?.phone || '-'}</td>
                         </tr>
                         <tr>
                             <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">CPF / CNPJ</span>{companyProfile?.cnpj || '-'}</td>
-                            <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">Endereço</span>{companyProfile?.address || '-'}</td>
+                            <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">Endereço</span>{[companyProfile?.street, companyProfile?.number, companyProfile?.city, companyProfile?.state].filter(Boolean).join(', ') || '-'}</td>
                         </tr>
                     </tbody>
                 </table>
