@@ -140,9 +140,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Initial Fetch & Real-time Subscriptions
     useEffect(() => {
         const fetchData = async () => {
-            // FIX: Bug 6 - Use Promise.allSettled for better error handling
-            // If one request fails, others should still succeed
-            const results = await Promise.allSettled([
+            // Use Promise.all with manual error catching to simulate allSettled behavior safely
+            // This ensures strict compatibility and prevents unhandled rejections from crashing the app
+            const queries = [
                 supabase.from('clients').select('*'),
                 supabase.from('orders').select('*'),
                 supabase.from('technicians').select('*'),
@@ -150,14 +150,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 supabase.from('quotes').select('*, client:clients(name)'),
                 supabase.from('contracts').select('*, client:clients(name)'),
                 supabase.from('projects').select('*, client:clients(name), responsible:technicians(name)'),
-                supabase.from('project_activities').select('*'), // Bug 4 target
+                supabase.from('project_activities').select('*'),
                 supabase.from('products_services').select('*'),
                 supabase.from('invoices').select('*'),
                 supabase.from('appointments').select('*'),
                 supabase.from('conversations').select('*'),
                 supabase.from('messages').select('*'),
                 supabase.from('company_settings').select('*').limit(1).single()
-            ]);
+            ];
+
+            const results = await Promise.all(
+                queries.map(q => q.then(
+                    data => ({ status: 'fulfilled' as const, value: data, reason: undefined }),
+                    err => ({ status: 'rejected' as const, value: undefined, reason: err })
+                ))
+            );
 
             const [
                 clientsRes, ordersRes, techniciansRes, inventoryRes, quotesRes,
@@ -166,19 +173,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ] = results;
 
             // Helper to process results safely
-            const processResult = (res: PromiseSettledResult<any>, setter: any, mapper: (d: any) => any = (d) => d) => {
-                if (res.status === 'fulfilled') {
+            const processResult = (res: { status: 'fulfilled' | 'rejected', value?: any, reason?: any }, setter: any, mapper: (d: any) => any = (d) => d) => {
+                if (res.status === 'fulfilled' && res.value) {
                     if (res.value.data) {
-                        setter(Array.isArray(res.value.data)
-                            ? res.value.data.map(mapper)
-                            : mapper(res.value.data) // Handle single objects if needed, though usually arrays
-                        );
+                        try {
+                            setter(Array.isArray(res.value.data)
+                                ? res.value.data.map(mapper)
+                                : mapper(res.value.data)
+                            );
+                        } catch (err) {
+                            console.error('Error mapping data:', err); // Catch mapping errors
+                        }
                     }
                     if (res.value.error) {
                         console.error('Supabase Data Error:', res.value.error);
                     }
                 } else {
-                    console.error('Promise Rejected:', res.reason);
+                    console.error('Query Rejected:', res.reason);
                 }
             };
 
@@ -192,7 +203,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             processResult(activitiesRes, setProjectActivities, mapActivityFromDB);
 
             // New tables processing
-            if (productsRes.status === 'fulfilled' && productsRes.value.data) {
+            if (productsRes.status === 'fulfilled' && productsRes.value?.data) {
                 setProducts(productsRes.value.data.map((p: any) => ({
                     ...p,
                     createdAt: p.created_at,
@@ -200,7 +211,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 })));
             }
 
-            if (invoicesRes.status === 'fulfilled' && invoicesRes.value.data) {
+            if (invoicesRes.status === 'fulfilled' && invoicesRes.value?.data) {
                 setInvoices(invoicesRes.value.data.map((i: any) => ({
                     ...i,
                     invoiceNumber: i.invoice_number,
@@ -215,7 +226,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 })));
             }
 
-            if (appointmentsRes.status === 'fulfilled' && appointmentsRes.value.data) {
+            if (appointmentsRes.status === 'fulfilled' && appointmentsRes.value?.data) {
                 setAppointments(appointmentsRes.value.data.map((a: any) => ({
                     ...a,
                     startTime: a.start_time,
@@ -231,7 +242,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             processResult(conversationsRes, setConversations, mapConversationFromDB);
             processResult(messagesRes, setMessages, mapMessageFromDB);
 
-            if (profileRes.status === 'fulfilled' && profileRes.value.data) {
+            if (profileRes.status === 'fulfilled' && profileRes.value?.data) {
                 const profileData = profileRes.value.data;
                 setCompanyProfile({
                     id: profileData.id,
