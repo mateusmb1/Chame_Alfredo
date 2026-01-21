@@ -141,8 +141,8 @@ const Dashboard: React.FC = () => {
         />
         <StatCard
           title="Faturamento"
-          value={`R$ ${(metrics.totalContractValue / 1000).toFixed(1)}k`}
-          subtitle="Mensal projetado"
+          value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 1 }).format((metrics.totalContractValue + orders.filter(o => o.status === 'concluida').reduce((sum, o) => sum + (o.value || 0), 0)))}
+          subtitle="Mensal projetado + concluídos"
           icon={TrendingUp}
           color="bg-emerald-500"
         />

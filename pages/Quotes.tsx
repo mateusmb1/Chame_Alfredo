@@ -20,24 +20,38 @@ import {
   Briefcase,
   DollarSign
 } from 'lucide-react';
+import { useApp } from '../contexts/AppContext';
 
 const Quotes: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { quotes: realQuotes, orders } = useApp();
   const [activeTab, setActiveTab] = useState('Todos');
   const [searchTerm, setSearchTerm] = useState('');
 
   const tabs = ['Todos', 'Rascunho', 'Enviado', 'Aprovado', 'Rejeitado'];
 
-  const quotes = [
-    { id: 'QT-2024-001', client: 'Inovatech Soluções', date: '15 de Jul, 2024', value: 1500.00, status: 'Aprovado', color: 'emerald' },
-    { id: 'QT-2024-002', client: 'Construtora Alfa', date: '14 de Jul, 2024', value: 8750.00, status: 'Enviado', color: 'blue' },
-    { id: 'QT-2024-003', client: 'Mercado Central', date: '12 de Jul, 2024', value: 3200.00, status: 'Rejeitado', color: 'red' },
-    { id: 'QT-2024-004', client: 'Tech Logística', date: '11 de Jul, 2024', value: 500.00, status: 'Rascunho', color: 'gray' },
-    { id: 'QT-2024-005', client: 'Condomínio Solar', date: '10 de Jul, 2024', value: 2450.00, status: 'Aprovado', color: 'emerald' },
+  const allQuotes = [
+    ...realQuotes.map(q => ({
+      id: q.id,
+      client: q.clientName,
+      date: new Date(q.createdAt).toLocaleDateString('pt-BR'),
+      value: q.total,
+      status: q.status === 'draft' ? 'Rascunho' : q.status === 'sent' ? 'Enviado' : q.status === 'accepted' ? 'Aprovado' : 'Rejeitado',
+      color: q.status === 'accepted' ? 'emerald' : q.status === 'sent' ? 'blue' : q.status === 'draft' ? 'gray' : 'red'
+    })),
+    ...orders.filter(o => o.items && o.items.length > 0 && o.status !== 'concluida').map(o => ({
+      id: `OS-${o.id}`,
+      client: o.clientName,
+      date: new Date(o.createdAt).toLocaleDateString('pt-BR'),
+      value: o.items.reduce((sum: number, i: any) => sum + i.total, 0),
+      status: o.customerSignature ? 'Aprovado' : 'Enviado', // Map signature to "Approved"
+      color: o.customerSignature ? 'emerald' : 'blue',
+      isFieldOrder: true
+    }))
   ];
 
-  const filteredQuotes = quotes.filter(q => {
+  const filteredQuotes = allQuotes.filter(q => {
     const matchesSearch = q.client.toLowerCase().includes(searchTerm.toLowerCase()) || q.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTab = activeTab === 'Todos' || q.status === activeTab;
     return matchesSearch && matchesTab;

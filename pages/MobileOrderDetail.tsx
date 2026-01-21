@@ -69,6 +69,20 @@ const MobileOrderDetail: React.FC = () => {
         }
     }, [id, orders, navigate, photos.length, notes, signature, checkInOut.checkIn, checkInOut.checkOut]);
 
+    // Auto-save items and notes when they change
+    useEffect(() => {
+        if (id && order && (additionalItems.length > 0 || notes)) {
+            const timer = setTimeout(() => {
+                updateOrder(id, {
+                    items: additionalItems,
+                    serviceNotes: notes,
+                    value: additionalItems.reduce((sum, item) => sum + item.total, 0)
+                });
+            }, 1000); // Debounce saves
+            return () => clearTimeout(timer);
+        }
+    }, [id, additionalItems, notes, updateOrder, order]);
+
 
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -203,6 +217,18 @@ const MobileOrderDetail: React.FC = () => {
                 showToast('error', 'Erro ao obter localização para o check-out');
             }
         );
+    };
+
+    const handleShareOrder = () => {
+        if (!order) return;
+
+        const total = additionalItems.reduce((sum, item) => sum + item.total, 0);
+        let itemsText = additionalItems.map(i => `${i.quantity}x ${i.name} - ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(i.total)}`).join('%0A');
+
+        const message = `*Ordem de Serviço #${order.id}*%0A%0A*Cliente:* ${order.clientName}%0A*Serviço:* ${order.serviceType}%0A%0A*Itens Adicionais:*%0A${itemsText}%0A%0A*Total Estimado:* ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}%0A%0A_Aguardamos sua aprovação para execução._`;
+
+        const whatsappUrl = `https://wa.me/?text=${message}`;
+        window.open(whatsappUrl, '_blank');
     };
 
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -392,6 +418,17 @@ const MobileOrderDetail: React.FC = () => {
                     </div>
                 ) : order.status === 'em_andamento' ? (
                     <div className="space-y-4">
+                        {additionalItems.length > 0 && !signature && (
+                            <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-lg">
+                                <h2 className="font-bold text-orange-800 flex items-center gap-2">
+                                    <span className="material-symbols-outlined">pending_actions</span>
+                                    Aguardando Aprovação
+                                </h2>
+                                <p className="text-xs text-orange-600 mt-1">
+                                    Existem itens adicionais neste orçamento. Colha a assinatura do cliente para autorizar a execução.
+                                </p>
+                            </div>
+                        )}
                         <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
                             <h2 className="font-bold text-green-800 flex items-center gap-2">
                                 <span className="material-symbols-outlined">task_alt</span>
@@ -464,13 +501,22 @@ const MobileOrderDetail: React.FC = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <button
-                                    onClick={() => setIsSignatureModalOpen(true)}
-                                    className="w-full py-4 bg-purple-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
-                                >
-                                    <span className="material-symbols-outlined">gesture</span>
-                                    Colher Assinatura Agora
-                                </button>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        onClick={handleShareOrder}
+                                        className="h-14 bg-white border-2 border-primary text-primary font-bold rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all text-sm"
+                                    >
+                                        <span className="material-symbols-outlined">share</span>
+                                        Enviar Cliente
+                                    </button>
+                                    <button
+                                        onClick={() => setIsSignatureModalOpen(true)}
+                                        className="h-14 bg-purple-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all text-sm"
+                                    >
+                                        <span className="material-symbols-outlined">gesture</span>
+                                        Colher Assinatura
+                                    </button>
+                                </div>
                             )}
                         </div>
 
@@ -590,9 +636,14 @@ const MobileOrderDetail: React.FC = () => {
             {/* Signature Modal Overlay */}
             {isSignatureModalOpen && (
                 <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-[100] animate-in fade-in duration-200">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter italic">Assinatura Digital</h3>
-                        <button onClick={() => setIsSignatureModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                    <div className="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter italic leading-none mb-1">Autorização de Execução</h3>
+                            <p className="text-[10px] text-gray-500 font-bold uppercase leading-tight">
+                                Autorizo a execução dos serviços e peças detalhadas nesse orçamento/ordemdeserviço
+                            </p>
+                        </div>
+                        <button onClick={() => setIsSignatureModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1">
                             <span className="material-symbols-outlined">close</span>
                         </button>
                     </div>
