@@ -630,26 +630,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (error) console.error('Error adding quote:', error);
     }, [mapQuoteToDB, supabase]);
 
-    const updateQuote = React.useCallback(async (id: string, updates: Partial<Quote>) => {
-        const dbUpdate = mapQuoteToDB(updates);
-        Object.keys(dbUpdate).forEach(key => (dbUpdate as any)[key] === undefined && delete (dbUpdate as any)[key]);
-        const { error } = await supabase.from('quotes').update(dbUpdate).eq('id', id);
-        if (error) {
-            console.error('Error updating quote:', error);
-            return;
-        }
-
-        // Logic for automatic conversion to invoice when approved
-        if (updates.status === 'approved' || updates.signatureData) {
-            // Find full quote to convert
-            const fullQuote = quotes.find(q => q.id === id) || (updates as Quote);
-            if (fullQuote && !fullQuote.invoiceId) {
-                // Trigger conversion
-                await convertQuoteToInvoice(id);
-            }
-        }
-    }, [mapQuoteToDB, supabase, quotes, convertQuoteToInvoice]); // FIX: Bug 5 - Ensure dependencies are complete
-
+    // Moved convertQuoteToInvoice UP before updateQuote to solve dependency order issue
     const convertQuoteToInvoice = React.useCallback(async (quoteId: string) => {
         const quote = quotes.find(q => q.id === quoteId);
         if (!quote) return;
@@ -691,6 +672,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         return invData;
     }, [quotes, supabase]);
+
+    const updateQuote = React.useCallback(async (id: string, updates: Partial<Quote>) => {
+        const dbUpdate = mapQuoteToDB(updates);
+        Object.keys(dbUpdate).forEach(key => (dbUpdate as any)[key] === undefined && delete (dbUpdate as any)[key]);
+        const { error } = await supabase.from('quotes').update(dbUpdate).eq('id', id);
+        if (error) {
+            console.error('Error updating quote:', error);
+            return;
+        }
+
+        // Logic for automatic conversion to invoice when approved
+        if (updates.status === 'approved' || updates.signatureData) {
+            // Find full quote to convert
+            const fullQuote = quotes.find(q => q.id === id) || (updates as Quote);
+            if (fullQuote && !fullQuote.invoiceId) {
+                // Trigger conversion
+                // Now safe to call as it is defined above
+                await convertQuoteToInvoice(id);
+            }
+        }
+    }, [mapQuoteToDB, supabase, quotes, convertQuoteToInvoice]); // FIX: Bug 5 - Ensure dependencies are complete
 
     const createQuoteFromOrder = React.useCallback(async (orderId: string, items: any[], notes: string) => {
         const order = orders.find(o => o.id === orderId);
