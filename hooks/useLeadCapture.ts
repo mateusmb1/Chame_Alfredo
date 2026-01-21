@@ -81,9 +81,9 @@ export const useLeadCapture = () => {
             let clientId: string
 
             // 1. Check or Create Client
-            const { data: existingClients } = await supabase
+            const { data: existingClients, error: searchError } = await supabase
                 .from('clients')
-                .select('*')
+                .select('id, name, phone')
                 .eq('phone', cleanPhone)
                 .limit(1)
 
@@ -108,8 +108,25 @@ export const useLeadCapture = () => {
                     .select()
                     .single()
 
-                if (createError) throw createError
-                clientId = newClient.id
+                if (createError) {
+                    // Handle duplicate key if the SELECT above failed due to RLS
+                    if (createError.code === '23505') {
+                        const { data: retryClient } = await supabase
+                            .from('clients')
+                            .select('id')
+                            .eq('phone', cleanPhone)
+                            .single()
+                        if (retryClient) {
+                            clientId = retryClient.id
+                        } else {
+                            throw new Error('Este telefone já está cadastrado, mas não conseguimos recuperar seus dados por questões de privacidade. Por favor, fale conosco pelo WhatsApp.')
+                        }
+                    } else {
+                        throw createError
+                    }
+                } else {
+                    clientId = newClient.id
+                }
             }
 
             // 2. Create Order
