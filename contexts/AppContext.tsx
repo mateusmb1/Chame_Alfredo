@@ -107,6 +107,7 @@ interface AppContextType {
     generateMonthlyInvoices: (month: number, year: number) => Promise<void>;
     companyProfile: CompanyProfile | null;
     updateCompanyProfile: (profile: Partial<CompanyProfile>) => Promise<void>;
+    deleteOrders: (ids: string[]) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -553,6 +554,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setOrders(prev => prev.filter(o => o.id !== id));
         const { error } = await supabase.from('orders').delete().eq('id', id);
         if (error) console.error('Error deleting order:', error);
+    }, [supabase, setOrders]);
+
+    const deleteOrders = React.useCallback(async (ids: string[]) => {
+        setOrders(prev => prev.filter(o => !ids.includes(o.id)));
+        const { error } = await supabase.from('orders').delete().in('id', ids);
+        if (error) console.error('Error deleting orders:', error);
     }, [supabase, setOrders]);
 
     const addInventoryItem = React.useCallback(async (item: Omit<InventoryItem, 'id'>) => {

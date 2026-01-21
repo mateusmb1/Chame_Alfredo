@@ -24,7 +24,7 @@ import {
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
-  const { orders, clients, technicians, inventory, addOrder, updateOrder, deleteOrder, addInventoryItem } = useApp();
+  const { orders, clients, technicians, inventory, addOrder, updateOrder, deleteOrder, deleteOrders, addInventoryItem } = useApp();
   const { showToast } = useToast();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,6 +34,9 @@ const Orders: React.FC = () => {
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('todas');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     clientId: '',
@@ -135,8 +138,40 @@ const Orders: React.FC = () => {
     if (orderToDelete) {
       deleteOrder(orderToDelete);
       showToast('success', 'Ordem de serviço excluída!');
+      setSelectedIds(prev => prev.filter(id => id !== orderToDelete));
     }
     setOrderToDelete(null);
+  };
+
+  const handleConfirmBulkDelete = () => {
+    if (selectedIds.length > 0) {
+      deleteOrders(selectedIds);
+      showToast('success', `${selectedIds.length} ordens de serviço excluídas!`);
+      setSelectedIds([]);
+    }
+  };
+
+  const handleConfirmDeleteAll = () => {
+    const allIds = filteredOrders.map(o => o.id);
+    if (allIds.length > 0) {
+      deleteOrders(allIds);
+      showToast('success', 'Todas as ordens de serviço foram excluídas!');
+      setSelectedIds([]);
+    }
+  };
+
+  const toggleSelectOrder = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredOrders.length && filteredOrders.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredOrders.map(o => o.id));
+    }
   };
 
   const filteredOrders = orders.filter(o => {
@@ -164,13 +199,37 @@ const Orders: React.FC = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-[#0d121b] dark:text-white tracking-tight">Ordens de Serviço</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm">Gerencie e acompanhe todos os serviços.</p>
         </div>
-        <button
-          onClick={handleOpenNewOrderModal}
-          className="flex items-center justify-center gap-2 bg-primary text-white px-5 py-2.5 rounded-2xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Nova OS</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {filteredOrders.length > 0 && (
+            <div className="hidden md:flex items-center gap-2 mr-2">
+              <button
+                onClick={() => setIsDeleteAllDialogOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all border border-transparent hover:border-red-100 dark:hover:border-red-500/20"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Limpar Tudo</span>
+              </button>
+
+              {selectedIds.length > 0 && (
+                <button
+                  onClick={() => setIsBulkDeleteDialogOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-all"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Excluir Selecionados ({selectedIds.length})</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={handleOpenNewOrderModal}
+            className="flex items-center justify-center gap-2 bg-primary text-white px-5 py-2.5 rounded-2xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Nova OS</span>
+          </button>
+        </div>
       </div>
 
       {/* Filters & Search */}
@@ -184,6 +243,24 @@ const Orders: React.FC = () => {
             placeholder="Buscar por cliente ou ID..."
             className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-white/5 border-none rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 dark:text-white"
           />
+        </div>
+
+        <div className="flex items-center gap-3 px-2">
+          <button
+            onClick={toggleSelectAll}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all
+              ${selectedIds.length === filteredOrders.length && filteredOrders.length > 0
+                ? 'bg-primary/10 text-primary'
+                : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5'}`}
+          >
+            {selectedIds.length === filteredOrders.length && filteredOrders.length > 0 ? 'Desvincular Tudo' : 'Selecionar Tudo'}
+          </button>
+
+          {selectedIds.length > 0 && (
+            <span className="text-xs font-bold text-primary">
+              {selectedIds.length} selecionado(s)
+            </span>
+          )}
         </div>
 
         {/* Mobile Tabs Wrapper */}
@@ -220,10 +297,18 @@ const Orders: React.FC = () => {
               >
                 {/* Status Bar */}
                 <div className="flex items-center justify-between mb-4">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${config.color}`}>
-                    <config.icon className="w-3 h-3" />
-                    {config.label}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(order.id)}
+                      onChange={() => toggleSelectOrder(order.id)}
+                      className="w-5 h-5 rounded-lg border-2 border-gray-200 text-primary focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-800 transition-all cursor-pointer"
+                    />
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${config.color}`}>
+                      <config.icon className="w-3 h-3" />
+                      {config.label}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => navigate(`/orders/${order.id}`)}
@@ -428,13 +513,24 @@ const Orders: React.FC = () => {
       </Modal>
 
       <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={handleConfirmDelete}
-        title="Excluir Ordem"
-        message="Deseja realmente excluir esta ordem de serviço? Esta ação é irreversível."
-        confirmText="Sim, Excluir"
-        cancelText="Manter Ordem"
+        isOpen={isBulkDeleteDialogOpen}
+        onClose={() => setIsBulkDeleteDialogOpen(false)}
+        onConfirm={handleConfirmBulkDelete}
+        title="Excluir Selecionados"
+        message={`Deseja realmente excluir as ${selectedIds.length} ordens de serviço selecionadas? Esta ação é irreversível.`}
+        confirmText="Sim, Excluir Selecionadas"
+        cancelText="Cancelar"
+        type="danger"
+      />
+
+      <ConfirmDialog
+        isOpen={isDeleteAllDialogOpen}
+        onClose={() => setIsDeleteAllDialogOpen(false)}
+        onConfirm={handleConfirmDeleteAll}
+        title="EXCLUIR TODAS AS ORDENS"
+        message="ATENÇÃO: Deseja realmente excluir TODAS as ordens de serviço visíveis nesta lista? Esta ação é extrema e irreversível. Use apenas para limpeza total antes de uma nova importação."
+        confirmText="Sim, EXCLUIR TUDO"
+        cancelText="Cancelar"
         type="danger"
       />
 

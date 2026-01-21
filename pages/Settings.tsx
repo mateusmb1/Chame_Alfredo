@@ -188,7 +188,7 @@ const Settings: React.FC = () => {
 
   return (
     <div className="flex h-full flex-col p-6 lg:p-10">
-      <div className="mx-auto max-w-4xl w-full">
+      <div className="mx-auto max-w-6xl w-full">
         {/* Page Heading */}
         <div className="flex flex-wrap justify-between gap-3 mb-8">
           <div className="flex min-w-72 flex-col gap-2">
@@ -225,206 +225,211 @@ const Settings: React.FC = () => {
           </div>
         </div>
 
-        {/* Logo Card */}
-        <div className="mb-8">
-          <div className="flex flex-col items-stretch justify-start rounded-xl sm:flex-row sm:items-center bg-white dark:bg-[#18202F] border border-slate-200 dark:border-gray-800">
-            <div className="flex w-full min-w-72 grow flex-col items-stretch justify-center gap-1 p-6">
-              <p className="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] mb-4 sm:mb-2">
-                Logotipo da Empresa
-              </p>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
-                <p className="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">
-                  Faça o upload do logotipo que será exibido nas comunicações e na plataforma.
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+          {/* Left Column: Logo & Import */}
+          <div className="lg:col-span-4 space-y-8">
+            {/* Logo Card */}
+            <div className="rounded-xl bg-white dark:bg-[#18202F] border border-slate-200 dark:border-gray-800 h-fit">
+              <div className="p-6">
+                <p className="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] mb-4">
+                  Logotipo
                 </p>
-                <div className="flex items-center gap-4 flex-shrink-0">
+                <div className="flex flex-col items-center gap-6">
                   {/* Logo Preview */}
                   <div className="relative">
                     <div
-                      className="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-16 border border-slate-200 dark:border-gray-700 flex items-center justify-center bg-slate-100 dark:bg-gray-800"
+                      className="bg-center bg-no-repeat aspect-square bg-cover rounded-2xl size-32 border border-slate-200 dark:border-gray-700 flex items-center justify-center bg-slate-100 dark:bg-gray-800 shadow-sm"
                       style={settings.logo_url ? { backgroundImage: `url("${settings.logo_url}")` } : {}}
                     >
                       {!settings.logo_url && (
-                        <Upload className="w-6 h-6 text-slate-400" />
+                        <Upload className="w-10 h-10 text-slate-400" />
                       )}
                     </div>
                     {settings.logo_url && (
                       <button
                         onClick={handleRemoveLogo}
-                        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                        className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md"
                         title="Remover logo"
                       >
-                        <X className="w-3 h-3" />
+                        <X className="w-4 h-4" />
                       </button>
                     )}
                   </div>
-                  {/* Hidden File Input */}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                    className="hidden"
-                  />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="flex w-full sm:w-auto cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-medium leading-normal hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed gap-2"
-                  >
-                    {isUploading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Enviando...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4" />
-                        <span className="truncate">Fazer Upload</span>
-                      </>
-                    )}
-                  </button>
+
+                  <div className="w-full space-y-3">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm text-center px-2">
+                      Upload do logotipo para comunicações e relatórios.
+                    </p>
+                    {/* Hidden File Input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-4 bg-primary text-white text-sm font-medium leading-normal hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed gap-2 shadow-sm"
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Enviando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          <span className="truncate">Fazer Upload</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Data Import Card */}
+            <div className="rounded-xl bg-white dark:bg-[#18202F] border border-slate-200 dark:border-gray-800">
+              <div className="p-6">
+                <h2 className="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] mb-4 flex items-center gap-2">
+                  <Database className="w-5 h-5 text-primary" />
+                  Privacidade & Dados
+                </h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
+                  Importe seus dados legados do Agenda Boa para o Alfredo.
+                </p>
+                <button
+                  onClick={() => setShowImportModal(true)}
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-11 px-5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-medium leading-normal hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Importar Agenda Boa</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Information Forms */}
+          <div className="lg:col-span-8 space-y-8">
+            <div className="rounded-xl bg-white dark:bg-[#18202F] border border-slate-200 dark:border-gray-800">
+              {/* Contact Information Section */}
+              <div className="p-8 border-b border-slate-200 dark:border-gray-800">
+                <h2 className="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] mb-1">
+                  Informações de Contato
+                </h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
+                  Detalhes principais de identificação e contato.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  <label className="flex flex-col">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">Nome da Empresa</p>
+                    <input
+                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#131b29] focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-600 px-4 text-base font-normal leading-normal transition-all"
+                      value={settings.company_name}
+                      onChange={handleChange('company_name')}
+                      placeholder="Nome da Empresa LTDA"
+                    />
+                  </label>
+                  <label className="flex flex-col">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">CNPJ</p>
+                    <input
+                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#131b29] focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-600 px-4 text-base font-normal leading-normal transition-all"
+                      value={settings.cnpj}
+                      onChange={handleChange('cnpj')}
+                      placeholder="00.000.000/0001-00"
+                    />
+                  </label>
+                  <label className="flex flex-col">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">E-mail de Contato</p>
+                    <input
+                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#131b29] focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-600 px-4 text-base font-normal leading-normal transition-all"
+                      type="email"
+                      value={settings.email}
+                      onChange={handleChange('email')}
+                      placeholder="contato@empresa.com"
+                    />
+                  </label>
+                  <label className="flex flex-col">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">Telefone</p>
+                    <input
+                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#131b29] focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-600 px-4 text-base font-normal leading-normal transition-all"
+                      type="tel"
+                      value={settings.phone}
+                      onChange={handleChange('phone')}
+                      placeholder="(11) 99999-9999"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Address Section */}
+              <div className="p-8">
+                <h2 className="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] mb-1">Endereço</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">Informações de localização da sede.</p>
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-x-8 gap-y-6">
+                  <label className="flex flex-col md:col-span-2">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">CEP</p>
+                    <input
+                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#131b29] focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-600 px-4 text-base font-normal leading-normal transition-all"
+                      value={settings.cep}
+                      onChange={handleChange('cep')}
+                      placeholder="01001-000"
+                    />
+                  </label>
+                  <label className="flex flex-col md:col-span-4">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">Logradouro</p>
+                    <input
+                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#131b29] focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-600 px-4 text-base font-normal leading-normal transition-all"
+                      value={settings.street}
+                      onChange={handleChange('street')}
+                      placeholder="Praça da Sé"
+                    />
+                  </label>
+                  <label className="flex flex-col md:col-span-2">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">Número</p>
+                    <input
+                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#131b29] focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-600 px-4 text-base font-normal leading-normal transition-all"
+                      value={settings.number}
+                      onChange={handleChange('number')}
+                      placeholder="100"
+                    />
+                  </label>
+                  <label className="flex flex-col md:col-span-4">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">Complemento</p>
+                    <input
+                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#131b29] focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-600 px-4 text-base font-normal leading-normal transition-all"
+                      value={settings.complement}
+                      onChange={handleChange('complement')}
+                      placeholder="Sala 101"
+                    />
+                  </label>
+                  <label className="flex flex-col md:col-span-3">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">Cidade</p>
+                    <input
+                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#131b29] focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-600 px-4 text-base font-normal leading-normal transition-all"
+                      value={settings.city}
+                      onChange={handleChange('city')}
+                      placeholder="São Paulo"
+                    />
+                  </label>
+                  <label className="flex flex-col md:col-span-3">
+                    <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">Estado</p>
+                    <input
+                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#131b29] focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-600 px-4 text-base font-normal leading-normal transition-all"
+                      value={settings.state}
+                      onChange={handleChange('state')}
+                      placeholder="SP"
+                    />
+                  </label>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Information Card */}
-        <div className="rounded-xl bg-white dark:bg-[#18202F] border border-slate-200 dark:border-gray-800">
-          {/* Contact Information Section */}
-          <div className="p-6 border-b border-slate-200 dark:border-gray-800">
-            <h2 className="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] mb-1">
-              Informações de Contato
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
-              Atualize os detalhes de contato da sua empresa.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-              <label className="flex flex-col">
-                <p className="text-slate-800 dark:text-slate-200 text-sm font-medium leading-normal pb-2">Nome da Empresa</p>
-                <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-gray-700 bg-white dark:bg-[#18202F] focus:border-primary h-11 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3 text-base font-normal leading-normal"
-                  value={settings.company_name}
-                  onChange={handleChange('company_name')}
-                  placeholder="Nome da Empresa LTDA"
-                />
-              </label>
-              <label className="flex flex-col">
-                <p className="text-slate-800 dark:text-slate-200 text-sm font-medium leading-normal pb-2">CNPJ</p>
-                <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-gray-700 bg-white dark:bg-[#18202F] focus:border-primary h-11 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3 text-base font-normal leading-normal"
-                  value={settings.cnpj}
-                  onChange={handleChange('cnpj')}
-                  placeholder="00.000.000/0001-00"
-                />
-              </label>
-              <label className="flex flex-col">
-                <p className="text-slate-800 dark:text-slate-200 text-sm font-medium leading-normal pb-2">E-mail de Contato</p>
-                <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-gray-700 bg-white dark:bg-[#18202F] focus:border-primary h-11 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3 text-base font-normal leading-normal"
-                  type="email"
-                  value={settings.email}
-                  onChange={handleChange('email')}
-                  placeholder="contato@empresa.com"
-                />
-              </label>
-              <label className="flex flex-col">
-                <p className="text-slate-800 dark:text-slate-200 text-sm font-medium leading-normal pb-2">Telefone</p>
-                <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-gray-700 bg-white dark:bg-[#18202F] focus:border-primary h-11 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3 text-base font-normal leading-normal"
-                  type="tel"
-                  value={settings.phone}
-                  onChange={handleChange('phone')}
-                  placeholder="(11) 99999-9999"
-                />
-              </label>
-            </div>
-          </div>
-          {/* Address Section */}
-          <div className="p-6">
-            <h2 className="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] mb-1">Endereço</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Informe o endereço comercial principal.</p>
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-x-6 gap-y-5">
-              <label className="flex flex-col md:col-span-2">
-                <p className="text-slate-800 dark:text-slate-200 text-sm font-medium leading-normal pb-2">CEP</p>
-                <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-gray-700 bg-white dark:bg-[#18202F] focus:border-primary h-11 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3 text-base font-normal leading-normal"
-                  value={settings.cep}
-                  onChange={handleChange('cep')}
-                  placeholder="01001-000"
-                />
-              </label>
-              <label className="flex flex-col md:col-span-4">
-                <p className="text-slate-800 dark:text-slate-200 text-sm font-medium leading-normal pb-2">Logradouro</p>
-                <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-gray-700 bg-white dark:bg-[#18202F] focus:border-primary h-11 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3 text-base font-normal leading-normal"
-                  value={settings.street}
-                  onChange={handleChange('street')}
-                  placeholder="Praça da Sé"
-                />
-              </label>
-              <label className="flex flex-col md:col-span-2">
-                <p className="text-slate-800 dark:text-slate-200 text-sm font-medium leading-normal pb-2">Número</p>
-                <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-gray-700 bg-white dark:bg-[#18202F] focus:border-primary h-11 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3 text-base font-normal leading-normal"
-                  value={settings.number}
-                  onChange={handleChange('number')}
-                  placeholder="100"
-                />
-              </label>
-              <label className="flex flex-col md:col-span-4">
-                <p className="text-slate-800 dark:text-slate-200 text-sm font-medium leading-normal pb-2">Complemento</p>
-                <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-gray-700 bg-white dark:bg-[#18202F] focus:border-primary h-11 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3 text-base font-normal leading-normal"
-                  value={settings.complement}
-                  onChange={handleChange('complement')}
-                  placeholder="Sala 101"
-                />
-              </label>
-              <label className="flex flex-col md:col-span-3">
-                <p className="text-slate-800 dark:text-slate-200 text-sm font-medium leading-normal pb-2">Cidade</p>
-                <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-gray-700 bg-white dark:bg-[#18202F] focus:border-primary h-11 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3 text-base font-normal leading-normal"
-                  value={settings.city}
-                  onChange={handleChange('city')}
-                  placeholder="São Paulo"
-                />
-              </label>
-              <label className="flex flex-col md:col-span-3">
-                <p className="text-slate-800 dark:text-slate-200 text-sm font-medium leading-normal pb-2">Estado</p>
-                <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-gray-700 bg-white dark:bg-[#18202F] focus:border-primary h-11 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3 text-base font-normal leading-normal"
-                  value={settings.state}
-                  onChange={handleChange('state')}
-                  placeholder="SP"
-                />
-              </label>
-            </div>
-          </div>
-        </div>
 
-        {/* Data Import Section */}
-        <div className="mt-8 rounded-xl bg-white dark:bg-[#18202F] border border-slate-200 dark:border-gray-800">
-          <div className="p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] mb-1 flex items-center gap-2">
-                  <Database className="w-5 h-5 text-primary" />
-                  Importação de Dados
-                </h2>
-                <p className="text-slate-500 dark:text-slate-400 text-sm">
-                  Importe clientes, materiais e serviços do sistema Agenda Boa.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowImportModal(true)}
-                className="flex w-full sm:w-auto cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-5 bg-gradient-to-r from-primary to-primary/80 text-white text-sm font-medium leading-normal hover:from-primary/90 hover:to-primary/70 transition-all shadow-md hover:shadow-lg"
-              >
-                <Upload className="w-4 h-4" />
-                <span>Importar do Agenda Boa</span>
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Import Modal */}
