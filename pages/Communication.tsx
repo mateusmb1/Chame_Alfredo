@@ -4,7 +4,7 @@ import { useToast } from '../contexts/ToastContext';
 import { Conversation, Message } from '../types/communication';
 
 const Communication: React.FC = () => {
-    const { clients, technicians, conversations, messages: allMessages, sendMessage, getOrCreateConversation, uploadChatFile } = useApp();
+    const { clients, technicians, conversations, messages: allMessages, sendMessage, getOrCreateConversation, uploadChatFile, companyProfile } = useApp();
     const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState<'clients' | 'team'>('team');
     const [selectedContact, setSelectedContact] = useState<any>(null);
@@ -354,6 +354,15 @@ const Communication: React.FC = () => {
                                                         {formatTime(msg.createdAt)}
                                                     </span>
                                                 </div>
+                                                {msg.senderType === 'admin' && (
+                                                    <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 mb-1 shadow-sm border border-gray-100 dark:border-gray-800 bg-white">
+                                                        {companyProfile?.logo_url ? (
+                                                            <img src={companyProfile.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                                                        ) : (
+                                                            <div className="w-full h-full bg-primary flex items-center justify-center text-white text-[10px] font-bold">A</div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>

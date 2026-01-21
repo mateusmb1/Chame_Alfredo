@@ -12,6 +12,17 @@ import { Invoice } from '../types/invoice';
 import { Appointment } from '../types/appointment';
 import { Conversation, Message } from '../types/communication';
 
+export interface CompanyProfile {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    logo_url: string;
+    signature_url: string;
+    cnpj: string;
+    address: string;
+}
+
 interface AppContextType {
     clients: Client[];
     orders: Order[];
@@ -87,6 +98,8 @@ interface AppContextType {
     uploadChatFile: (file: File) => Promise<string | null>;
     uploadFile: (file: File, bucket?: string, folder?: string) => Promise<string | null>;
     generateMonthlyInvoices: (month: number, year: number) => Promise<void>;
+    companyProfile: CompanyProfile | null;
+    updateCompanyProfile: (profile: Partial<CompanyProfile>) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -110,6 +123,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
+    const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
 
     // Notification callbacks (using refs to avoid stale closures in realtime handlers)
     const onNewOrderRef = useRef<((order: Order) => void) | undefined>(undefined);
@@ -132,7 +146,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 { data: invoicesData },
                 { data: appointmentsData },
                 { data: conversationsData },
-                { data: messagesData }
+                { data: messagesData },
+                { data: profileData }
             ] = await Promise.all([
                 supabase.from('clients').select('*'),
                 supabase.from('orders').select('*'),
@@ -146,7 +161,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 supabase.from('invoices').select('*'),
                 supabase.from('appointments').select('*'),
                 supabase.from('conversations').select('*'),
-                supabase.from('messages').select('*')
+                supabase.from('messages').select('*'),
+                supabase.from('company_profile').select('*').limit(1).single()
             ]);
 
             if (clientsData) setClients(clientsData.map(mapClientFromDB));
@@ -188,6 +204,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             })));
             if (conversationsData) setConversations(conversationsData.map(mapConversationFromDB));
             if (messagesData) setMessages(messagesData.map(mapMessageFromDB));
+            if (profileData) {
+                setCompanyProfile({
+                    id: profileData.id,
+                    name: profileData.name,
+                    email: profileData.email,
+                    phone: profileData.phone,
+                    logo_url: profileData.logo_url,
+                    signature_url: profileData.signature_url,
+                    cnpj: profileData.cnpj,
+                    address: profileData.address
+                });
+            }
         };
 
         fetchData();
@@ -882,6 +910,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (error) console.error('Error saving signature:', error);
     }, [supabase]);
 
+    const updateCompanyProfile = React.useCallback(async (updates: Partial<CompanyProfile>) => {
+        const { error } = await supabase.from('company_profile').update(updates).eq('id', companyProfile?.id || 'default');
+        if (error) console.error('Error updating profile:', error);
+        else setCompanyProfile(prev => prev ? { ...prev, ...updates } : null);
+    }, [companyProfile, supabase]);
+
     const value: AppContextType = React.useMemo(() => ({
         clients,
         orders,
@@ -954,9 +988,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Communication operations
         sendMessage,
         getOrCreateConversation,
-        uploadChatFile,
         uploadFile,
         generateMonthlyInvoices,
+        companyProfile,
+        updateCompanyProfile
     }), [
         clients, orders, inventory, quotes, contracts, technicians, projects, projectActivities,
         products, invoices, appointments, conversations, messages,
@@ -965,7 +1000,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addContract, updateContract, deleteContract, addTechnician, updateTechnician, deleteTechnician,
         authenticateTechnician, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
         addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder, setOnNewMessage,
-        sendMessage, getOrCreateConversation, uploadChatFile, uploadFile, generateMonthlyInvoices
+        sendMessage, getOrCreateConversation, uploadChatFile, uploadFile, generateMonthlyInvoices,
+        companyProfile, updateCompanyProfile
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -9,7 +9,6 @@ import {
     Save,
     Plus,
     Trash2,
-    Upload,
     FileText,
     FolderPlus
 } from 'lucide-react';
@@ -26,18 +25,11 @@ const QuoteDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { showToast } = useToast();
-    const { quotes, clients, addProject, updateQuote } = useApp();
+    const { quotes, clients, addProject, updateQuote, companyProfile } = useApp();
     const [quote, setQuote] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isConverting, setIsConverting] = useState(false);
-    const [logoUrl, setLogoUrl] = useState<string>('');
-
-    // Company info
-    const [companyName, setCompanyName] = useState('');
-    const [companyAddress, setCompanyAddress] = useState('');
-    const [companyPhone, setCompanyPhone] = useState('');
-    const [companyEmail, setCompanyEmail] = useState('');
 
     // Client details
     const [clientName, setClientName] = useState('');
@@ -61,30 +53,6 @@ const QuoteDetail: React.FC = () => {
 
     // Tax rate
     const [taxRate, setTaxRate] = useState(10);
-
-    // Load company settings
-    useEffect(() => {
-        const loadCompanySettings = async () => {
-            try {
-                const { data } = await supabase
-                    .from('company_settings')
-                    .select('*')
-                    .single();
-
-                if (data) {
-                    setCompanyName(data.company_name || '');
-                    const addr = [data.street, data.number, data.city, data.state, data.cep].filter(Boolean).join(', ');
-                    setCompanyAddress(addr);
-                    setCompanyPhone(data.phone || '');
-                    setCompanyEmail(data.email || '');
-                    setLogoUrl(data.logo_url || '');
-                }
-            } catch (err) {
-                console.error('Error loading company settings:', err);
-            }
-        };
-        loadCompanySettings();
-    }, []);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -187,7 +155,7 @@ const QuoteDetail: React.FC = () => {
             };
             const newProject = addProject(projectData);
             if (updateQuote) {
-                updateQuote(quote.id, { ...quote, projectId: newProject?.id, status: 'approved' });
+                updateQuote(quote.id, { ...quote, projectId: (newProject as any)?.id, status: 'approved' });
             }
             showToast('success', 'Projeto criado com sucesso!');
             navigate(`/projects`);
@@ -301,11 +269,11 @@ const QuoteDetail: React.FC = () => {
                         <div className="flex flex-col md:flex-row justify-between items-start gap-8 pb-8 border-b border-slate-200 dark:border-slate-700">
                             {/* Logo */}
                             <div className="flex-shrink-0">
-                                {logoUrl ? (
-                                    <img src={logoUrl} alt="Logo" className="h-24 w-auto object-contain" />
+                                {companyProfile?.logo_url ? (
+                                    <img src={companyProfile.logo_url} alt="Logo" className="h-24 w-auto object-contain" />
                                 ) : (
-                                    <div className="w-32 h-32 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer">
-                                        <Upload className="w-8 h-8 mb-2" />
+                                    <div className="w-32 h-32 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl flex flex-col items-center justify-center text-slate-400">
+                                        <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-2xl mb-2">A</div>
                                         <span className="text-xs font-medium">Logo</span>
                                     </div>
                                 )}
@@ -313,30 +281,23 @@ const QuoteDetail: React.FC = () => {
 
                             {/* Company Info */}
                             <div className="flex-1 space-y-1">
-                                <input
-                                    className="w-full text-xl font-bold text-slate-900 dark:text-white bg-transparent border-none focus:ring-2 focus:ring-primary/30 rounded-lg p-1 -ml-1"
-                                    value={companyName}
-                                    onChange={(e) => setCompanyName(e.target.value)}
-                                    placeholder="Nome da Empresa"
-                                />
-                                <input
-                                    className="w-full text-sm text-slate-600 dark:text-slate-400 bg-transparent border-none focus:ring-2 focus:ring-primary/30 rounded p-1 -ml-1"
-                                    value={companyAddress}
-                                    onChange={(e) => setCompanyAddress(e.target.value)}
-                                    placeholder="Endereço"
-                                />
-                                <input
-                                    className="w-full text-sm text-slate-600 dark:text-slate-400 bg-transparent border-none focus:ring-2 focus:ring-primary/30 rounded p-1 -ml-1"
-                                    value={companyPhone}
-                                    onChange={(e) => setCompanyPhone(e.target.value)}
-                                    placeholder="Telefone"
-                                />
-                                <input
-                                    className="w-full text-sm text-slate-600 dark:text-slate-400 bg-transparent border-none focus:ring-2 focus:ring-primary/30 rounded p-1 -ml-1"
-                                    value={companyEmail}
-                                    onChange={(e) => setCompanyEmail(e.target.value)}
-                                    placeholder="Email"
-                                />
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                                    {companyProfile?.name || 'Alfredo'}
+                                </h3>
+                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                    {companyProfile?.address}
+                                </p>
+                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                    {companyProfile?.phone}
+                                </p>
+                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                    {companyProfile?.email}
+                                </p>
+                                {companyProfile?.cnpj && (
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                                        CNPJ: {companyProfile.cnpj}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Title */}

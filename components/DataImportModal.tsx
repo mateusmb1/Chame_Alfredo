@@ -7,6 +7,7 @@ import {
     parseCSV,
     detectImportType,
     getImportTypeLabel,
+    parseKeyValueCSV,
     mapClientFromAgendaBoa,
     mapMaterialFromAgendaBoa,
     mapServiceFromAgendaBoa,
@@ -14,6 +15,7 @@ import {
     AgendaBoaClient,
     AgendaBoaMaterial,
     AgendaBoaService,
+    AgendaBoaFinancialRecord,
     ImportedClient,
     ImportedInventoryItem,
     ImportedService,
@@ -49,6 +51,8 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
     const [materialRows, setMaterialRows] = useState<ImportRow<ImportedInventoryItem>[]>([]);
     const [serviceRows, setServiceRows] = useState<ImportRow<ImportedService>[]>([]);
     const [orderRows, setOrderRows] = useState<ImportRow<ImportedOrder>[]>([]);
+    const [financialRows, setFinancialRows] = useState<ImportRow<any>[]>([]);
+    const [profileData, setProfileData] = useState<Record<string, string> | null>(null);
 
     const resetState = () => {
         setImportState('idle');
@@ -87,7 +91,7 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
             }
 
             const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-            const detectedType = detectImportType(headers);
+            const detectedType = detectImportType(headers, lines[0]);
             setImportType(detectedType);
 
             if (detectedType === 'unknown') {
@@ -124,6 +128,20 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                     return { data, validation, selected: validation.valid };
                 });
                 setOrderRows(mapped);
+            } else if (detectedType === 'financial') {
+                const records = parseCSV<AgendaBoaFinancialRecord>(content);
+                const mapped = records.map(record => {
+                    const price = parseFloat(record.value?.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
+                    return {
+                        data: { ...record, parsedValue: price },
+                        validation: { valid: true, warnings: [], errors: [] },
+                        selected: true
+                    };
+                });
+                setFinancialRows(mapped);
+            } else if (detectedType === 'profile') {
+                const data = parseKeyValueCSV(content);
+                setProfileData(data);
             }
 
             setImportState('preview');
@@ -158,6 +176,8 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
         if (importType === 'materials') return materialRows.filter(r => r.selected).length;
         if (importType === 'services') return serviceRows.filter(r => r.selected).length;
         if (importType === 'orders') return orderRows.filter(r => r.selected).length;
+        if (importType === 'financial') return financialRows.filter(r => r.selected).length;
+        if (importType === 'profile') return profileData ? 1 : 0;
         return 0;
     };
 
@@ -257,6 +277,37 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                         scheduled_date: data.job_date || new Date().toISOString(),
                     });
                     setImportProgress({ current: i + 1, total: selected.length });
+                }
+            } else if (importType === 'financial') {
+                const selected = financialRows.filter(r => r.selected);
+                setImportProgress({ current: 0, total: selected.length });
+
+                for (let i = 0; i < selected.length; i++) {
+                    const { data } = selected[i];
+                    await supabase.from('invoices').insert({
+                        client_name: data.client,
+                        value: data.parsedValue,
+                        status: data.revenue === '1' ? 'paid' : 'pending',
+                        due_date: data.date ? data.date.split('/').reverse().join('-') : new Date().toISOString(),
+                        external_id: data.id,
+                    });
+                    setImportProgress({ current: i + 1, total: selected.length });
+                }
+            } else if (importType === 'profile') {
+                if (profileData) {
+                    setImportProgress({ current: 0, total: 1 });
+                    const { error } = await supabase.from('company_profile').upsert({
+                        id: 'default', // Single profile for the app
+                        name: profileData['details.companyName'] || profileData['corporateName'],
+                        email: profileData['email'],
+                        phone: profileData['phone'],
+                        logo_url: profileData['picture'],
+                        signature_url: profileData['signature'],
+                        cnpj: profileData['details.cnpj'],
+                        address: `${profileData['address.street']}, ${profileData['address.number']}`
+                    });
+                    if (error) throw error;
+                    setImportProgress({ current: 1, total: 1 });
                 }
             }
 
@@ -446,6 +497,79 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                                     }}
                                     allSelected={orderRows.filter(r => r.validation.valid).every(r => r.selected)}
                                 />
+                            )}
+
+                            {importType === 'financial' && (
+                                <ImportPreviewTable
+                                    data={financialRows}
+                                    columns={[
+                                        { key: 'client', label: 'Cliente' },
+                                        { key: 'date', label: 'Data' },
+                                        { key: 'value', label: 'Valor' },
+                                        { key: 'revenue', label: 'Pago?' },
+                                    ]}
+                                    onToggleSelect={(index) => {
+                                        const updated = [...financialRows];
+                                        updated[index].selected = !updated[index].selected;
+                                        setFinancialRows(updated);
+                                    }}
+                                    onSelectAll={() => {
+                                        const allSelected = financialRows.every(r => r.selected);
+                                        setFinancialRows(financialRows.map(r => ({ ...r, selected: !allSelected })));
+                                    }}
+                                    allSelected={financialRows.every(r => r.selected)}
+                                />
+                            )}
+
+                            {importType === 'profile' && profileData && (
+                                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-20 h-20 rounded-xl bg-gray-50 border flex items-center justify-center overflow-hidden">
+                                                {profileData['picture'] ? (
+                                                    <img src={profileData['picture']} alt="Logo" className="w-full h-full object-contain" />
+                                                ) : (
+                                                    <Upload className="w-8 h-8 text-gray-400" />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <h4 className="text-xl font-bold text-gray-900 dark:text-white">
+                                                    {profileData['details.companyName'] || profileData['corporateName']}
+                                                </h4>
+                                                <p className="text-gray-500 dark:text-gray-400">{profileData['email']}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full uppercase tracking-wider">
+                                                Perfil Encontrado
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                                        <div>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">CNPJ</p>
+                                            <p className="font-bold">{profileData['details.cnpj'] || 'Não informado'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Telefone</p>
+                                            <p className="font-bold">{profileData['phone'] || 'Não informado'}</p>
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Endereço</p>
+                                            <p className="font-bold">
+                                                {profileData['address.street']}{profileData['address.number'] ? `, ${profileData['address.number']}` : ''}
+                                                {profileData['address.district'] ? ` - ${profileData['address.district']}` : ''}
+                                                {profileData['address.city'] ? ` (${profileData['address.city']} - ${profileData['address.state']})` : ''}
+                                            </p>
+                                        </div>
+                                        {profileData['signature'] && (
+                                            <div className="md:col-span-2">
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Assinatura Digital</p>
+                                                <img src={profileData['signature']} alt="Assinatura" className="h-16 object-contain" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             )}
                         </div>
                     )}

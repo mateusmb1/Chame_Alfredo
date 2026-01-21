@@ -7,7 +7,7 @@ import { Printer as PrintIcon } from 'lucide-react';
 
 const QuotePrintConfig: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    const { quotes, clients } = useApp();
+    const { quotes, clients, companyProfile } = useApp();
     const [quote, setQuote] = useState<any>(null);
 
     // Config State
@@ -160,13 +160,18 @@ const QuotePrintConfig: React.FC = () => {
                         <div className="text-right">
                             {showLogo && (
                                 <div className="flex justify-end mb-2">
-                                    <div className="bg-primary text-white p-2 rounded">
-                                        <Construction className="w-8 h-8" />
-                                    </div>
+                                    {companyProfile?.logo_url ? (
+                                        <img src={companyProfile.logo_url} alt="Logo" className="h-12 w-auto object-contain" />
+                                    ) : (
+                                        <div className="bg-primary text-white p-2 rounded">
+                                            <Construction className="w-8 h-8" />
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                            <p className="font-bold">Sua Empresa Inc.</p>
-                            <p className="text-gray-600 text-sm">Rua Exemplo, 123, Cidade, UF</p>
+                            <p className="font-bold">{companyProfile?.name || 'Alfredo'}</p>
+                            <p className="text-gray-600 text-sm">{companyProfile?.address}</p>
+                            {companyProfile?.cnpj && <p className="text-gray-600 text-xs">CNPJ: {companyProfile.cnpj}</p>}
                         </div>
                     </header>
 

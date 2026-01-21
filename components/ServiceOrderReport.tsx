@@ -1,6 +1,8 @@
 import React from 'react';
 import { Order } from '../types/order';
 import { Client } from '../types/client';
+import { useApp } from '../contexts/AppContext';
+import { Briefcase } from 'lucide-react';
 
 interface ServiceOrderReportProps {
     order: Order;
@@ -8,6 +10,7 @@ interface ServiceOrderReportProps {
 }
 
 const ServiceOrderReport: React.FC<ServiceOrderReportProps> = ({ order, client }) => {
+    const { companyProfile } = useApp();
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return '-';
@@ -27,11 +30,16 @@ const ServiceOrderReport: React.FC<ServiceOrderReportProps> = ({ order, client }
     return (
         <div className="bg-white text-black font-sans text-[11px] leading-tight p-8 max-w-[210mm] mx-auto shadow-none print:shadow-none" id="printable-report">
             {/* Header */}
-            <header className="text-center mb-6 relative">
+            <header className="text-center mb-6 relative flex flex-col items-center">
+                {companyProfile?.logo_url ? (
+                    <img src={companyProfile.logo_url} alt="Logo" className="h-16 w-auto object-contain mb-4" />
+                ) : (
+                    <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-lg mb-4">A</div>
+                )}
                 <div className="absolute right-0 top-0 text-[10px] text-gray-400">1</div>
                 <h1 className="text-xl font-medium uppercase mb-1">Relatório de Visita Técnica</h1>
                 <h2 className="text-lg font-medium">({new Date(order.scheduledDate).toLocaleDateString('pt-BR')})</h2>
-                <div className="flex justify-between mt-4 text-[10px] text-gray-500">
+                <div className="flex justify-between w-full mt-4 text-[10px] text-gray-500">
                     <div>Por: {order.technicianName}</div>
                     <div>Em: {new Date(order.updatedAt || order.createdAt).toLocaleString('pt-BR')}</div>
                 </div>
@@ -43,12 +51,12 @@ const ServiceOrderReport: React.FC<ServiceOrderReportProps> = ({ order, client }
                 <table className="w-full border-collapse border border-gray-300 text-[11px] leading-tight">
                     <tbody>
                         <tr>
-                            <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">Nome</span>Produtivo</td>
-                            <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">Telefone fixo</span>(11) 11111-1111</td>
+                            <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">Nome</span>{companyProfile?.name || 'Alfredo'}</td>
+                            <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">Telefone</span>{companyProfile?.phone || '-'}</td>
                         </tr>
                         <tr>
-                            <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">CPF / CNPJ</span>00.000.000/0000-00</td>
-                            <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">Endereço</span>Av. Paulista - Bela Vista, São Paulo</td>
+                            <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">CPF / CNPJ</span>{companyProfile?.cnpj || '-'}</td>
+                            <td className="w-1/2 border border-gray-300 p-2 align-top"><span className="font-bold text-gray-700 block mb-0.5">Endereço</span>{companyProfile?.address || '-'}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -205,7 +213,7 @@ const ServiceOrderReport: React.FC<ServiceOrderReportProps> = ({ order, client }
                         </tr>
                     </tbody>
                 </table>
-                <div className="mt-2 text-[9px] text-gray-400">Produtivo</div>
+                <div className="mt-2 text-[9px] text-gray-400">{companyProfile?.name || 'Alfredo'}</div>
             </div>
 
             <style>{`

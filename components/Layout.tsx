@@ -27,7 +27,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { setOnNewMessage } = useApp();
+  const { setOnNewMessage, companyProfile } = useApp();
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -51,7 +51,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/products', label: 'Produtos', icon: Package },
     { path: '/clients', label: 'Clientes', icon: Users },
     { path: '/agenda', label: 'Agenda', icon: Calendar },
-    { path: '/team', label: 'Equipe', icon: Users }, // Changed UserGroup to Users
+    { path: '/team', label: 'Equipe', icon: Users },
     { path: '/projects', label: 'Projetos', icon: Briefcase },
     { path: '/inventory', label: 'Estoque', icon: HardDrive },
     { path: '/reports', label: 'Relatórios', icon: BarChart3 },
@@ -72,12 +72,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="p-6 border-b border-gray-100 dark:border-gray-800/50">
         <div className="flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20"
+            className={`w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden shadow-lg ${!companyProfile?.logo_url ? 'bg-gradient-to-br from-primary to-primary/60 shadow-primary/20' : ''}`}
           >
-            <span className="text-white font-bold text-xl">A</span>
+            {companyProfile?.logo_url ? (
+              <img src={companyProfile.logo_url} alt="Logo" className="w-full h-full object-contain bg-white" />
+            ) : (
+              <span className="text-white font-bold text-xl">A</span>
+            )}
           </div>
           <div className="flex flex-col">
-            <h1 className="text-[#0d121b] dark:text-white text-lg font-bold leading-tight tracking-tight">Alfredo</h1>
+            <h1 className="text-[#0d121b] dark:text-white text-lg font-bold leading-tight tracking-tight">
+              {companyProfile?.name || 'Alfredo'}
+            </h1>
             <p className="text-[#4c669a] dark:text-gray-400 text-xs font-medium uppercase tracking-wider">Admin Panel</p>
           </div>
         </div>
@@ -176,10 +182,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </button>
 
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden ${!companyProfile?.logo_url ? 'bg-primary' : ''}`}>
+              {companyProfile?.logo_url ? (
+                <img src={companyProfile.logo_url} alt="Logo" className="w-full h-full object-contain bg-white" />
+              ) : (
+                <span className="text-white font-bold text-sm">A</span>
+              )}
             </div>
-            <span className="text-[#0d121b] dark:text-white font-bold text-sm tracking-tight">Alfredo Admin</span>
+            <span className="text-[#0d121b] dark:text-white font-bold text-sm tracking-tight">
+              {companyProfile?.name || 'Alfredo'} Admin
+            </span>
           </div>
 
           <div className="w-10"></div> {/* Spacer for symmetry */}

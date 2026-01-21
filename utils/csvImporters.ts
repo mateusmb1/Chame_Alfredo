@@ -53,6 +53,23 @@ function parseCSVLine(line: string): string[] {
     return result;
 }
 
+// Parse a key-value style CSV vertical format
+export function parseKeyValueCSV(csvContent: string): Record<string, string> {
+    const lines = csvContent.split('\n').filter(line => line.trim());
+    const result: Record<string, string> = {};
+
+    lines.forEach(line => {
+        const parts = parseCSVLine(line);
+        if (parts.length >= 2) {
+            const key = parts[0].trim();
+            const value = parts.slice(1).join(',').trim(); // Handle commas in values
+            result[key] = value;
+        }
+    });
+
+    return result;
+}
+
 // ===== TYPE DEFINITIONS =====
 
 export interface AgendaBoaClient {
@@ -112,6 +129,17 @@ export interface AgendaBoaOrder {
     totalPrice: string;
     'descriptions.description': string;
     'descriptions.price': string;
+}
+
+export interface AgendaBoaFinancialRecord {
+    id: string;
+    clientId: string;
+    clienId: string; // Handle typo
+    client: string;
+    jobId: string;
+    revenue: string;
+    date: string;
+    value: string;
 }
 
 export interface ImportedClient {
@@ -340,16 +368,29 @@ export function mapOrderFromAgendaBoa(record: any): { data: ImportedOrder; valid
 
 // ===== IMPORT TYPE DETECTION =====
 
-export type ImportType = 'clients' | 'materials' | 'services' | 'orders' | 'unknown';
+export type ImportType = 'clients' | 'materials' | 'services' | 'orders' | 'financial' | 'profile' | 'unknown';
 
-export function detectImportType(headers: string[]): ImportType {
+export function detectImportType(headers: string[], firstLine?: string): ImportType {
+    // If it looks like a profile (vertical key-value), the first line usually doesn't look like a header row
+    if (firstLine && firstLine.includes(',') && !firstLine.includes('id') && !firstLine.includes('name')) {
+        const parts = firstLine.split(',');
+        if (parts[0].includes('.') || parts[0] === 'email' || parts[0] === 'firstName') {
+            return 'profile';
+        }
+    }
+
     const headerSet = new Set(headers.map(h => h.toLowerCase().trim()));
+
+    // Financial (recebiveis / receipts) - Handle 'clienId' typo
+    if (headerSet.has('revenue') && (headerSet.has('clientid') || headerSet.has('clienid'))) {
+        return 'financial';
+    }
 
     // Clients
     if (headerSet.has('cnpj') || headerSet.has('cpf') || headerSet.has('corporatename') ||
         headerSet.has('nome') || headerSet.has('razão social')) {
         // Double check it's not orders if 'cliente' is present
-        if (headerSet.has('id do job') || headerSet.has('valor total')) return 'orders';
+        if (headerSet.has('id do job') || headerSet.has('valor total') || headerSet.has('jobid')) return 'orders';
         return 'clients';
     }
 
@@ -379,6 +420,8 @@ export function getImportTypeLabel(type: ImportType): string {
         materials: 'Materiais/Estoque',
         services: 'Serviços',
         orders: 'Pedidos/Ordens',
+        financial: 'Financeiro (Recebíveis/Recibos)',
+        profile: 'Perfil da Empresa',
         unknown: 'Desconhecido',
     };
     return labels[type];
