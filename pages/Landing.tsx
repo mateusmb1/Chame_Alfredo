@@ -21,7 +21,9 @@ import {
   CheckCircle2,
   User,
   Star,
-  Quote
+  Quote,
+  Users,
+  Check
 } from 'lucide-react'
 import { supabase } from '../src/lib/supabase'
 import LeadFormModal from '../components/LeadFormModal'
@@ -248,6 +250,37 @@ const Landing: React.FC = () => {
                 Ver Nossos Serviços
               </a>
             </div>
+
+            <div className="mt-12 grid grid-cols-2 gap-4">
+              <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/10 hover:bg-white/20 transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <Users className="w-5 h-5 text-[#F97316]" />
+                  <span className="font-bold text-xl">2000+</span>
+                </div>
+                <p className="text-xs text-gray-300 leading-tight">Clientes atendidos desde 2015</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/10 hover:bg-white/20 transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <Star className="w-5 h-5 text-[#F97316] fill-[#F97316]" />
+                  <span className="font-bold text-xl">4.8/5</span>
+                </div>
+                <p className="text-xs text-gray-300 leading-tight">Avaliação média no Google</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/10 hover:bg-white/20 transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle2 className="w-5 h-5 text-[#F97316]" />
+                  <span className="font-bold text-xl">98%</span>
+                </div>
+                <p className="text-xs text-gray-300 leading-tight">Resolvido no 1º agendamento</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/10 hover:bg-white/20 transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <ShieldCheck className="w-5 h-5 text-[#F97316]" />
+                  <span className="font-bold text-xl">6 Meses</span>
+                </div>
+                <p className="text-xs text-gray-300 leading-tight">Garantia em todos serviços</p>
+              </div>
+            </div>
           </div>
           <div className="md:w-1/2 md:pl-12 w-full">
             <div className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl max-w-md mx-auto border-t-8 border-[#F97316]">
@@ -367,14 +400,27 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      <section className="bg-gray-100 py-6 border-b border-gray-200">
+      <section className="bg-white py-12 border-b border-gray-100">
         <div className="container mx-auto px-4">
-          <p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Trabalhamos com as melhores marcas</p>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
-            <img src="https://logo.clearbit.com/intelbras.com.br" alt="Intelbras" className="h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" />
-            <img src="https://logo.clearbit.com/hikvision.com" alt="Hikvision" className="h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" />
-            <img src="https://logo.clearbit.com/ppabrasil.com.br" alt="PPA" className="h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" />
-            <img src="https://logo.clearbit.com/garen.com.br" alt="Garen" className="h-16 w-auto object-contain hover:scale-110 transition-transform duration-300" />
+          <div className="text-center mb-8">
+            <p className="text-[#F97316] font-bold text-sm uppercase tracking-wider mb-2">Qualidade Garantida</p>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">Trabalhamos com as melhores marcas</h3>
+            <p className="text-gray-500 max-w-2xl mx-auto text-sm">As mesmas marcas confiadas por grandes condomínios. Peças originais e suporte técnico garantido.</p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 items-center justify-items-center max-w-4xl mx-auto">
+            <a href="https://intelbras.com.br" target="_blank" rel="noopener noreferrer" className="group w-full flex justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110">
+              <img src="https://logo.clearbit.com/intelbras.com.br" alt="Intelbras" className="h-12 md:h-14 w-auto object-contain opacity-70 group-hover:opacity-100 transition-opacity" />
+            </a>
+            <a href="https://hikvision.com" target="_blank" rel="noopener noreferrer" className="group w-full flex justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110">
+              <img src="https://logo.clearbit.com/hikvision.com" alt="Hikvision" className="h-12 md:h-14 w-auto object-contain opacity-70 group-hover:opacity-100 transition-opacity" />
+            </a>
+            <a href="https://ppabrasil.com.br" target="_blank" rel="noopener noreferrer" className="group w-full flex justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110">
+              <img src="https://logo.clearbit.com/ppabrasil.com.br" alt="PPA" className="h-12 md:h-14 w-auto object-contain opacity-70 group-hover:opacity-100 transition-opacity" />
+            </a>
+            <a href="https://garen.com.br" target="_blank" rel="noopener noreferrer" className="group w-full flex justify-center p-4 grayscale hover:grayscale-0 transition-all duration-300 hover:scale-110">
+              <img src="https://logo.clearbit.com/garen.com.br" alt="Garen" className="h-12 md:h-14 w-auto object-contain opacity-70 group-hover:opacity-100 transition-opacity" />
+            </a>
           </div>
         </div>
       </section>
@@ -462,7 +508,10 @@ const Landing: React.FC = () => {
               <div className="flex items-center mt-auto border-t border-gray-100 pt-4">
                 <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold mr-3">JS</div>
                 <div>
-                  <h4 className="font-bold text-[#1e293b] text-sm">João Silva</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#1e293b] text-sm">João Silva</h4>
+                    <span className="flex items-center text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold"><Check className="w-3 h-3 mr-1" /> Verificado</span>
+                  </div>
                   <p className="text-xs text-gray-500">Condomínio Ponto Real, Recife</p>
                 </div>
               </div>
@@ -482,7 +531,10 @@ const Landing: React.FC = () => {
               <div className="flex items-center mt-auto border-t border-gray-100 pt-4">
                 <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold mr-3">MS</div>
                 <div>
-                  <h4 className="font-bold text-[#1e293b] text-sm">Maria Santos</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#1e293b] text-sm">Maria Santos</h4>
+                    <span className="flex items-center text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold"><Check className="w-3 h-3 mr-1" /> Verificado</span>
+                  </div>
                   <p className="text-xs text-gray-500">Loja Meu Sonho, Jaboatão</p>
                 </div>
               </div>
@@ -502,14 +554,28 @@ const Landing: React.FC = () => {
               <div className="flex items-center mt-auto border-t border-gray-100 pt-4">
                 <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold mr-3">PC</div>
                 <div>
-                  <h4 className="font-bold text-[#1e293b] text-sm">Pedro Costa</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#1e293b] text-sm">Pedro Costa</h4>
+                    <span className="flex items-center text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold"><Check className="w-3 h-3 mr-1" /> Verificado</span>
+                  </div>
                   <p className="text-xs text-gray-500">Edifício Paulista, Recife</p>
                 </div>
               </div>
             </div>
           </div>
+
+          <div className="mt-12 text-center">
+            <button
+              onClick={() => setLeadModalOpen(true)}
+              className="bg-[#1e293b] text-white font-bold py-4 px-10 rounded-full shadow-xl hover:bg-gray-800 transform hover:scale-105 transition-all text-lg flex items-center mx-auto"
+            >
+              <Star className="w-5 h-5 text-yellow-500 mr-2 fill-yellow-500" />
+              Quero ser o próximo cliente satisfeito
+            </button>
+            <p className="text-gray-500 text-sm mt-3">Junte-se a mais de 2.000 clientes em Recife</p>
+          </div>
         </div>
-      </section>
+      </section >
 
       <section id="sobre" className="py-20 bg-[#fff7ed]">
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center gap-12">
@@ -571,7 +637,7 @@ const Landing: React.FC = () => {
       </footer>
 
       <LeadFormModal isOpen={leadModalOpen} onClose={() => setLeadModalOpen(false)} />
-    </div>
+    </div >
   )
 }
 
