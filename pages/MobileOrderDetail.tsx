@@ -439,6 +439,16 @@ const MobileOrderDetail: React.FC = () => {
                             />
                         </div>
 
+                        {/* Produtos e Serviços */}
+                        <div className="bg-white rounded-xl shadow-md p-4">
+                            <OrderItemSelector
+                                items={additionalItems}
+                                onItemsChange={setAdditionalItems}
+                                inventory={inventory}
+                                productsServices={products}
+                            />
+                        </div>
+
                         {/* Signature section */}
                         <div className="bg-white rounded-xl shadow-md p-4">
                             <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
@@ -497,6 +507,34 @@ const MobileOrderDetail: React.FC = () => {
                                 {order.serviceNotes || 'Nenhuma observação registrada.'}
                             </div>
                         </div>
+
+                        {/* Approved Items Summary */}
+                        {additionalItems.length > 0 && (
+                            <div className="bg-white rounded-xl shadow-md p-4">
+                                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-primary">receipt_long</span>
+                                    Produtos e Serviços Aprovados
+                                </h3>
+                                <div className="space-y-2">
+                                    {additionalItems.map((item, idx) => (
+                                        <div key={idx} className="flex justify-between text-sm">
+                                            <span className="text-gray-600">{item.quantity}x {item.name}</span>
+                                            <span className="font-bold text-gray-900">
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.total)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                    <div className="pt-2 border-t border-gray-100 flex justify-between items-center bg-primary/5 -mx-4 px-4 py-2 mt-2">
+                                        <span className="font-bold text-gray-900">Total do Orçamento:</span>
+                                        <span className="text-lg font-black text-primary">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                                additionalItems.reduce((sum, item) => sum + item.total, 0)
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Photos section */}
                         {photos.length > 0 && (
