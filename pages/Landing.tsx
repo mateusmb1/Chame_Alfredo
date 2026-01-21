@@ -24,6 +24,7 @@ import {
   Quote
 } from 'lucide-react'
 import { supabase } from '../src/lib/supabase'
+import LeadFormModal from '../components/LeadFormModal'
 
 const Mascot: React.FC<{ className?: string }> = ({ className }) => {
   const [sourceIndex, setSourceIndex] = useState(0)
@@ -44,6 +45,8 @@ const Landing: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+  const [leadModalOpen, setLeadModalOpen] = useState(false)
+
 
   // Form state
   const [formData, setFormData] = useState({
@@ -238,9 +241,9 @@ const Landing: React.FC = () => {
             <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-6 leading-tight">Portão travado? Chame o Alfredo em <span className="text-[#F97316]">30 MIN</span></h2>
             <p className="text-lg text-gray-200 mb-8 max-w-lg mx-auto md:mx-0 font-light">Técnico especializado em automação desde 2015. 24 horas de atendimento. Garantia 6 meses em todos os serviços.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <a href="https://wa.me/5581988417003" onClick={trackWhatsAppClick} className="bg-[#84cc16] hover:bg-green-600 text-white text-lg font-bold px-8 py-3 rounded-lg shadow-xl flex items-center justify-center transform hover:scale-105 transition-all duration-300">
-                <MessageCircle className="mr-2" /> Abrir Chat no WhatsApp
-              </a>
+              <button onClick={() => setLeadModalOpen(true)} className="bg-[#84cc16] hover:bg-green-600 text-white text-lg font-bold px-8 py-3 rounded-lg shadow-xl flex items-center justify-center transform hover:scale-105 transition-all duration-300">
+                <MessageCircle className="mr-2" /> Abrir Chamado Rápido
+              </button>
               <a href="#servicos" className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold px-8 py-3 rounded-lg text-center flex items-center justify-center hover:bg-white/30 transition-all">
                 Ver Nossos Serviços
               </a>
@@ -567,6 +570,7 @@ const Landing: React.FC = () => {
         <div className="container mx-auto px-4 pt-8 border-t border-gray-800 text-center text-gray-500 text-xs">&copy; 2024 Chame Alfredo Soluções. Todos os direitos reservados.</div>
       </footer>
 
+      <LeadFormModal isOpen={leadModalOpen} onClose={() => setLeadModalOpen(false)} />
     </div>
   )
 }
