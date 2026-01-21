@@ -1,105 +1,178 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../contexts/AppContext';
+import { Lock, User, CheckCircle2, AlertCircle, ArrowRight, Loader2 } from 'lucide-react';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { authenticateTechnician, authenticateClient } = useApp();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [focusedInput, setFocusedInput] = useState<string | null>(null);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/dashboard');
+    setError('');
+    setIsLoading(true);
+
+    try {
+      // Simulate network delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // 1. Try Technician/Admin Login
+      const tech = authenticateTechnician(username, password);
+      if (tech) {
+        if (tech.username === 'martes') {
+          // Admin specific logic if needed, for now both go to dashboard
+          navigate('/dashboard');
+        } else {
+          // Technician usually goes to mobile views if mobile, or dashboard
+          navigate('/dashboard');
+        }
+        return;
+      }
+
+      // 2. Try Client Login
+      const client = authenticateClient(username, password);
+      if (client) {
+        navigate('/client/dashboard');
+        return;
+      }
+
+      // 3. Fail
+      setError('Usuário ou senha incorretos. Tente novamente.');
+    } catch (err) {
+      setError('Erro ao processar login. Tente novamente.');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden bg-background-light dark:bg-background-dark">
-      <div class="layout-container flex h-full grow flex-col">
-        <div class="flex flex-1 justify-center items-center p-4 lg:p-0">
-          <div class="layout-content-container flex flex-row max-w-6xl w-full bg-white dark:bg-[#1a2230] shadow-xl rounded-xl overflow-hidden min-h-96 sm:min-h-[520px] md:min-h-[560px] lg:min-h-[600px]">
-            {/* Left Column - Branding */}
-            <div class="hidden lg:flex flex-col w-1/2 bg-slate-100 dark:bg-[#131b29] p-12 justify-between">
-              <div>
-                <div class="flex items-center gap-3">
-                  <span class="material-symbols-outlined text-primary text-4xl">dynamic_form</span>
-                  <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Plataforma Central</h2>
-                </div>
-              </div>
-              <div class="flex flex-col gap-8">
-                <div class="w-full bg-center bg-no-repeat bg-cover aspect-video rounded-lg shadow-lg" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCVCmEqmN486GB9LuMvCtipNsJ174zfxSTiPgV8_LfHTS88alOkJWaVH4UJVjDPLH2y0up7Avmdq72Kw-Gjem9m8YJKRU8S8Fj2P3Pf-lSNo4cFcdX1JvXEqH9v1742mjyGz9GtBQG8gQcQ3l9DvnBYc2VtqzcdRfY2HYd3-UDINvlWBWYvNZ05Zr54UeuvGYJQnWiTuc70P7098m_qxAYe8fZ7dFaEBmshCyRuFt4GkQLSRECEccTrl5GqMtBmUwzq08sZ06mgPAn0")' }}></div>
-                <div class="flex flex-col gap-2">
-                  <h1 class="text-slate-800 dark:text-slate-100 tracking-tight text-3xl font-bold leading-tight text-left">Otimize suas operações.</h1>
-                  <p class="text-slate-600 dark:text-slate-400 text-lg font-normal leading-normal">Centralize seu sucesso com nossa plataforma completa para gestão de serviços, estoque e clientes.</p>
-                </div>
-              </div>
-              <div class="text-slate-500 dark:text-slate-400 text-sm">
-                © 2024 Plataforma Central. Todos os direitos reservados.
-              </div>
+    <div className="flex h-screen w-full overflow-hidden bg-gray-50">
+      {/* Left Panel - Branding (Hidden on mobile) */}
+      <div className="hidden lg:flex flex-col w-1/2 bg-[#1e293b] relative overflow-hidden text-white p-12 justify-between">
+        {/* Background Patterns */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#F97316] rounded-full filter blur-[100px] opacity-10 -mr-20 -mt-20"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500 rounded-full filter blur-[100px] opacity-10 -ml-20 -mb-20"></div>
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm border border-white/10">
+              <span className="font-black text-[#F97316] text-xl">A</span>
             </div>
-            
-            {/* Right Column - Form */}
-            <div class="w-full lg:w-1/2 p-6 sm:p-8 md:p-12 flex flex-col justify-center">
-              <div class="flex flex-col max-w-md mx-auto w-full">
-                <div class="flex flex-col mb-8">
-                  <h1 class="text-[#0d121b] dark:text-slate-100 tracking-light text-[32px] font-bold leading-tight text-left pb-1">Bem-vindo de volta!</h1>
-                  <p class="text-slate-600 dark:text-slate-400 text-base font-normal leading-normal">Faça login para continuar ou crie uma nova conta.</p>
-                </div>
-                
-                <div class="flex mb-6">
-                  <div class="flex h-10 flex-1 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 p-1 w-full">
-                    <label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-md px-2 bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-slate-100 text-sm font-medium leading-normal transition-all duration-200">
-                      <span class="truncate">Login</span>
-                      <input type="radio" name="auth-toggle" value="Login" class="invisible w-0" defaultChecked />
-                    </label>
-                    <label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-md px-2 text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal transition-all duration-200">
-                      <span class="truncate">Registrar-se</span>
-                      <input type="radio" name="auth-toggle" value="Registrar-se" class="invisible w-0" />
-                    </label>
-                  </div>
-                </div>
-
-                <form onSubmit={handleLogin} class="flex flex-col gap-4">
-                  <label class="flex flex-col w-full">
-                    <p class="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">E-mail ou Usuário</p>
-                    <div class="relative flex items-center">
-                      <span class="material-symbols-outlined absolute left-3 text-slate-400 dark:text-slate-500 text-xl">person</span>
-                      <input type="text" placeholder="Digite seu e-mail ou nome de usuário" class="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-800 dark:text-slate-200 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-500 pl-10 pr-4 text-base font-normal leading-normal" />
-                    </div>
-                  </label>
-                  
-                  <label class="flex flex-col w-full">
-                    <p class="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal pb-2">Senha</p>
-                    <div class="relative flex items-center">
-                      <span class="material-symbols-outlined absolute left-3 text-slate-400 dark:text-slate-500 text-xl">lock</span>
-                      <input type="password" placeholder="Digite sua senha" class="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-800 dark:text-slate-200 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark focus:border-primary h-12 placeholder:text-slate-400 dark:placeholder:text-slate-500 pl-10 pr-10 text-base font-normal leading-normal" />
-                      <button type="button" class="absolute right-3 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400">
-                        <span class="material-symbols-outlined text-xl">visibility_off</span>
-                      </button>
-                    </div>
-                  </label>
-
-                  <div class="flex justify-end mt-1">
-                    <a href="#" class="text-sm font-medium text-primary hover:underline">Esqueci minha senha</a>
-                  </div>
-
-                  <button type="submit" class="flex items-center justify-center whitespace-nowrap rounded-lg text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-white shadow hover:bg-primary/90 h-12 px-4 py-2 w-full mt-4">
-                    Entrar
-                  </button>
-
-                  <div class="relative my-4">
-                    <div class="absolute inset-0 flex items-center">
-                      <span class="w-full border-t border-slate-300 dark:border-slate-700"></span>
-                    </div>
-                    <div class="relative flex justify-center text-xs uppercase">
-                      <span class="bg-white dark:bg-[#1a2230] px-2 text-slate-500 dark:text-slate-400">Ou continue com</span>
-                    </div>
-                  </div>
-
-                  <button type="button" class="flex items-center justify-center gap-3 whitespace-nowrap rounded-lg text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-slate-300 dark:border-slate-700 bg-transparent text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-100 dark:hover:bg-slate-800 h-12 px-4 py-2 w-full">
-                    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjSIO6o_FmbGvOYEgMOW9kKkSZv2zEpe0VAdMm3NdYdBX1giterjwz8ykPKpx2M2mbYrwYDJY_mwJjCVFRZUpddg-IbAAsciJZEoUTZKiHtESRfPPOF3ndJbwcJgwpiqON9onHRDYw7EdYRZOgFTFAlBaNMcLTrpqf7zc9AaCarH--bECSSwGOT1MsErLV3L7wEQ6au2LKW22cAa2gqQkNZ9Ak7NJcg4Os91TFuhF_M6n9hQ-4eEnSwQTmkqfCvK6aG5oJhI8JEAC0" alt="Google logo" class="h-5 w-5" />
-                    <span>Entrar com Google</span>
-                  </button>
-                </form>
-              </div>
-            </div>
+            <span className="text-xl font-bold tracking-tight">Chame Alfredo</span>
           </div>
+        </div>
+
+        <div className="relative z-10 max-w-lg">
+          <div className="inline-flex items-center bg-[#F97316]/20 border border-[#F97316]/30 text-[#F97316] rounded-full px-3 py-1 mb-6 text-sm font-bold backdrop-blur-md">
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Sistema de Gestão 4.0
+          </div>
+          <h1 className="text-5xl font-extrabold mb-6 leading-tight">
+            Gerencie seus serviços com <span className="text-[#F97316]">agilidade</span> e precisão.
+          </h1>
+          <p className="text-gray-400 text-lg leading-relaxed">
+            Plataforma unificada para técnicos, administradores e clientes.
+            Controle de ordens, estoques e chamados em tempo real.
+          </p>
+        </div>
+
+        <div className="relative z-10 text-xs text-gray-500 font-medium tracking-wide uppercase">
+          © 2026 Chame Alfredo Soluções Prediais
+        </div>
+      </div>
+
+      {/* Right Panel - Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white">
+        <div className="w-full max-w-md space-y-8 animate-fade-in-up">
+          <div className="text-center lg:text-left">
+            <div className="inline-block lg:hidden mb-6">
+              <img src="/alfredo.png" alt="Mascote" className="w-20 h-20 mx-auto object-contain" />
+            </div>
+            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Bem-vindo de volta!</h2>
+            <p className="mt-2 text-gray-500">Acesse sua conta para continuar.</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-6 mt-8">
+            {error && (
+              <div className="p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3 text-red-700 animate-shake">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <span className="text-sm font-medium">{error}</span>
+              </div>
+            )}
+
+            <div className="space-y-5">
+              <div className="relative group">
+                <label className={`absolute left-4 transition-all duration-200 pointer-events-none ${focusedInput === 'username' || username ? '-top-2.5 bg-white px-2 text-xs text-[#F97316] font-bold' : 'top-3.5 text-gray-400'}`}>
+                  Usuário ou E-mail
+                </label>
+                <div className="relative">
+                  <User className={`absolute left-4 top-3.5 w-5 h-5 transition-colors ${focusedInput === 'username' ? 'text-[#F97316]' : 'text-gray-300'}`} />
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    onFocus={() => setFocusedInput('username')}
+                    onBlur={() => setFocusedInput(null)}
+                    className={`w-full bg-white border-2 rounded-xl py-3 pl-12 pr-4 outline-none transition-all duration-200 ${focusedInput === 'username' ? 'border-[#F97316] shadow-lg shadow-orange-100' : 'border-gray-100'}`}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="relative group">
+                <label className={`absolute left-4 transition-all duration-200 pointer-events-none ${focusedInput === 'password' || password ? '-top-2.5 bg-white px-2 text-xs text-[#F97316] font-bold' : 'top-3.5 text-gray-400'}`}>
+                  Senha
+                </label>
+                <div className="relative">
+                  <Lock className={`absolute left-4 top-3.5 w-5 h-5 transition-colors ${focusedInput === 'password' ? 'text-[#F97316]' : 'text-gray-300'}`} />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onFocus={() => setFocusedInput('password')}
+                    onBlur={() => setFocusedInput(null)}
+                    className={`w-full bg-white border-2 rounded-xl py-3 pl-12 pr-4 outline-none transition-all duration-200 ${focusedInput === 'password' ? 'border-[#F97316] shadow-lg shadow-orange-100' : 'border-gray-100'}`}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center">
+                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]" />
+                <span className="ml-2 text-sm text-gray-500">Lembrar de mim</span>
+              </label>
+              <a href="#" className="text-sm font-bold text-[#F97316] hover:text-[#c2410c] transition-colors">
+                Esqueceu a senha?
+              </a>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-[#1e293b] hover:bg-gray-800 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-xl shadow-gray-200 flex items-center justify-center gap-2 transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed group"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  Entrar na Plataforma <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-gray-400 mt-8">
+            Ainda não é cliente? <a href="/" className="font-bold text-[#F97316] hover:underline">Solicite uma proposta</a>
+          </p>
         </div>
       </div>
     </div>
