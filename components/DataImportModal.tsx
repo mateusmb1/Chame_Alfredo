@@ -324,18 +324,21 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                         let clientId = null;
 
                         if (clientName) {
-                            const { data: clientData } = await supabase
+                            // Use simple select without .single() to avoid errors if not found or multiple found
+                            const { data: clientData, error: clientError } = await supabase
                                 .from('clients')
                                 .select('id')
                                 .ilike('name', `%${clientName}%`)
-                                .limit(1)
-                                .single();
-                            clientId = clientData?.id;
+                                .limit(1);
+
+                            if (!clientError && clientData && clientData.length > 0) {
+                                clientId = clientData[0].id;
+                            }
                         }
 
                         // 2. Insert into invoices with correct fields
                         const { error } = await supabase.from('invoices').insert({
-                            client_id: clientId,
+                            client_id: clientId, // Can be null if table allows, otherwise check schema
                             client_name: clientName,
                             total: data.parsedValue,
                             subtotal: data.parsedValue,
