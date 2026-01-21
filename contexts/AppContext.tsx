@@ -59,6 +59,8 @@ interface AppContextType {
     updateQuote: (id: string, updates: Partial<Quote>) => void;
     deleteQuote: (id: string) => void;
     saveQuoteSignature: (id: string, signature: string) => Promise<void>;
+    convertQuoteToInvoice: (quoteId: string) => Promise<any>;
+    createQuoteFromOrder: (orderId: string, items: any[], notes: string) => Promise<any>;
 
     // Contract operations
     addContract: (contract: Omit<Contract, 'id' | 'createdAt'>) => void;
@@ -310,13 +312,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         clientId: d.client_id,
         clientName: d.client?.name || d.client_name || 'Cliente removido',
         validityDate: d.validity_date,
+        sourceOrderId: d.source_order_id,
+        invoiceId: d.invoice_id,
         createdAt: d.created_at,
         updatedAt: d.updated_at
     });
     const mapQuoteToDB = (q: Partial<Quote>) => {
         const {
             clientId, clientName, validityDate, paymentTerms, signatureData,
-            createdAt, updatedAt, ...rest
+            sourceOrderId, invoiceId, createdAt, updatedAt, ...rest
         } = q;
 
         return {
@@ -326,6 +330,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...(validityDate && { validity_date: validityDate }),
             ...(paymentTerms && { payment_terms: paymentTerms }),
             ...(signatureData && { signature_data: signatureData }),
+            ...(sourceOrderId && { source_order_id: sourceOrderId }),
+            ...(invoiceId && { invoice_id: invoiceId }),
             ...(createdAt && { created_at: createdAt }),
             ...(updatedAt && { updated_at: updatedAt }),
         };
@@ -470,6 +476,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...(customerSignature !== undefined && { customer_signature: customerSignature }),
             ...(invoiced !== undefined && { invoiced: invoiced }),
             ...(invoiceId !== undefined && { invoice_id: invoiceId }),
+            ...(order.quoteId !== undefined && { quote_id: order.quoteId }),
             ...(items !== undefined && { items: items }),
             ...(asset_info !== undefined && { asset_info: asset_info }),
             ...(createdAt !== undefined && { created_at: createdAt }),
@@ -568,8 +575,102 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const dbUpdate = mapQuoteToDB(updates);
         Object.keys(dbUpdate).forEach(key => (dbUpdate as any)[key] === undefined && delete (dbUpdate as any)[key]);
         const { error } = await supabase.from('quotes').update(dbUpdate).eq('id', id);
-        if (error) console.error('Error updating quote:', error);
-    }, [mapQuoteToDB, supabase]);
+        if (error) {
+            console.error('Error updating quote:', error);
+            return;
+        }
+
+        // Logic for automatic conversion to invoice when approved
+        if (updates.status === 'approved' || updates.signatureData) {
+            // Find full quote to convert
+            const fullQuote = quotes.find(q => q.id === id) || (updates as Quote);
+            if (fullQuote && !fullQuote.invoiceId) {
+                // Trigger conversion
+                await convertQuoteToInvoice(id);
+            }
+        }
+    }, [mapQuoteToDB, supabase, quotes]);
+
+    const convertQuoteToInvoice = React.useCallback(async (quoteId: string) => {
+        const quote = quotes.find(q => q.id === quoteId);
+        if (!quote) return;
+
+        const newInvoice: any = {
+            invoice_number: `FAT-${new Date().getFullYear()}${Math.floor(Math.random() * 9000 + 1000)}`,
+            client_id: quote.clientId,
+            client_name: quote.clientName,
+            issue_date: new Date().toISOString().split('T')[0],
+            due_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 15 days default
+            items: quote.items,
+            subtotal: quote.subtotal,
+            tax: quote.tax,
+            discount: quote.discount,
+            total: quote.total,
+            status: 'pending',
+            type: 'service',
+            source_quote_id: quote.id,
+            source_order_id: quote.sourceOrderId
+        };
+
+        const { data: invData, error: invError } = await supabase.from('invoices').insert([newInvoice]).select().single();
+        if (invError) {
+            console.error('Error creating invoice from quote:', invError);
+            return;
+        }
+
+        // Link invoice back to quote
+        await supabase.from('quotes').update({ invoice_id: invData.id, status: 'approved' }).eq('id', quoteId);
+
+        // Link to order if source exists
+        if (quote.sourceOrderId) {
+            await supabase.from('orders').update({
+                invoiced: true,
+                invoice_id: invData.id,
+                quote_id: quoteId
+            }).eq('id', quote.sourceOrderId);
+        }
+
+        return invData;
+    }, [quotes, supabase]);
+
+    const createQuoteFromOrder = React.useCallback(async (orderId: string, items: any[], notes: string) => {
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+
+        const subtotal = items.reduce((sum, i) => sum + i.total, 0);
+        const tax = subtotal * 0.1; // Default tax 10%
+        const total = subtotal + tax;
+
+        const newQuote: any = {
+            client_id: order.clientId,
+            client_name: order.clientName,
+            items: items.map(i => ({
+                id: i.id || Math.random().toString(36).substring(7),
+                description: i.name || i.description,
+                quantity: i.quantity,
+                unitPrice: i.price || i.unitPrice,
+                totalPrice: i.total || i.totalPrice
+            })),
+            subtotal,
+            tax,
+            total,
+            status: 'sent',
+            validity_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            notes,
+            source_order_id: orderId
+        };
+
+        const { data: quoteData, error } = await supabase.from('quotes').insert([newQuote]).select().single();
+        if (error) {
+            console.error('Error creating quote from order:', error);
+            return;
+        }
+
+        // Link back to order
+        await supabase.from('orders').update({ quote_id: quoteData.id }).eq('id', orderId);
+
+        return mapQuoteFromDB(quoteData);
+    }, [orders, supabase, mapQuoteFromDB]);
 
     const deleteQuote = React.useCallback(async (id: string) => {
         const { error } = await supabase.from('quotes').delete().eq('id', id);
@@ -952,6 +1053,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateQuote,
         deleteQuote,
         saveQuoteSignature,
+        convertQuoteToInvoice,
+        createQuoteFromOrder,
 
         // Contract operations
         addContract,

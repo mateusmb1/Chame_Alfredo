@@ -27,7 +27,7 @@ interface CheckInOut {
 const MobileOrderDetail: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
-    const { orders, updateOrder, uploadFile, inventory, products } = useApp();
+    const { orders, updateOrder, uploadFile, inventory, products, createQuoteFromOrder, quotes, updateQuote } = useApp();
     const { showToast } = useToast();
 
     const [technician, setTechnician] = useState<Technician | null>(null);
@@ -295,6 +295,9 @@ const MobileOrderDetail: React.FC = () => {
 
             if (publicUrl) {
                 await updateOrder(id, { customerSignature: publicUrl });
+                if (order?.quoteId) {
+                    await updateQuote(order.quoteId, { signatureData: publicUrl, status: 'approved' });
+                }
                 setSignature(publicUrl);
                 setIsSignatureModalOpen(false);
                 showToast('success', 'Assinatura salva com sucesso!');
@@ -477,13 +480,61 @@ const MobileOrderDetail: React.FC = () => {
                         </div>
 
                         {/* Produtos e Serviços */}
-                        <div className="bg-white rounded-xl shadow-md p-4">
+                        <div className="bg-white rounded-xl shadow-md p-4 space-y-4">
+                            <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary">request_quote</span>
+                                Serviços e Peças Adicionais
+                            </h3>
                             <OrderItemSelector
                                 items={additionalItems}
                                 onItemsChange={setAdditionalItems}
                                 inventory={inventory}
                                 productsServices={products}
                             />
+
+                            {/* Workflow Links */}
+                            {additionalItems.length > 0 && (
+                                <div className="pt-2 border-t border-gray-100">
+                                    {order.quoteId ? (
+                                        <div className={`p-4 rounded-xl flex items-center justify-between ${quotes.find(q => q.id === order.quoteId)?.status === 'approved'
+                                            ? 'bg-green-50 text-green-700 border border-green-200'
+                                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                            }`}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-symbols-outlined">
+                                                    {quotes.find(q => q.id === order.quoteId)?.status === 'approved' ? 'check_circle' : 'history'}
+                                                </span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-black uppercase tracking-tight">Status do Orçamento</span>
+                                                    <span className="text-sm font-bold">
+                                                        {quotes.find(q => q.id === order.quoteId)?.status === 'approved' ? 'APROVADO P/ EXECUÇÃO' : 'AGUARDANDO APROVAÇÃO'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {quotes.find(q => q.id === order.quoteId)?.status !== 'approved' && (
+                                                <button onClick={handleShareOrder} className="p-2 bg-white rounded-lg shadow-sm">
+                                                    <span className="material-symbols-outlined text-primary">share</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={async () => {
+                                                if (id) {
+                                                    const newQuote = await createQuoteFromOrder(id, additionalItems, notes);
+                                                    if (newQuote) {
+                                                        showToast('success', 'Orçamento gerado! Colha a assinatura do cliente.');
+                                                    }
+                                                }
+                                            }}
+                                            className="w-full py-4 bg-primary/10 text-primary font-black rounded-xl border-2 border-dashed border-primary/30 flex items-center justify-center gap-2 active:scale-95 transition-all text-sm uppercase"
+                                        >
+                                            <span className="material-symbols-outlined">add_task</span>
+                                            Gerar Orçamento p/ Aprovação
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Signature section */}

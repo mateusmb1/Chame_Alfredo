@@ -37,8 +37,9 @@ const Quotes: React.FC = () => {
       client: q.clientName,
       date: new Date(q.createdAt).toLocaleDateString('pt-BR'),
       value: q.total,
-      status: q.status === 'draft' ? 'Rascunho' : q.status === 'sent' ? 'Enviado' : q.status === 'accepted' ? 'Aprovado' : 'Rejeitado',
-      color: q.status === 'accepted' ? 'emerald' : q.status === 'sent' ? 'blue' : q.status === 'draft' ? 'gray' : 'red'
+      status: q.status === 'draft' ? 'Rascunho' : q.status === 'sent' ? 'Enviado' : q.status === 'approved' ? 'Aprovado' : 'Rejeitado',
+      color: q.status === 'approved' ? 'emerald' : q.status === 'sent' ? 'blue' : q.status === 'draft' ? 'gray' : 'red',
+      sourceOrderId: q.sourceOrderId
     })),
     ...orders.filter(o => o.items && o.items.length > 0 && o.status !== 'concluida').map(o => ({
       id: `OS-${o.id}`,
@@ -172,7 +173,12 @@ const Quotes: React.FC = () => {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">#{quote.id}</span>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1 flex items-center gap-2">
+                      #{quote.id.substring(0, 8)}
+                      {quote.sourceOrderId && (
+                        <span className="bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 px-1.5 py-0.5 rounded text-[8px] font-black border border-purple-200 dark:border-purple-800">COLETA DE CAMPO (OS)</span>
+                      )}
+                    </span>
                     <h3 className="font-bold text-[#0d121b] dark:text-white leading-tight">{quote.client}</h3>
                   </div>
                   <div className={`p-2 rounded-xl bg-${quote.color}-500/10 text-${quote.color}-500`}>

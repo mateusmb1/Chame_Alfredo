@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, RefreshCw } from 'lucide-react';
+import { Plus, Search, Filter, RefreshCw, Quote, FileText, Receipt } from 'lucide-react';
 import { Badge } from '../../components/Badge';
 import { useApp } from '../../../contexts/AppContext';
 import { useToast } from '../../../contexts/ToastContext';
@@ -101,6 +101,7 @@ export default function InvoiceList() {
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nº Fatura</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Origem</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Emissão</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimento</th>
@@ -120,6 +121,21 @@ export default function InvoiceList() {
                 invoices.map((invoice) => (
                   <tr key={invoice.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{invoice.number}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-[10px] font-black uppercase">
+                      {invoice.sourceQuoteId ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-600 border border-purple-100 rounded-lg">
+                          <Quote className="w-3 h-3" /> Proposta
+                        </span>
+                      ) : invoice.contractId ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg">
+                          <FileText className="w-3 h-3" /> Contrato
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-50 text-gray-600 border border-gray-100 rounded-lg">
+                          <Receipt className="w-3 h-3" /> OS Direta
+                        </span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{invoice.clientName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{new Date(invoice.issueDate).toLocaleDateString('pt-BR')}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{new Date(invoice.dueDate).toLocaleDateString('pt-BR')}</td>

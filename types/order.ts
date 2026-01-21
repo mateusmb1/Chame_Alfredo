@@ -25,6 +25,7 @@ export interface Order {
   invoiceId?: string;
   items?: any[];
   asset_info?: any;
+  quoteId?: string; // Link to related quote
 }
 
 export interface CreateOrderData {

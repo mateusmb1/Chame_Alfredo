@@ -32,6 +32,8 @@ export interface Quote {
   signatureData?: string;
   projectId?: string; // Linked project ID (when converted)
   quoteNumber?: string; // Human-readable quote number
+  sourceOrderId?: string; // Link to original OS
+  invoiceId?: string; // Link to generated invoice
 }
 
 export interface CreateQuoteData {
@@ -43,4 +45,5 @@ export interface CreateQuoteData {
   discount?: number;
   tax?: number;
   attachments?: QuoteAttachment[];
+  sourceOrderId?: string;
 }

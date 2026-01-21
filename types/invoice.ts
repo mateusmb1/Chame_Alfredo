@@ -5,7 +5,7 @@ export interface InvoiceItem {
   unitPrice: number;
   totalPrice: number;
   sourceId?: string;
-  sourceType?: 'order' | 'contract';
+  sourceType?: 'order' | 'contract' | 'quote';
 }
 
 export interface Invoice {
@@ -26,6 +26,10 @@ export interface Invoice {
   paymentMethod?: string;
   observations?: string;
   contractId?: string;
+  quoteId?: string;
+  orderId?: string;
+  sourceQuoteId?: string;
+  sourceOrderId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -38,4 +42,8 @@ export interface CreateInvoiceData {
   discount?: number;
   observations?: string;
   contractId?: string;
+  quoteId?: string;
+  orderId?: string;
+  sourceQuoteId?: string;
+  sourceOrderId?: string;
 }
