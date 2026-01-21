@@ -1059,6 +1059,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addOrder,
         updateOrder,
         deleteOrder,
+        deleteOrders,
 
         // Inventory operations
         addInventoryItem,
@@ -1116,7 +1117,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }), [
         clients, orders, inventory, quotes, contracts, technicians, projects, projectActivities,
         products, invoices, appointments, conversations, messages,
-        addClient, updateClient, deleteClient, authenticateClient, addOrder, updateOrder, deleteOrder,
+        addClient, updateClient, deleteClient, authenticateClient, addOrder, updateOrder, deleteOrder, deleteOrders,
         addInventoryItem, updateInventoryItem, deleteInventoryItem, addQuote, updateQuote, deleteQuote, saveQuoteSignature,
         addContract, updateContract, deleteContract, addTechnician, updateTechnician, deleteTechnician,
         authenticateTechnician, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
