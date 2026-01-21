@@ -3,29 +3,71 @@
  * Parse and map CSV data from legacy system to Supabase schema
  */
 
-// Parse CSV string to array of objects
+// Parse CSV string to array of objects - handling multiline quoted fields
 export function parseCSV<T>(csvContent: string): T[] {
-    const lines = csvContent.split('\n').filter(line => line.trim());
-    if (lines.length < 2) return [];
-
-    const headers = parseCSVLine(lines[0]);
     const records: T[] = [];
+    let currentLine: string[] = [];
+    let currentField = '';
+    let inQuotes = false;
+    let headers: string[] = [];
 
-    for (let i = 1; i < lines.length; i++) {
-        const values = parseCSVLine(lines[i]);
-        const record: Record<string, string> = {};
+    // Simple state machine to parse CSV correctly
+    for (let i = 0; i < csvContent.length; i++) {
+        const char = csvContent[i];
+        const nextChar = csvContent[i + 1];
 
-        headers.forEach((header, index) => {
-            record[header] = values[index] || '';
-        });
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                // ESCAPED QUOTE
+                currentField += '"';
+                i++;
+            } else {
+                // TOGGLE QUOTES
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            // END OF FIELD
+            currentLine.push(currentField.trim());
+            currentField = '';
+        } else if ((char === '\n' || char === '\r') && !inQuotes) {
+            // END OF RECORD
+            if (char === '\r' && nextChar === '\n') i++; // Handle CRLF
 
-        records.push(record as T);
+            currentLine.push(currentField.trim());
+
+            if (headers.length === 0) {
+                headers = currentLine.filter(h => h !== '');
+            } else if (currentLine.some(val => val !== '')) {
+                const record: Record<string, string> = {};
+                headers.forEach((header, index) => {
+                    record[header] = currentLine[index] || '';
+                });
+                records.push(record as T);
+            }
+
+            currentLine = [];
+            currentField = '';
+        } else {
+            currentField += char;
+        }
+    }
+
+    // Handle last record if not followed by newline
+    if (currentField !== '' || currentLine.length > 0) {
+        currentLine.push(currentField.trim());
+        if (headers.length > 0) {
+            const record: Record<string, string> = {};
+            headers.forEach((header, index) => {
+                record[header] = currentLine[index] || '';
+            });
+            records.push(record as T);
+        }
     }
 
     return records;
 }
 
-// Parse a single CSV line handling quoted values
+// Parse a single CSV line handling quoted values (legacy, kept for compatibility if needed elsewhere)
 function parseCSVLine(line: string): string[] {
     const result: string[] = [];
     let current = '';
@@ -185,6 +227,38 @@ export interface ValidationResult {
     errors: string[];
 }
 
+// Helper to format various date inputs to ISO
+export function formatDateToISO(dateStr: string): string {
+    if (!dateStr) return new Date().toISOString();
+
+    // Clean input
+    const cleanStr = dateStr.trim();
+
+    // Check if it's a numeric timestamp (all digits)
+    if (/^\d+$/.test(cleanStr)) {
+        const timestamp = parseInt(cleanStr, 10);
+        // If timestamp is realistic (after year 2000)
+        if (timestamp > 946684800000) {
+            return new Date(timestamp).toISOString();
+        }
+    }
+
+    // Check if it's Brazilian DD/MM/YYYY
+    const brDateMatch = cleanStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (brDateMatch) {
+        const [_, day, month, year] = brDateMatch;
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T12:00:00.000Z`;
+    }
+
+    // Try standard JS Date parsing
+    const parsed = new Date(cleanStr);
+    if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString();
+    }
+
+    return new Date().toISOString();
+}
+
 // ===== MAPPING FUNCTIONS =====
 
 export function mapClientFromAgendaBoa(record: AgendaBoaClient): { data: ImportedClient; validation: ValidationResult } {
@@ -333,7 +407,7 @@ export function mapOrderFromAgendaBoa(record: any): { data: ImportedOrder; valid
     const totalPriceStr = record.totalPrice || record['Valor total'] || record['valor total'] || '0';
     const status = record.jobStatus || record['Status'] || record['status'] || 'pendente';
     const title = record.jobTitle || record['Tópico'] || record['tópico'] || record['Título'] || '';
-    const date = record.jobDate || record['Data'] || record['data'] || '';
+    const date = record.jobTimeInMillis || record.jobDate || record['Data'] || record['data'] || '';
     const id = record.id || record['ID do job'] || record['id'] || '';
 
     if (!clientName) {
@@ -359,7 +433,7 @@ export function mapOrderFromAgendaBoa(record: any): { data: ImportedOrder; valid
             total_price: parsePrice(totalPriceStr),
             status: status.toLowerCase(),
             description: title,
-            job_date: date,
+            job_date: formatDateToISO(date),
             external_id: id,
         },
         validation,

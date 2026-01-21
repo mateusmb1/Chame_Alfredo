@@ -22,6 +22,7 @@ import {
     ImportedOrder,
     ValidationResult,
     ImportType,
+    formatDateToISO,
 } from '../utils/csvImporters';
 
 interface DataImportModalProps {
@@ -231,10 +232,12 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
             } else if (importType === 'materials') {
                 const selected = materialRows.filter(r => r.selected);
                 setImportProgress({ current: 0, total: selected.length });
+                let successCount = 0;
+                let errorCount = 0;
 
                 for (let i = 0; i < selected.length; i++) {
                     const { data } = selected[i];
-                    await supabase.from('inventory').insert({
+                    const { error } = await supabase.from('inventory').insert({
                         name: data.name,
                         sku: data.sku,
                         quantity: data.quantity,
@@ -245,54 +248,91 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                         price: data.price,
                         supplier: data.supplier,
                     });
+                    if (error) {
+                        console.error(`Error inserting material ${data.name}:`, error);
+                        errorCount++;
+                    } else {
+                        successCount++;
+                    }
                     setImportProgress({ current: i + 1, total: selected.length });
                 }
+                showToast(errorCount > 0 ? 'warning' : 'success', `${successCount} materiais importados (${errorCount} falhas)`);
 
             } else if (importType === 'services') {
                 const selected = serviceRows.filter(r => r.selected);
                 setImportProgress({ current: 0, total: selected.length });
+                let successCount = 0;
+                let errorCount = 0;
 
                 for (let i = 0; i < selected.length; i++) {
                     const { data } = selected[i];
-                    await supabase.from('products_services').insert({
+                    const { error } = await supabase.from('products_services').insert({
                         name: data.name,
                         description: data.description,
                         price: data.price,
                         unit: data.unit,
                         type: 'service',
                     });
+                    if (error) {
+                        console.error(`Error inserting service ${data.name}:`, error);
+                        errorCount++;
+                    } else {
+                        successCount++;
+                    }
                     setImportProgress({ current: i + 1, total: selected.length });
                 }
+                showToast(errorCount > 0 ? 'warning' : 'success', `${successCount} serviços importados (${errorCount} falhas)`);
+
             } else if (importType === 'orders') {
                 const selected = orderRows.filter(r => r.selected);
                 setImportProgress({ current: 0, total: selected.length });
+                let successCount = 0;
+                let errorCount = 0;
 
                 for (let i = 0; i < selected.length; i++) {
                     const { data } = selected[i];
-                    await supabase.from('orders').insert({
+                    const { error } = await supabase.from('orders').insert({
                         client_name: data.client_name,
                         value: data.total_price,
                         status: data.status,
                         service_type: data.description || 'Importado',
-                        scheduled_date: data.job_date || new Date().toISOString(),
+                        scheduled_date: data.job_date, // mapper already converts it to ISO
                     });
+                    if (error) {
+                        console.error(`Error inserting order for ${data.client_name}:`, error);
+                        errorCount++;
+                    } else {
+                        successCount++;
+                    }
                     setImportProgress({ current: i + 1, total: selected.length });
                 }
+                showToast(errorCount > 0 ? 'warning' : 'success', `${successCount} ordens importadas (${errorCount} falhas)`);
+
             } else if (importType === 'financial') {
                 const selected = financialRows.filter(r => r.selected);
                 setImportProgress({ current: 0, total: selected.length });
+                let successCount = 0;
+                let errorCount = 0;
 
                 for (let i = 0; i < selected.length; i++) {
                     const { data } = selected[i];
-                    await supabase.from('invoices').insert({
+                    const { error } = await supabase.from('invoices').insert({
                         client_name: data.client,
                         value: data.parsedValue,
                         status: data.revenue === '1' ? 'paid' : 'pending',
-                        due_date: data.date ? data.date.split('/').reverse().join('-') : new Date().toISOString(),
+                        due_date: formatDateToISO(data.date),
                         external_id: data.id,
                     });
+                    if (error) {
+                        console.error(`Error inserting invoice for ${data.client}:`, error);
+                        errorCount++;
+                    } else {
+                        successCount++;
+                    }
                     setImportProgress({ current: i + 1, total: selected.length });
                 }
+                showToast(errorCount > 0 ? 'warning' : 'success', `${successCount} registros financeiros importados (${errorCount} falhas)`);
+
             } else if (importType === 'profile') {
                 if (profileData) {
                     setImportProgress({ current: 0, total: 1 });
