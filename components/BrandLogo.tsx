@@ -44,23 +44,23 @@ const BrandLogo: React.FC = () => {
                 <div className="h-px bg-gray-200 w-12"></div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center justify-items-center">
                 {BRAND_DATA.map((brand) => (
                     <a
                         key={brand.name}
                         href={brand.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex flex-col items-center justify-center p-6 rounded-xl hover:bg-slate-50 transition-all duration-300"
+                        className="group flex flex-col items-center justify-center p-4 w-full"
                     >
-                        <div className="h-16 flex items-center justify-center mb-4 relative filter grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 group-hover:scale-110">
+                        <div className="h-20 w-full flex items-center justify-center mb-4 transition-transform duration-300 transform group-hover:-translate-y-1">
                             <img
                                 src={brand.logo}
-                                alt={brand.name}
-                                className="max-h-full max-w-full object-contain"
+                                alt={`Logo ${brand.name}`}
+                                className="max-h-full max-w-[160px] object-contain filter drop-shadow-sm group-hover:drop-shadow-md transition-all"
                             />
                         </div>
-                        <span className="text-xs font-medium text-gray-400 group-hover:text-[#F97316] transition-colors text-center">
+                        <span className="text-xs font-medium text-gray-500 group-hover:text-[#F97316] transition-colors text-center opacity-80 group-hover:opacity-100">
                             {brand.text}
                         </span>
                     </a>

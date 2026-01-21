@@ -419,7 +419,7 @@ const Landing: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <span className="text-[#F97316] font-bold text-sm uppercase tracking-wider">O que fazemos</span>
-            <h2 className="text-3xl sm:text-4xl md:text-4xl font-extrabold text-[#1e293b] mt-2 mb-4">Soluções completas para seu condomínio</h2>
+            <h2 className="text-3xl sm:text-4xl md:text-4xl font-extrabold text-[#1e293b] mt-2 mb-4">Soluções para Corporativa, Administradoras e Condomínio</h2>
             <div className="w-20 h-1.5 bg-[#F97316] mx-auto rounded-full"></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
