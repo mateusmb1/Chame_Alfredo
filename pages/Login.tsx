@@ -81,10 +81,14 @@ const Login: React.FC = () => {
             Plataforma unificada para técnicos, administradores e clientes.
             Controle de ordens, estoques e chamados em tempo real.
           </p>
+          <div className="mt-10">
+            <img src="/alfredo.png" alt="Mascote Chame Alfredo" className="w-64 h-auto object-contain drop-shadow-2xl" />
+          </div>
         </div>
 
         <div className="relative z-10 text-xs text-gray-500 font-medium tracking-wide uppercase">
-          © 2026 Chame Alfredo Soluções Prediais
+          © 2026 Chame Alfredo Soluções para Corporativa, Administradoras e Condomínio
+
         </div>
       </div>
 
