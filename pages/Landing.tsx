@@ -138,9 +138,10 @@ const Landing: React.FC = () => {
       const cleanPhone = formData.whatsapp.replace(/\D/g, '')
       let client = null
 
-      const { data: existingClients } = await supabase
+      // Use a more careful selection to handle potential RLS issues
+      const { data: existingClients, error: searchError } = await supabase
         .from('clients')
-        .select('*')
+        .select('id, name, phone')
         .eq('phone', cleanPhone)
         .limit(1)
 
@@ -148,6 +149,8 @@ const Landing: React.FC = () => {
         client = existingClients[0]
       } else {
         // 2. Create new client
+        // We use a try-catch for the insert specifically to handle "already exists" errors 
+        // that might happen if the SELECT above failed to find the client (e.g. due to RLS)
         const { data: newClient, error: clientError } = await supabase
           .from('clients')
           .insert([{
@@ -159,18 +162,38 @@ const Landing: React.FC = () => {
           .select()
           .single()
 
-        if (clientError) throw clientError
-        client = newClient
+        if (clientError) {
+          // If it fails because of duplicate phone, try to get the existing client one more time
+          if (clientError.code === '23505') {
+            const { data: retryClient } = await supabase
+              .from('clients')
+              .select('id, name, phone')
+              .eq('phone', cleanPhone)
+              .single()
+            if (retryClient) {
+              client = retryClient
+            } else {
+              throw new Error('Este telefone já está cadastrado, mas não conseguimos recuperar seus dados. Por favor, fale conosco pelo WhatsApp.')
+            }
+          } else {
+            throw clientError
+          }
+        } else {
+          client = newClient
+        }
       }
+
+      if (!client) throw new Error('Não foi possível identificar ou criar seu cadastro.')
 
       setClientData(client)
 
       // Move to step 2: Service Selection
       setStep('service_selection')
 
-    } catch (error) {
-      console.error('Erro ao enviar solicitação:', error)
-      alert('Erro ao enviar solicitação. Por favor, tente novamente ou entre em contato via WhatsApp.')
+    } catch (error: any) {
+      console.error('Erro detalhado ao enviar solicitação:', error)
+      const msg = error.message || error.details || 'Erro desconhecido'
+      alert(`Erro ao processar sua solicitação: ${msg}. Por favor, tente novamente ou use o WhatsApp.`)
     } finally {
       setIsSubmitting(false)
     }
