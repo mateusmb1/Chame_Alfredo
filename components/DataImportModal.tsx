@@ -345,7 +345,7 @@ export function DataImportModal({ isOpen, onClose }: DataImportModalProps) {
                             subtotal: data.parsedValue,
                             tax: 0,
                             discount: 0,
-                            status: data.revenue === '1' ? 'paid' : 'pending',
+                            status: data.revenue === '1' ? 'paga' : 'pendente',
                             due_date: formatDateToISO(data.date || (data as any).vencimento).split('T')[0],
                             invoice_number: `IMP-${data.id || Math.random().toString(36).substring(7).toUpperCase()}`,
                             issue_date: new Date().toISOString().split('T')[0],

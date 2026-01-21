@@ -623,7 +623,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             tax: quote.tax,
             discount: quote.discount,
             total: quote.total,
-            status: 'pending',
+            status: 'pendente',
             // type: 'service', // removed as it does not exist in DB
             source_quote_id: quote.id,
             source_order_id: quote.sourceOrderId
