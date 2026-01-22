@@ -158,6 +158,27 @@
         display: none !important;
       }
     }
+
+    /* Fix input visibility in dark mode when background is light */
+    input,
+    textarea,
+    select {
+      color: #0f172a !important;
+      /* text-slate-950 */
+    }
+
+    /* Keep placeholder legible but muted */
+    input::placeholder,
+    textarea::placeholder {
+      color: #94a3b8 !important;
+      /* text-slate-400 */
+    }
+
+    /* Dark mode specific overrides for labels or other text if needed */
+    .dark label {
+      color: #e2e8f0 !important;
+      /* text-slate-200 */
+    }
   </style>
   <script type="importmap">
 {

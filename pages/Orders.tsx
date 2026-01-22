@@ -46,6 +46,25 @@ const Orders: React.FC = () => {
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
 
+  // Deletion handlers
+  const handleConfirmDelete = () => {
+    if (orderToDelete) {
+      deleteOrder(orderToDelete);
+      showToast('success', 'Registro removido com sucesso.');
+      setOrderToDelete(null);
+    }
+    setIsDeleteDialogOpen(false);
+  };
+
+  const handleConfirmBulkDelete = () => {
+    if (selectedIds.length > 0) {
+      deleteOrders(selectedIds);
+      showToast('success', `${selectedIds.length} registros purgados.`);
+      setSelectedIds([]);
+    }
+    setIsBulkDeleteDialogOpen(false);
+  };
+
   const [formData, setFormData] = useState({
     clientId: '',
     clientName: '',

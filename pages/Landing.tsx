@@ -379,7 +379,7 @@ const Landing: React.FC = () => {
                       placeholder="Algum detalhe adicional? (Opcional)"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none text-sm h-20 resize-none mt-4"
+                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none text-sm h-20 resize-none mt-4 text-slate-900"
                     />
 
                     <button

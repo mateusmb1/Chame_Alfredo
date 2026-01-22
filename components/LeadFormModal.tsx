@@ -275,7 +275,7 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Descreva o serviço:</label>
                                     <textarea
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none text-slate-900"
                                         rows={2}
                                         value={formData.otherServiceDescription}
                                         onChange={e => setFormData({ ...formData, otherServiceDescription: e.target.value })}

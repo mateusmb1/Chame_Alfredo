@@ -184,8 +184,7 @@ const Clients: React.FC = () => {
             </button>
           </div>
 
-          {/* Elegant List Containers */}
-          <div className="space-y-4 overflow-y-auto pr-2 flex-1 pb-10 custom-scrollbar">
+          <div className="space-y-3 overflow-y-auto pr-2 flex-1 pb-10 custom-scrollbar">
             {filteredClients.map((client) => (
               <div
                 key={client.id}
@@ -193,41 +192,41 @@ const Clients: React.FC = () => {
                   setSelectedClient(client);
                   if (window.innerWidth < 1024) setShowMobileDetails(true);
                 }}
-                className={`group p-6 rounded-[2.5rem] border transition-all cursor-pointer relative overflow-hidden
+                className={`group p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden
                   ${selectedClient?.id === client.id
-                    ? 'bg-[#1e293b] border-transparent shadow-2xl scale-[1.02] z-10'
-                    : 'bg-white dark:bg-[#101622] border-gray-100 dark:border-gray-800/50 hover:border-[#F97316]/30 shadow-sm'}`}
+                    ? 'bg-slate-50 dark:bg-white/5 border-primary shadow-lg ring-1 ring-primary/20 translate-x-1'
+                    : 'bg-white dark:bg-[#101622] border-gray-100 dark:border-gray-800/50 hover:border-primary/30 shadow-sm'}`}
               >
-                <div className="flex items-center gap-6">
-                  <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center font-black text-xl shadow-inner
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg shadow-inner shrink-0
                     ${selectedClient?.id === client.id
-                      ? 'bg-white/10 text-[#F97316]'
-                      : 'bg-gray-50 dark:bg-white/5 text-gray-400 group-hover:text-[#F97316]'}`}>
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-50 dark:bg-white/5 text-gray-400 group-hover:text-primary'}`}>
                     {client.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className={`font-black text-lg italic tracking-tighter uppercase mb-1
-                      ${selectedClient?.id === client.id ? 'text-white' : 'text-[#1e293b] dark:text-white'}`}>
+                    <h3 className={`font-black text-base italic tracking-tighter uppercase mb-0.5 truncate
+                      ${selectedClient?.id === client.id ? 'text-primary dark:text-white' : 'text-[#1e293b] dark:text-white'}`}>
                       {client.name}
                     </h3>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1.5 opacity-60">
-                        {client.type === 'pf' ? <User className="w-3.5 h-3.5" /> : <Building2 className="w-3.5 h-3.5" />}
-                        <span className="text-[9px] font-black uppercase tracking-widest">{client.type === 'pf' ? 'Indivíduo' : 'Corporativo'}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 opacity-60">
+                        {client.type === 'pf' ? <User className="w-3 h-3" /> : <Building2 className="w-3 h-3" />}
+                        <span className="text-[8px] font-black uppercase tracking-widest">{client.type === 'pf' ? 'PF' : 'PJ'}</span>
                       </div>
                       <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                      <span className="text-[10px] font-bold text-gray-400 lowercase tracking-wide truncate max-w-[180px]">{client.email}</span>
+                      <span className="text-[9px] font-bold text-gray-400 truncate max-w-[120px]">{client.phone}</span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-3">
-                    <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-[0.2em]
+                  <div className="flex flex-col items-end gap-2">
+                    <span className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest
                       ${client.status === 'active'
                         ? 'bg-emerald-500/10 text-emerald-500'
                         : 'bg-gray-500/10 text-gray-500'}`}>
                       {client.status === 'active' ? 'Ativo' : 'Offline'}
                     </span>
-                    <ChevronRight className={`w-5 h-5 transition-all
-                      ${selectedClient?.id === client.id ? 'text-[#F97316] translate-x-1' : 'text-gray-200 group-hover:text-[#F97316]'}`} />
+                    <ChevronRight className={`w-4 h-4 transition-all
+                      ${selectedClient?.id === client.id ? 'text-primary translate-x-1' : 'text-gray-200 group-hover:text-primary'}`} />
                   </div>
                 </div>
               </div>
