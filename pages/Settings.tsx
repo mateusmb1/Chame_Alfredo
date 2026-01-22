@@ -133,7 +133,19 @@ const Settings: React.FC = () => {
     try {
       // Check availability if username changed
       if (securityForm.username !== currentUser.username) {
+        // Find existing tech with same username but different ID
+        const tech = await checkUsernameAvailability(securityForm.username, currentUser.id);
+        if (!tech) { // checkUsernameAvailability returns false if username exists? Wait, let's check AppContext.
+          // AppContext: return !exists. So if true, it IS available.
+          // BUT, checkUsernameAvailability implementation: return !exists. 
+          // Let's re-read the implementation in AppContext carefully.
+          // const exists = technicians.some(t => t.username... && t.id !== excludeId).
+          // return !exists.
+          // So if it returns false, it means it Exists.
+        }
+
         const isAvailable = await checkUsernameAvailability(securityForm.username, currentUser.id);
+
         if (!isAvailable) {
           showToast('error', 'Este nome de usuário já está em uso.');
           setIsSavingSecurity(false);
@@ -146,9 +158,12 @@ const Settings: React.FC = () => {
         updates.password = securityForm.password;
       }
 
-      const { error } = await updateTechnician(currentUser.id, updates);
+      // AppContext returns { error } object
+      const result = await updateTechnician(currentUser.id, updates);
 
-      if (error) throw error;
+      if (result && result.error) {
+        throw result.error;
+      }
 
       // Update local storage
       const updatedUser = { ...currentUser, ...updates };
