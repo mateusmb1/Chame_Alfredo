@@ -17,11 +17,10 @@ import {
   Settings,
   LogOut,
   Menu,
-  X,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from 'lucide-react';
 import Mascot from './Mascot';
-
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -46,24 +45,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, [setOnNewMessage]);
 
   const menuItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/orders', label: 'Ordens de Serviço', icon: Receipt },
-    { path: '/quotes', label: 'Orçamentos', icon: Quote },
-    { path: '/invoices', label: 'Faturas', icon: FileText },
+    { path: '/dashboard', label: 'Monitor', icon: LayoutDashboard },
+    { path: '/orders', label: 'Serviços', icon: Receipt },
+    { path: '/quotes', label: 'Propostas', icon: Quote },
     { path: '/contracts', label: 'Contratos', icon: FileText },
-    { path: '/products', label: 'Produtos', icon: Package },
-    { path: '/clients', label: 'Clientes', icon: Users },
-    { path: '/agenda', label: 'Agenda', icon: Calendar },
+    { path: '/agenda', label: 'Planejamento', icon: Calendar },
+    { path: '/clients', label: 'Parceiros', icon: Users },
     { path: '/team', label: 'Equipe', icon: Users },
     { path: '/projects', label: 'Projetos', icon: Briefcase },
-    { path: '/inventory', label: 'Estoque', icon: HardDrive },
-    { path: '/reports', label: 'Relatórios', icon: BarChart3 },
-    { path: '/communication', label: 'Comunicação', icon: MessageSquare },
+    { path: '/inventory', label: 'Patrimônio', icon: HardDrive },
+    { path: '/reports', label: 'Performance', icon: BarChart3 },
+    { path: '/communication', label: 'Chat Central', icon: MessageSquare },
   ];
 
   const currentPathLabel = menuItems.find(item =>
     location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
-  )?.label || 'Alfredo';
+  )?.label || 'Alfredo OS';
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
@@ -75,85 +72,78 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const SidebarContent = () => (
-    <div className="flex h-full flex-col bg-white dark:bg-[#101622]">
-      {/* Brand Header */}
-      <div className="p-8 border-b border-gray-100 dark:border-gray-800/50 bg-[#1e293b] text-white rounded-br-[2rem] mb-6">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center p-1.5 border border-white/20 shadow-xl">
+    <div className="flex h-full flex-col bg-[#1e293b] text-white">
+      {/* Premium Brand Header */}
+      <div className="p-10  relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+          <Sparkles className="w-20 h-20 rotate-12" />
+        </div>
+        <div className="flex items-center gap-5 relative z-10">
+          <div className="w-16 h-16 rounded-[1.5rem] bg-white text-[#1e293b] flex items-center justify-center p-2.5 shadow-2xl border border-white/20">
             <Mascot className="w-full h-full" />
           </div>
           <div className="flex flex-col">
-            <h1 className="text-white text-lg font-black leading-none tracking-tight">Alfredo</h1>
-            <p className="text-[#F97316] text-[10px] font-black uppercase tracking-[0.2em] mt-1">Admin Panel</p>
+            <h1 className="text-white text-2xl font-black italic tracking-tighter leading-none">Alfredo</h1>
+            <p className="text-[#F97316] text-[10px] font-black uppercase tracking-[0.4em] mt-2 opacity-80">SaaS Command</p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-6 py-2 custom-scrollbar">
-        <div className="space-y-1.5">
-          {menuItems.map((item) => {
-            const active = isActive(item.path);
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileOpen(false)}
-                className={`
-                  group flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300
-                  ${active
-                    ? 'bg-[#1e293b] text-white shadow-lg shadow-gray-200 dark:shadow-none translate-x-1'
-                    : 'text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5'
-                  }
-                `}
-              >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className={`
-                    p-2.5 rounded-xl transition-all
-                    ${active ? 'bg-[#F97316] text-white shadow-lg shadow-orange-500/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:text-primary'}
-                  `}>
-                    <item.icon className="w-5 h-5" />
-                  </div>
-                  <span className={`text-sm font-bold truncate ${!active ? 'text-gray-600 dark:text-gray-400 group-hover:text-primary' : 'text-white'}`}>
-                    {item.label}
-                  </span>
-                </div>
-                {active && <ChevronRight className="ml-auto w-4 h-4 text-[#F97316]" />}
-              </Link>
-            );
-          })}
-        </div>
+      <nav className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar lg:no-scrollbar space-y-2">
+        {menuItems.map((item) => {
+          const active = isActive(item.path);
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => setMobileOpen(false)}
+              className={`
+                group flex items-center gap-5 px-6 py-4 rounded-[1.8rem] transition-all duration-500 relative
+                ${active
+                  ? 'bg-white text-[#1e293b] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)]'
+                  : 'text-white/40 hover:text-white hover:bg-white/5'
+                }
+              `}
+            >
+              {active && <div className="absolute left-0 w-1.5 h-6 bg-primary rounded-full -translate-x-3"></div>}
+              <div className={`
+                p-2.5 rounded-xl transition-all duration-500
+                ${active ? 'bg-primary text-white shadow-lg' : 'bg-white/5 text-white/20 group-hover:bg-white/10 group-hover:text-white'}
+              `}>
+                <item.icon className="w-5 h-5" />
+              </div>
+              <span className={`text-[11px] font-black uppercase tracking-[0.2em] truncate ${active ? 'text-[#1e293b]' : ''}`}>
+                {item.label}
+              </span>
+              {active && <ChevronRight className="ml-auto w-4 h-4 text-primary" />}
+            </Link>
+          );
+        })}
       </nav>
 
       {/* Footer Actions */}
-      <div className="p-4 border-t border-gray-100 dark:border-gray-800/50 space-y-1">
+      <div className="p-8 border-t border-white/5 space-y-3 bg-black/10">
         <Link
           to="/settings"
           onClick={() => setMobileOpen(false)}
           className={`
-            flex items-center gap-3 px-4 py-3 rounded-xl transition-colors
+            flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300
             ${isActive('/settings')
-              ? 'bg-primary/10 text-primary'
-              : 'text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5'
+              ? 'bg-primary text-white shadow-lg'
+              : 'text-white/30 hover:text-white hover:bg-white/5'
             }
           `}
         >
           <Settings className="w-5 h-5 flex-shrink-0" />
-          <span className={`text-[14px] font-semibold ${(breakpoint === 'xs' || breakpoint === 'sm') ? 'hidden md:block' : ''}`}>
-            Configurações
-          </span>
+          <span className="text-[10px] font-black uppercase tracking-widest">Ajustes GERAIS</span>
         </Link>
         <button
-          onClick={() => {
-            setMobileOpen(false);
-            handleLogout();
-          }}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+          onClick={handleLogout}
+          className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-red-400 hover:bg-red-500/10 transition-all group"
         >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
-          <span className={`text-[14px] font-semibold ${(breakpoint === 'xs' || breakpoint === 'sm') ? 'hidden md:block' : ''}`}>
-            Sair
-          </span>
+          <LogOut className="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform" />
+          <span className="text-[10px] font-black uppercase tracking-widest">Finalizar Sessão</span>
         </button>
       </div>
     </div>
@@ -163,16 +153,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="flex h-screen overflow-hidden bg-[#F8FAFC] dark:bg-[#090E1A]">
       {/* Mobile Drawer Overlay */}
       <div
-        className={`fixed inset-0 bg-[#090E1A]/60 backdrop-blur-sm z-[60] md:hidden transition-all duration-300 ${mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-[#090E1A]/80 backdrop-blur-md z-[60] md:hidden transition-all duration-500 ${mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setMobileOpen(false)}
       />
 
       <aside
         className={`
-          fixed inset-y-0 left-0 z-[70] w-[300px] bg-white dark:bg-[#101622] 
-          border-r border-gray-100 dark:border-gray-800 transition-transform duration-300 ease-in-out
+          fixed inset-y-0 left-0 z-[70] w-[320px] bg-[#1e293b]
+          transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1)
           md:relative md:translate-x-0
-          ${mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <SidebarContent />
@@ -181,60 +171,38 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-hidden">
         {/* Mobile Header */}
-        <header className="md:hidden flex items-center justify-between h-16 px-4 bg-white/80 dark:bg-[#101622]/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 sticky top-0 z-[50]">
+        <header className="md:hidden flex items-center justify-between h-20 px-6 bg-white/80 dark:bg-[#101622]/80 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 sticky top-0 z-[50]">
           <button
             onClick={() => setMobileOpen(true)}
-            className="p-2 -ml-2 rounded-xl text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5"
+            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-gray-50 dark:bg-white/5 text-[#1e293b] dark:text-white shadow-sm"
           >
             <Menu className="w-6 h-6" />
           </button>
 
-          <div className="flex items-center gap-2 min-w-0">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 ${!companyProfile?.logo_url ? 'bg-primary' : ''}`}>
-              {companyProfile?.logo_url ? (
-                <img src={companyProfile.logo_url} alt="Logo" className="w-full h-full object-contain bg-white" />
-              ) : (
-                <span className="text-white font-bold text-sm">A</span>
-              )}
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col items-end">
+              <span className="text-[9px] font-black text-[#F97316] uppercase tracking-[0.2em] leading-none mb-1">Membro Admin</span>
+              <span className="text-[#1e293b] dark:text-white font-black text-sm uppercase italic tracking-tighter truncate">{currentPathLabel}</span>
             </div>
-            <span className="text-[#0d121b] dark:text-white font-bold text-sm tracking-tight truncate">
-              {currentPathLabel}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-end w-10">
-            {/* Empty space or notification badge could go here */}
+            <div className="w-10 h-10 rounded-xl bg-[#1e293b] flex items-center justify-center p-1.5 shadow-lg">
+              <Mascot className="w-full h-full" />
+            </div>
           </div>
         </header>
 
         {/* Dynamic Page Container */}
-        <main className={`
-          flex-1 w-full max-w-[1600px] mx-auto overflow-y-auto overflow-x-hidden
-          transition-all duration-300
-          p-3 sm:p-4 md:p-8
-        `}>
+        <main className="flex-1 w-full max-w-[1700px] mx-auto overflow-y-auto overflow-x-hidden p-6 sm:p-10 lg:p-14 custom-scrollbar">
           {children}
         </main>
       </div>
 
       <style dangerouslySetInnerHTML={{
         __html: `
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(156, 163, 175, 0.2);
-          border-radius: 10px;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(75, 85, 99, 0.2);
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(156, 163, 175, 0.4);
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.05); border-radius: 20px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.05); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
       `}} />
     </div>
   );

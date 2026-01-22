@@ -35,7 +35,7 @@ import MobileCreateOrder from './pages/MobileCreateOrder';
 import Layout from './components/Layout';
 import MobileLayout from './components/MobileLayout';
 import Landing from './pages/Landing';
-import LeadConfirmation from './pages/LeadConfirmation';
+// import LeadConfirmation from './pages/LeadConfirmation';
 
 // Import new pages from downloader
 import InvoiceList from './downloader/pages/invoices/InvoiceList';
@@ -125,20 +125,20 @@ const MobileAppLayout: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <AppProvider>
-      <ToastProvider>
+    <ToastProvider>
+      <AppProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/landing" element={<Landing />} />
-            <Route path="/lead-confirmation" element={<LeadConfirmation />} />
+            {/* <Route path="/lead-confirmation" element={<LeadConfirmation />} /> */}
             <Route path="/login" element={<Login />} />
             <Route path="/mobile/*" element={<MobileAppLayout />} />
             <Route path="/client/*" element={<ClientAppLayout />} />
             <Route path="/*" element={<AppLayout />} />
           </Routes>
         </BrowserRouter>
-      </ToastProvider>
-    </AppProvider>
+      </AppProvider>
+    </ToastProvider>
   );
 };
 

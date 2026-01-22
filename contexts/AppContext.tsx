@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { supabase } from '../src/lib/supabase';
+import { useToast } from './ToastContext';
 import { Client } from '../types/client';
 import { Order } from '../types/order';
 import { InventoryItem } from '../types/inventory';
@@ -109,6 +110,7 @@ interface AppContextType {
     companyProfile: CompanyProfile | null;
     updateCompanyProfile: (profile: Partial<CompanyProfile>) => Promise<void>;
     deleteOrders: (ids: string[]) => Promise<void>;
+    logAppError: (error: any, context: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -137,6 +139,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Notification callbacks (using refs to avoid stale closures in realtime handlers)
     const onNewOrderRef = useRef<((order: Order) => void) | undefined>(undefined);
     const onNewMessageRef = useRef<((message: Message) => void) | undefined>(undefined);
+    const { showToast } = useToast();
 
     // Initial Fetch & Real-time Subscriptions
     useEffect(() => {
@@ -401,9 +404,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
     const mapContractToDB = (c: Partial<Contract>) => {
         const { clientId, billingFrequency, startDate, endDate, contractType, createdAt, updatedAt, ...rest } = c;
+        // Verify UUID format for clientId
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        const validClientId = clientId && uuidRegex.test(clientId) ? clientId : undefined;
+
         return {
             ...rest,
-            ...(clientId && { client_id: clientId }),
+            ...(validClientId && { client_id: validClientId }),
             ...(billingFrequency && { billing_frequency: billingFrequency }),
             ...(startDate && { start_date: startDate }),
             ...(endDate && { end_date: endDate }),
@@ -559,10 +566,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [setClients, mapClientToDB, mapClientFromDB, supabase]);
 
     const updateClient = React.useCallback(async (id: string, updatedClient: Partial<Client>) => {
+        const previousClients = [...clients];
+        setClients(prev => prev.map(c => c.id === id ? { ...c, ...updatedClient } : c));
+
         const dbUpdate = mapClientToDB(updatedClient);
         const { error } = await supabase.from('clients').update(dbUpdate).eq('id', id);
-        if (error) console.error('Error updating client:', error);
-    }, [mapClientToDB, supabase]);
+
+        if (error) {
+            logAppError(error, 'updateClient');
+            setClients(previousClients);
+            showToast('error', 'Falha ao atualizar cliente. Revertendo...');
+        }
+    }, [mapClientToDB, supabase, clients, showToast]);
 
     const deleteClient = React.useCallback(async (id: string) => {
         const { error } = await supabase.from('clients').delete().eq('id', id);
@@ -582,16 +597,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     }, [setOrders, mapOrderToDB, mapOrderFromDB, supabase]);
 
-    const updateOrder = React.useCallback(async (id: string, updatedOrder: Partial<Order>) => {
-        // Optimistic update
-        setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updatedOrder } : o));
-
-        const dbUpdate = mapOrderToDB(updatedOrder);
-        const { error } = await supabase.from('orders').update(dbUpdate).eq('id', id);
-        if (error) {
-            console.error('Error updating order:', error);
-        }
-    }, [mapOrderToDB, supabase, setOrders]);
 
     const deleteOrder = React.useCallback(async (id: string) => {
         setOrders(prev => prev.filter(o => o.id !== id));
@@ -612,17 +617,57 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [mapInventoryToDB, supabase]);
 
     const updateInventoryItem = React.useCallback(async (id: string, updates: Partial<InventoryItem>) => {
+        const previousInventory = [...inventory];
+        setInventory(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+
         const dbUpdate = mapInventoryToDB(updates);
-        // Clean undefineds
         Object.keys(dbUpdate).forEach(key => (dbUpdate as any)[key] === undefined && delete (dbUpdate as any)[key]);
         const { error } = await supabase.from('inventory').update(dbUpdate).eq('id', id);
-        if (error) console.error('Error updating inventory:', error);
-    }, [mapInventoryToDB, supabase]);
+
+        if (error) {
+            logAppError(error, 'updateInventoryItem');
+            setInventory(previousInventory);
+            showToast('error', 'Erro no estoque. Alteração desfeita.');
+        }
+    }, [mapInventoryToDB, supabase, inventory, showToast]);
 
     const deleteInventoryItem = React.useCallback(async (id: string) => {
         const { error } = await supabase.from('inventory').delete().eq('id', id);
         if (error) console.error('Error deleting inventory:', error);
     }, [supabase]);
+
+    const updateOrder = React.useCallback(async (id: string, updatedOrder: Partial<Order>) => {
+        // Save previous state for rollback
+        const previousOrders = [...orders];
+        const oldOrder = orders.find(o => o.id === id);
+
+        // Optimistic update
+        setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updatedOrder } : o));
+
+        const dbUpdate = mapOrderToDB(updatedOrder);
+        const { error } = await supabase.from('orders').update(dbUpdate).eq('id', id);
+
+        if (error) {
+            console.error('Error updating order - Rolling back:', error);
+            setOrders(previousOrders); // Rollback
+            showToast('error', 'Falha na sincronização. Alteração revertida.');
+            return;
+        }
+
+        // Feature: Automatic Inventory Deduction
+        // If order status is changed to 'concluida', we deduct items from inventory
+        if (updatedOrder.status === 'concluida' && oldOrder && oldOrder.status !== 'concluida') {
+            const itemsToDeduct = oldOrder.items || [];
+            for (const item of itemsToDeduct) {
+                // Find matching inventory item by SKU or Name
+                const invItem = inventory.find(i => i.sku === item.sku || i.name === item.name);
+                if (invItem) {
+                    const newQty = invItem.quantity - (item.quantity || 1);
+                    await updateInventoryItem(invItem.id, { quantity: Math.max(0, newQty) });
+                }
+            }
+        }
+    }, [mapOrderToDB, supabase, setOrders, orders, inventory, updateInventoryItem, showToast]);
 
     // Quote operations
     const addQuote = React.useCallback(async (quote: Omit<Quote, 'id' | 'createdAt'>) => {
@@ -1101,6 +1146,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         else setCompanyProfile(prev => prev ? { ...prev, ...updates } : null);
     }, [companyProfile, supabase]);
 
+    const logAppError = React.useCallback((error: any, context: string) => {
+        console.error(`[App Error][${context}]`, error);
+        // Here we could also send to Sentry or a custom logs table in Supabase
+    }, []);
+
     const value: AppContextType = React.useMemo(() => ({
         clients,
         orders,
@@ -1180,7 +1230,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         uploadFile,
         generateMonthlyInvoices,
         companyProfile,
-        updateCompanyProfile
+        updateCompanyProfile,
+        logAppError
     }), [
         clients, orders, inventory, quotes, contracts, technicians, projects, projectActivities,
         products, invoices, appointments, conversations, messages,
