@@ -1,0 +1,66 @@
+📊 Estrutura de Categorização Proposta
+CATEGORIA 1: VIDEOMONITORAMENTO / CFTV
+Câmeras, DVRs, gravadores, conversores de vídeo
+
+Exemplos: DVR 8CH, CÂMERA INFRAVERMELHO, GRAVADOR DIGITAL, CONVERSOR VÍDEO BALUN
+
+CATEGORIA 2: ELETRIFICAÇÃO & CONTROLE DE ACESSO
+Fechaduras elétricas, motores de portão, automação
+
+Exemplos: MOTOR DESLIZANTE, FECHADURA ELETRÔNICA, CENTRAL ELETRIFICADORA, KIT MOTOR JET FLEX
+
+CATEGORIA 3: COMPONENTES & CABOS
+Cabos, conectores, fios, componentes elétricos
+
+Exemplos: CABO COAXIAL, CONECTOR BNC, FITA ADESIVA, BUCHA NYLON, CABO UTP CAT5E
+
+CATEGORIA 4: PROTEÇÃO FÍSICA
+Concertina, cerca elétrica, grades, hastes
+
+Exemplos: KIT CERCA CONCERTINA, PLACA ADVERTÊNCIA, HASTE CHUMBAR, FILO DE AÇO INOX
+
+CATEGORIA 5: TELEFONIA & PORTARIA
+Interfones, terminais, central de portaria, telefones
+
+Exemplos: APARELHO INTERFONE, TERMINAL DE PORTARIA TP 2000, CENTRAL PORTARIA, VIDEOPORTEIRO
+
+CATEGORIA 6: ALARME & SEGURANÇA
+Sirenes, sensores, centrais de alarme, botões
+
+Exemplos: CENTRAL ALARME, SENSOR MOVIMENTO, SIRENE, BOTOEIRA, SENSOR MAGNÉTICO
+
+CATEGORIA 7: REDE & COMUNICAÇÃO
+Switches, roteadores, antenas, modems
+
+Exemplos: SWITCH, ROTEADOR WIRELESS, ANTENA DIGITAL, ACCESS POINT
+
+CATEGORIA 8: FONTE & ENERGIA
+Fontes de alimentação, baterias, nobreaks, conversores
+
+Exemplos: FONTE ALIMENTAÇÃO 12V, BATERIA 12V, NOBREAK, CONVERSOR AC/DC
+
+CATEGORIA 9: MATERIAL DE CONSTRUÇÃO & FERRAGENS
+Cimento, areia, parafusos, arruelas, abraçadeiras
+
+Exemplos: CIMENTO CINZA, AREIA LAVADA, PARAFUSO, ARRUELA INOX, ABRAÇADEIRA NYLON
+
+CATEGORIA 10: PERIFÉRICOS & ACESSÓRIOS DIVERSOS
+Mouses, teclados, suportes, bandejas, protetor de rede
+
+Exemplos: MOUSE COM FIO, PROTETOR ELETRONICO, BANDEJA RACK, ABRACADEIRA
+
+CATEGORIA 11: SERVIÇOS / KITS COMPLETOS ⭐
+Esses são pacotes que incluem instalação/configuração (serviço + produto)
+
+Exemplos: "KIT COMPLETO CONTROLADOR ACESSO" com "KIT DE INSTALAÇÃO COMPLETO", "CONJ AUT DE PORTOES... Incluso: Instalação, configuração e ativação"
+
+⚠️ O que você TEM em SERVIÇOS:
+Alguns itens incluem instalação, configuração e ativação, então são Serviços/Kits Completos:
+
+OX0EYqoVpSGJrEbmrzD - CONJ AUT PORTOES (Incluso instalação)
+
+OX0F1K96XZZVR7kjR6w - CONJ AUT PORTOES PIV (Incluso instalação)
+
+OeOvY6ucoFNIx9LKqHl - Leitor RFID (KIT completo com instalação)
+
+ObnSmW33gTlOVi0wr0v - CONTROLADOR ACESSO FACIAL (Controle facial + acessórios)

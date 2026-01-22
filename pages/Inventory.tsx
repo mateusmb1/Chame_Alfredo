@@ -4,6 +4,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { useApp } from '../contexts/AppContext';
 import { useToast } from '../contexts/ToastContext';
 import { InventoryItem } from '../types/inventory';
+import { INVENTORY_CATEGORIES, CATEGORY_COLORS, normalizeCategory } from '../src/constants/categories';
 import {
     Search,
     Filter,
@@ -38,15 +39,21 @@ const Inventory: React.FC = () => {
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<string>('TODAS');
 
     const [formData, setFormData] = useState({
         name: '', sku: '', quantity: '', location: '', minQuantity: '', unit: '', category: '', price: '', supplier: ''
     });
 
-    const filteredItems = inventory.filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.sku.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredItems = inventory.filter(item => {
+        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.sku.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const category = normalizeCategory(item.name, item.category);
+        const matchesCategory = selectedCategory === 'TODAS' || category === selectedCategory;
+
+        return matchesSearch && matchesCategory;
+    });
 
     const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
     const paginatedItems = filteredItems.slice(
@@ -184,10 +191,32 @@ const Inventory: React.FC = () => {
                             className="w-full pl-14 pr-6 py-4 bg-gray-50/50 dark:bg-white/5 border-none rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest focus:ring-4 focus:ring-primary/5 dark:text-white"
                         />
                     </div>
-                    <button className="h-14 w-14 flex items-center justify-center bg-gray-50 dark:bg-white/5 text-gray-400 rounded-2xl hover:text-primary transition-all">
-                        <Filter className="w-6 h-6" />
-                    </button>
                 </div>
+            </div>
+
+            {/* Category Filter Bar */}
+            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
+                <button
+                    onClick={() => setSelectedCategory('TODAS')}
+                    className={`h-10 px-6 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all border
+                        ${selectedCategory === 'TODAS'
+                            ? 'bg-[#1e293b] text-white border-[#1e293b]'
+                            : 'bg-white dark:bg-[#101622] text-gray-400 border-gray-100 dark:border-gray-800 hover:border-primary/50'}`}
+                >
+                    Todos
+                </button>
+                {INVENTORY_CATEGORIES.map(cat => (
+                    <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`h-10 px-6 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all border
+                            ${selectedCategory === cat
+                                ? `border-transparent shadow-lg ${CATEGORY_COLORS[cat]}`
+                                : 'bg-white dark:bg-[#101622] text-gray-400 border-gray-100 dark:border-gray-800 hover:border-primary/50'}`}
+                    >
+                        {cat.split(' ')[0]} {/* Show first word for compactness */}
+                    </button>
+                ))}
             </div>
 
             {/* Inventory Asset List - Industrial Premium Redesign */}
@@ -230,7 +259,9 @@ const Inventory: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="px-8 py-5">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-[#1e293b]/60 dark:text-gray-400 border border-gray-100 dark:border-gray-800 px-3 py-1 rounded-lg bg-white dark:bg-white/5">{item.category}</span>
+                                                <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-transparent opacity-90 whitespace-nowrap ${CATEGORY_COLORS[normalizeCategory(item.name, item.category) as keyof typeof CATEGORY_COLORS] || 'bg-gray-100 text-gray-500'}`}>
+                                                    {normalizeCategory(item.name, item.category).split(' ')[0]}...
+                                                </span>
                                             </td>
                                             <td className="px-8 py-5">
                                                 <div className="flex items-baseline gap-1">
@@ -403,12 +434,16 @@ const Inventory: React.FC = () => {
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Categoria</label>
-                            <input
-                                type="text"
+                            <select
                                 value={formData.category}
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                className="w-full h-16 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-black focus:ring-8 focus:ring-primary/5 dark:text-white px-6 transition-all uppercase"
-                            />
+                                className="w-full h-16 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-black focus:ring-8 focus:ring-primary/5 dark:text-white px-5 outline-none transition-all uppercase"
+                            >
+                                <option value="">SELECIONE UMA CATEGORIA</option>
+                                {INVENTORY_CATEGORIES.map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Custo Base</label>
