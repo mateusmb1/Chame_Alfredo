@@ -18,7 +18,7 @@ const SERVICES = [
 ]
 
 const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
-    const { loading, error: submitError, fetchAddressByCEP, submitLead } = useLeadCapture()
+    const { loading, error: submitError, success, protocol, fetchAddressByCEP, submitLead } = useLeadCapture()
     const [step, setStep] = useState(1)
     const [addressLoading, setAddressLoading] = useState(false)
 
@@ -44,8 +44,7 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
         }
     }, [isOpen])
 
-    // Geolocation effect - run once on mount or when convenient, but better inside a user action or specifically requested. 
-    // Let's run it on open step 1.
+    // Geolocation effect
     useEffect(() => {
         if (isOpen && step === 1 && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((pos) => {
@@ -79,11 +78,8 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
 
     const handleNextStep = (e: React.FormEvent) => {
         e.preventDefault()
-        // Validation
         if (formData.name.length < 3) return alert('Nome deve ter pelo menos 3 caracteres')
         if (formData.whatsapp.length < 10) return alert('WhatsApp inválido')
-        // if (!formData.street) return alert('Endereço obrigatório')
-
         setStep(2)
     }
 
@@ -124,7 +120,28 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
 
                 {/* Body */}
                 <div className="p-6 overflow-y-auto custom-scrollbar">
-                    {step === 1 ? (
+                    {success ? (
+                        <div className="py-8 flex flex-col items-center text-center space-y-4 animate-in zoom-in-95 duration-300">
+                            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-2">
+                                <CheckCircle className="w-12 h-12 text-emerald-500" />
+                            </div>
+                            <h3 className="text-2xl font-black text-[#1e293b] tracking-tight">Solicitação Enviada!</h3>
+                            <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl w-full">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Seu Protocolo</p>
+                                <p className="text-xl font-black text-primary font-mono">{protocol}</p>
+                            </div>
+                            <p className="text-gray-600 font-medium">
+                                Obrigado, <span className="text-[#1e293b] font-bold">{formData.name.split(' ')[0]}</span>.
+                                Recebemos seu pedido e um de nossos especialistas entrará em contato pelo seu <span className="text-emerald-600 font-bold italic">WhatsApp</span> em instantes.
+                            </p>
+                            <button
+                                onClick={onClose}
+                                className="w-full bg-[#1e293b] text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition shadow-lg mt-4"
+                            >
+                                Entendi, obrigado!
+                            </button>
+                        </div>
+                    ) : step === 1 ? (
                         <form id="step1-form" onSubmit={handleNextStep} className="space-y-4">
                             {/* Emergency Checkbox */}
                             <div className="bg-red-50 border border-red-100 p-3 rounded-lg flex items-start gap-3">
@@ -166,7 +183,6 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition"
                                         value={formData.whatsapp}
                                         onChange={e => {
-                                            // Simple mask
                                             let v = e.target.value.replace(/\D/g, '')
                                             if (v.length > 11) v = v.slice(0, 11)
                                             setFormData({ ...formData, whatsapp: v })
@@ -278,39 +294,41 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Footer actions */}
-                <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between shrink-0">
-                    {step === 2 && (
-                        <button
-                            onClick={() => setStep(1)}
-                            className="px-4 py-2 text-gray-600 font-medium hover:text-[#1e293b] flex items-center"
-                        >
-                            <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
-                        </button>
-                    )}
-
-                    <div className="ml-auto w-full sm:w-auto">
-                        {step === 1 ? (
+                {!success && (
+                    <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between shrink-0">
+                        {step === 2 && (
                             <button
-                                onClick={handleNextStep}
-                                className="w-full sm:w-auto bg-[#1e293b] hover:bg-gray-800 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition flex items-center justify-center"
+                                onClick={() => setStep(1)}
+                                className="px-4 py-2 text-gray-600 font-medium hover:text-[#1e293b] flex items-center"
                             >
-                                Continuar <ArrowRight className="ml-2 w-4 h-4" />
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleFinalSubmit}
-                                disabled={loading}
-                                className="w-full sm:w-auto bg-[#F97316] hover:bg-orange-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
-                            >
-                                {loading ? (
-                                    <>Processando...</>
-                                ) : (
-                                    <>Solicitar Agora <CheckCircle className="ml-2 w-4 h-4" /></>
-                                )}
+                                <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
                             </button>
                         )}
+
+                        <div className="ml-auto w-full sm:w-auto">
+                            {step === 1 ? (
+                                <button
+                                    onClick={handleNextStep}
+                                    className="w-full sm:w-auto bg-[#1e293b] hover:bg-gray-800 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition flex items-center justify-center"
+                                >
+                                    Continuar <ArrowRight className="ml-2 w-4 h-4" />
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleFinalSubmit}
+                                    disabled={loading}
+                                    className="w-full sm:w-auto bg-[#F97316] hover:bg-orange-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    {loading ? (
+                                        <>Processando...</>
+                                    ) : (
+                                        <>Solicitar Agora <CheckCircle className="ml-2 w-4 h-4" /></>
+                                    )}
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     )

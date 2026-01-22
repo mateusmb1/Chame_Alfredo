@@ -72,9 +72,15 @@ export const useLeadCapture = () => {
         return 'media' // Default
     }
 
+    const [success, setSuccess] = useState(false)
+    const [protocol, setProtocol] = useState<string | null>(null)
+
+    // ... (rest of helper functions)
+
     const submitLead = async (formData: LeadFormData) => {
         setLoading(true)
         setError(null)
+        setSuccess(false)
 
         try {
             const cleanPhone = formData.whatsapp.replace(/\D/g, '')
@@ -95,7 +101,7 @@ export const useLeadCapture = () => {
             // 2. Create Order
             if (!clientId) throw new Error('Não foi possível identificar seu cadastro (ID ausente).')
 
-            const protocol = generateProtocol()
+            const newProtocol = generateProtocol()
             const priority = determinePriority(formData)
             const finalClientName = formData.name?.trim() || 'Cliente Site'
 
@@ -118,18 +124,8 @@ export const useLeadCapture = () => {
 
             if (orderError) throw orderError
 
-            // 3. Redirect to Confirmation
-            navigate('/lead-confirmation', {
-                state: {
-                    protocol,
-                    name: formData.name,
-                    services: serviceNames,
-                    priority: priority === 'urgente' ? 'URGENTE' : 'Normal',
-                    whatsapp: cleanPhone,
-                    neighborhood: formData.neighborhood,
-                    city: formData.city
-                }
-            })
+            setProtocol(newProtocol)
+            setSuccess(true)
 
         } catch (err: any) {
             console.error('Error submitting lead:', err)
@@ -142,6 +138,8 @@ export const useLeadCapture = () => {
     return {
         loading,
         error,
+        success,
+        protocol,
         fetchAddressByCEP,
         submitLead
     }
