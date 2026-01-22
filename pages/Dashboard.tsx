@@ -95,21 +95,25 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-gray-100 dark:border-gray-800">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#0d121b] dark:text-white tracking-tight">Overview</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Bom dia! Veja como estão as operações hoje.</p>
+          <h1 className="text-3xl md:text-4xl font-black text-[#1e293b] dark:text-white tracking-tight leading-none mb-2">
+            Overview
+          </h1>
+          <p className="text-gray-400 dark:text-gray-500 text-sm font-medium tracking-wide">
+            Bom dia! Veja como estão as operações hoje.
+          </p>
         </div>
-        <div className="flex items-center gap-2 md:gap-3">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1 sm:w-80 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-primary transition-colors" />
             <input
               type="text"
-              placeholder="Buscar..."
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-[#101622] border border-gray-100 dark:border-gray-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white"
+              placeholder="Buscar ordens, clientes..."
+              className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-[#101622] border border-gray-200 dark:border-gray-800 rounded-[1.25rem] text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all dark:text-white"
             />
           </div>
-          <button className="p-2 bg-white dark:bg-[#101622] border border-gray-100 dark:border-gray-800 rounded-xl text-gray-500">
+          <button className="p-3.5 bg-white dark:bg-[#101622] border border-gray-200 dark:border-gray-800 rounded-[1.25rem] text-gray-400 hover:text-primary hover:border-primary/50 transition-all shadow-sm">
             <Bell className="w-5 h-5" />
           </button>
         </div>

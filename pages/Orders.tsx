@@ -330,24 +330,27 @@ const Orders: React.FC = () => {
                         {config.label}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => navigate(`/orders/${order.id}`)}
-                        className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors"
+                        className="p-3 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-2xl transition-all"
+                        title="Ver Detalhes"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleOpenEditModal(order)}
-                        className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-500/5 rounded-xl transition-colors"
+                        className="p-3 text-gray-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-2xl transition-all"
+                        title="Editar Ordem"
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <Edit2 className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleDeleteClick(order.id)}
-                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-colors"
+                        className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-2xl transition-all"
+                        title="Excluir Ordem"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
@@ -442,27 +445,27 @@ const Orders: React.FC = () => {
                     <config.icon className="w-3 h-3" />
                     {config.label}
                   </span>
-                  <div className="flex items-center justify-end gap-1">
+                  <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => navigate(`/orders/${order.id}`)}
-                      className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors"
+                      className="p-3 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-2xl transition-all"
                       title="Ver Detalhes"
                     >
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => handleOpenEditModal(order)}
-                      className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-500/5 rounded-xl transition-colors"
+                      className="p-3 text-gray-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-2xl transition-all"
                       title="Editar Ordem"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Edit2 className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => handleDeleteClick(order.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-colors"
+                      className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-2xl transition-all"
                       title="Excluir Ordem"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
                 </div>

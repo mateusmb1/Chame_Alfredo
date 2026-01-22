@@ -4,6 +4,7 @@ import { useApp } from '../contexts/AppContext';
 import { Technician } from '../types/technician';
 import { Order } from '../types/order';
 import { useToast } from '../contexts/ToastContext';
+import { TrendingUp, LogOut, ChevronRight, Inbox } from 'lucide-react';
 
 const MobileDashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -30,18 +31,8 @@ const MobileDashboard: React.FC = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('technician');
-        showToast('success', 'Logout realizado com sucesso');
+        showToast('success', 'Tchau! Até a próxima.');
         navigate('/mobile/login');
-    };
-
-    const handleStartOrder = (orderId: string) => {
-        updateOrder(orderId, { status: 'em_andamento' });
-        showToast('success', 'Ordem iniciada!');
-    };
-
-    const handleCompleteOrder = (orderId: string) => {
-        updateOrder(orderId, { status: 'concluida' });
-        showToast('success', 'Ordem concluída!');
     };
 
     const getFilteredOrders = () => {
@@ -57,29 +48,7 @@ const MobileDashboard: React.FC = () => {
         }
     };
 
-    const getPriorityColor = (priority: string) => {
-        switch (priority) {
-            case 'urgente': return 'bg-red-500';
-            case 'alta': return 'bg-orange-500';
-            case 'normal': return 'bg-blue-500';
-            case 'baixa': return 'bg-gray-500';
-            default: return 'bg-gray-500';
-        }
-    };
-
-    const getPriorityLabel = (priority: string) => {
-        switch (priority) {
-            case 'urgente': return 'Urgente';
-            case 'alta': return 'Alta';
-            case 'normal': return 'Normal';
-            case 'baixa': return 'Baixa';
-            default: return priority;
-        }
-    };
-
-    if (!technician) {
-        return null;
-    }
+    if (!technician) return null;
 
     const filteredOrders = getFilteredOrders();
     const activeCount = myOrders.filter(o => o.status === 'em_andamento').length;
@@ -87,199 +56,145 @@ const MobileDashboard: React.FC = () => {
     const completedCount = myOrders.filter(o => o.status === 'concluida').length;
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-primary to-blue-600 text-white p-6 pb-8 rounded-b-3xl shadow-lg">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm shadow-inner flex items-center justify-center overflow-hidden border border-white/30">
+        <div className="min-h-screen bg-gray-50 pb-28">
+            {/* Premium Header */}
+            <div className="bg-[#1e293b] text-white p-6 pb-12 rounded-b-[3rem] shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                    <TrendingUp className="w-48 h-48 -rotate-12 translate-x-10 -translate-y-10" />
+                </div>
+
+                <div className="flex items-center justify-between mb-8 relative z-10">
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl shadow-inner flex items-center justify-center overflow-hidden border border-white/20 p-1">
                             {companyProfile?.logo_url ? (
-                                <img src={companyProfile.logo_url} alt="Logo" className="w-full h-full object-contain p-1" />
+                                <img src={companyProfile.logo_url} alt="Logo" className="w-full h-full object-contain" />
                             ) : (
-                                <span className="material-symbols-outlined text-3xl text-white">person</span>
+                                <img src="/alfredo.png" alt="Alfredo" className="w-full h-full object-contain" />
                             )}
                         </div>
-                        <div className="flex flex-col">
-                            <h1 className="text-lg font-black leading-tight">{technician.name}</h1>
-                            <p className="text-xs font-bold text-white/70 uppercase tracking-widest">{technician.specialization[0]}</p>
+                        <div>
+                            <p className="text-[#F97316] text-[10px] font-black uppercase tracking-[0.2em] leading-none mb-1.5">Bem-vindo, Alfredo</p>
+                            <h1 className="text-xl font-black leading-tight tracking-tighter">{technician.name}</h1>
                         </div>
                     </div>
                     <button
                         onClick={handleLogout}
-                        className="p-2 rounded-full hover:bg-white/20 transition-colors"
-                        title="Sair"
+                        className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/40 active:bg-red-500 active:text-white transition-all active:scale-95"
                     >
-                        <span className="material-symbols-outlined">logout</span>
+                        <LogOut className="w-5 h-5" />
                     </button>
                 </div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                        <div className="text-2xl font-bold">{activeCount}</div>
-                        <div className="text-xs text-white/80">Em Andamento</div>
+                {/* KPI Cards */}
+                <div className="flex items-center justify-between relative z-10 bg-white/5 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-inner">
+                    <div className="flex flex-col items-center">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Em curso</span>
+                        <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full bg-orange-500 ${activeCount > 0 ? 'animate-pulse' : 'opacity-20'}`}></div>
+                            <span className="text-2xl font-black tracking-tighter">{activeCount}</span>
+                        </div>
                     </div>
-                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                        <div className="text-2xl font-bold">{pendingCount}</div>
-                        <div className="text-xs text-white/80">Pendentes</div>
+                    <div className="w-px h-8 bg-white/10"></div>
+                    <div className="flex flex-col items-center">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Novas</span>
+                        <span className="text-2xl font-black tracking-tighter">{pendingCount}</span>
                     </div>
-                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                        <div className="text-2xl font-bold">{completedCount}</div>
-                        <div className="text-xs text-white/80">Concluídas</div>
+                    <div className="w-px h-8 bg-white/10"></div>
+                    <div className="flex flex-col items-center">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Mês</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-2xl font-black tracking-tighter">{completedCount}</span>
+                        </div>
                     </div>
-                </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="px-4 -mt-4 mb-4">
-                <div className="bg-white rounded-xl shadow-md p-1 flex gap-1">
-                    <button
-                        onClick={() => setSelectedTab('active')}
-                        className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${selectedTab === 'active'
-                            ? 'bg-primary text-white shadow-md'
-                            : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                    >
-                        Ativas
-                    </button>
-                    <button
-                        onClick={() => setSelectedTab('pending')}
-                        className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${selectedTab === 'pending'
-                            ? 'bg-primary text-white shadow-md'
-                            : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                    >
-                        Pendentes
-                    </button>
-                    <button
-                        onClick={() => setSelectedTab('completed')}
-                        className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${selectedTab === 'completed'
-                            ? 'bg-primary text-white shadow-md'
-                            : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                    >
-                        Concluídas
-                    </button>
                 </div>
             </div>
 
-            {/* Orders List */}
-            <div className="px-4 space-y-3">
+            {/* Custom Premium Tabs */}
+            <div className="px-6 -mt-8 mb-6 relative z-10">
+                <div className="bg-white rounded-3xl shadow-xl p-1.5 flex gap-1 border border-gray-100/50">
+                    {(['active', 'pending', 'completed'] as const).map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setSelectedTab(tab)}
+                            className={`flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${selectedTab === tab
+                                    ? 'bg-[#1e293b] text-white shadow-lg shadow-gray-400/20'
+                                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                                }`}
+                        >
+                            {tab === 'active' ? 'Ativas' : tab === 'pending' ? 'Novas' : 'Feitas'}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Orders Feed */}
+            <div className="px-6 space-y-4">
+                <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4 pl-1">
+                    {selectedTab === 'active' ? 'Execução em tempo real' : selectedTab === 'pending' ? 'Ordens aguardando início' : 'Histórico de finalizadas'}
+                </h2>
+
                 {filteredOrders.length === 0 ? (
-                    <div className="bg-white rounded-xl p-8 text-center">
-                        <span className="material-symbols-outlined text-6xl text-gray-300 mb-3">inbox</span>
-                        <p className="text-gray-500">Nenhuma ordem encontrada</p>
+                    <div className="bg-white rounded-[2.5rem] p-12 text-center border border-gray-100 shadow-sm">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
+                            <Inbox className="w-8 h-8 text-gray-300" />
+                        </div>
+                        <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Tudo limpo por aqui</p>
                     </div>
                 ) : (
                     filteredOrders.map(order => (
-                        <div key={order.id} className="bg-white rounded-xl shadow-md p-4 border-l-4 border-primary">
-                            {/* Order Header */}
-                            <div className="flex items-start justify-between mb-3">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-bold text-gray-900">#{order.id}</span>
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold text-white ${getPriorityColor(order.priority)}`}>
-                                            {getPriorityLabel(order.priority)}
-                                        </span>
-                                    </div>
-                                    <h3 className="font-semibold text-gray-900">{order.clientName}</h3>
-                                    <p className="text-sm text-gray-600">{order.serviceType}</p>
+                        <button
+                            key={order.id}
+                            onClick={() => navigate(`/mobile/order/${order.id}`)}
+                            className="w-full text-left bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 flex flex-col gap-4 active:scale-[0.98] transition-all hover:bg-gray-50/50"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-3 h-3 rounded-full ${order.priority === 'urgente' ? 'bg-red-500 shadow-red-200' : 'bg-blue-500 shadow-blue-200'} shadow-lg`}></div>
+                                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">OS #{order.id.split('-')[0]}</span>
+                                </div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-[#F97316] bg-orange-50 px-2 py-1 rounded-md">
+                                    {order.priority}
                                 </div>
                             </div>
 
-                            {/* Description */}
-                            <p className="text-sm text-gray-700 mb-4 line-clamp-2">{order.description}</p>
-
-                            {/* Actions */}
-                            <div className="flex gap-2">
-                                {order.status === 'nova' && (
-                                    <button
-                                        onClick={() => handleStartOrder(order.id)}
-                                        className="flex-1 h-10 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">play_arrow</span>
-                                        <span>Iniciar</span>
-                                    </button>
-                                )}
-                                {order.status === 'em_andamento' && (
-                                    <button
-                                        onClick={() => handleCompleteOrder(order.id)}
-                                        className="flex-1 h-10 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">check_circle</span>
-                                        <span>Concluir</span>
-                                    </button>
-                                )}
-                                <button
-                                    onClick={() => navigate(`/mobile/order/${order.id}`)}
-                                    className="h-10 px-4 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <span className="material-symbols-outlined text-lg">visibility</span>
-                                    <span>Detalhes</span>
-                                </button>
+                            <div>
+                                <h3 className="text-lg font-black text-gray-900 leading-tight tracking-tighter mb-1 uppercase">{order.clientName}</h3>
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-sm text-gray-400">home_repair_service</span>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">{order.serviceType}</p>
+                                </div>
                             </div>
-                        </div>
+
+                            <div className="flex items-center justify-between mt-2 pt-4 border-t border-gray-50">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-gray-400 font-bold">schedule</span>
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Acessar Processo</span>
+                                </div>
+                                <div className="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-900">
+                                    <ChevronRight className="w-5 h-5" />
+                                </div>
+                            </div>
+                        </button>
                     ))
                 )}
             </div>
 
-            {/* Floating Buttons */}
-            <div className="fixed bottom-20 right-4 flex flex-col gap-3 z-50">
-                <button
-                    onClick={() => navigate('/mobile/order/new')}
-                    className="w-14 h-14 bg-gradient-to-r from-blue-600 to-primary text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
-                    title="Nova Ordem de Serviço"
-                >
-                    <span className="material-symbols-outlined text-2xl">add</span>
-                </button>
-                <button
-                    onClick={() => navigate('/mobile/chat')}
-                    className="w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
-                    title="Chat"
-                >
-                    <span className="material-symbols-outlined text-2xl">chat</span>
-                </button>
-            </div>
-
-            {/* Bottom Navigation */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-                <div className="flex justify-around items-center h-16 px-4">
-                    <button
-                        onClick={() => navigate('/mobile/dashboard')}
-                        className="flex flex-col items-center gap-1 text-primary"
-                    >
-                        <span className="material-symbols-outlined text-2xl">home</span>
-                        <span className="text-xs font-medium">Início</span>
-                    </button>
-                    <button
-                        onClick={() => navigate('/mobile/chat')}
-                        className="flex flex-col items-center gap-1 text-gray-400 relative"
-                    >
-                        <span className="material-symbols-outlined text-2xl">chat</span>
-                        <span className="text-xs font-medium">Chat</span>
-                        <span className="absolute top-0 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-                    </button>
-                    <button
-                        onClick={() => navigate('/mobile/agenda')}
-                        className="flex flex-col items-center gap-1 text-gray-400"
-                    >
-                        <span className="material-symbols-outlined text-2xl">calendar_month</span>
-                        <span className="text-xs font-medium">Agenda</span>
-                    </button>
-                    <button
-                        onClick={() => navigate('/mobile/notifications')}
-                        className="flex flex-col items-center gap-1 text-gray-400"
-                    >
-                        <span className="material-symbols-outlined text-2xl">notifications</span>
-                        <span className="text-xs font-medium">Avisos</span>
-                    </button>
-                    <button
-                        onClick={() => navigate('/mobile/profile')}
-                        className="flex flex-col items-center gap-1 text-gray-400"
-                    >
-                        <span className="material-symbols-outlined text-2xl">person</span>
-                        <span className="text-xs font-medium">Perfil</span>
-                    </button>
+            {/* Bottom Floating Status Bar */}
+            <div className="fixed bottom-6 left-6 right-6 z-50">
+                <div className="bg-[#1e293b] text-white rounded-3xl p-4 shadow-2xl flex items-center justify-between border border-white/10 backdrop-blur-md">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                            <TrendingUp className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-tighter leading-none mb-1 text-white/50">Status Operacional</p>
+                            <p className="text-xs font-black uppercase tracking-widest text-white">Online & Disponível</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-white/10 px-3 py-2 rounded-xl">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span className="text-[10px] font-black uppercase tracking-tighter">GPS OK</span>
+                    </div>
                 </div>
             </div>
         </div>

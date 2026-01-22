@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { TrendingUp } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { Technician } from '../types/technician';
 import { Order } from '../types/order';
@@ -11,6 +12,7 @@ interface ServicePhoto {
     url: string;
     caption: string;
     timestamp: string;
+    type?: 'start' | 'finish';
 }
 
 interface CheckInOut {
@@ -53,7 +55,6 @@ const MobileOrderDetail: React.FC = () => {
         const foundOrder = orders.find(o => o.id === id);
         if (foundOrder) {
             setOrder(foundOrder);
-            // Load existing data if local state is empty
             if (foundOrder.servicePhotos && photos.length === 0) setPhotos(foundOrder.servicePhotos);
             if (foundOrder.serviceNotes && !notes) setNotes(foundOrder.serviceNotes);
             if (foundOrder.customerSignature && !signature) setSignature(foundOrder.customerSignature);
@@ -69,7 +70,6 @@ const MobileOrderDetail: React.FC = () => {
         }
     }, [id, orders, navigate, photos.length, notes, signature, checkInOut.checkIn, checkInOut.checkOut]);
 
-    // Auto-save items and notes when they change
     useEffect(() => {
         if (id && order && (additionalItems.length > 0 || notes)) {
             const timer = setTimeout(() => {
@@ -78,15 +78,14 @@ const MobileOrderDetail: React.FC = () => {
                     serviceNotes: notes,
                     value: additionalItems.reduce((sum, item) => sum + item.total, 0)
                 });
-            }, 1000); // Debounce saves
+            }, 1000);
             return () => clearTimeout(timer);
         }
     }, [id, additionalItems, notes, updateOrder, order]);
 
-
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (files && files.length > 0 && id) {
+        if (files && files.length > 0 && id && order) {
             const file = files[0];
             setIsUploadingPhoto(true);
 
@@ -98,7 +97,8 @@ const MobileOrderDetail: React.FC = () => {
                         id: `photo-${Date.now()}`,
                         url: publicUrl,
                         caption: '',
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        type: order.status === 'em_andamento' ? 'finish' : 'start'
                     };
                     const updatedPhotos = [...photos, newPhoto];
                     await updateOrder(id, { servicePhotos: updatedPhotos });
@@ -221,12 +221,9 @@ const MobileOrderDetail: React.FC = () => {
 
     const handleShareOrder = () => {
         if (!order) return;
-
         const total = additionalItems.reduce((sum, item) => sum + item.total, 0);
         let itemsText = additionalItems.map(i => `${i.quantity}x ${i.name} - ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(i.total)}`).join('%0A');
-
         const message = `*Ordem de Serviço #${order.id}*%0A%0A*Cliente:* ${order.clientName}%0A*Serviço:* ${order.serviceType}%0A%0A*Itens Adicionais:*%0A${itemsText}%0A%0A*Total Estimado:* ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}%0A%0A_Aguardamos sua aprovação para execução._`;
-
         const whatsappUrl = `https://wa.me/?text=${message}`;
         window.open(whatsappUrl, '_blank');
     };
@@ -239,15 +236,12 @@ const MobileOrderDetail: React.FC = () => {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
-
         const rect = canvas.getBoundingClientRect();
         const x = ('touches' in e) ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
         const y = ('touches' in e) ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-
         ctx.beginPath();
         ctx.moveTo(x, y);
         setIsDrawing(true);
@@ -259,11 +253,9 @@ const MobileOrderDetail: React.FC = () => {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-
         const rect = canvas.getBoundingClientRect();
         const x = ('touches' in e) ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
         const y = ('touches' in e) ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-
         ctx.lineTo(x, y);
         ctx.stroke();
     };
@@ -282,17 +274,13 @@ const MobileOrderDetail: React.FC = () => {
     const handleSaveSignature = async () => {
         const canvas = canvasRef.current;
         if (!canvas || !id) return;
-
         setIsSaving(true);
         try {
             const dataUrl = canvas.toDataURL();
-            // Convert dataUrl to File to upload to Storage
             const response = await fetch(dataUrl);
             const blob = await response.blob();
             const file = new File([blob], `signature-${id}.png`, { type: 'image/png' });
-
             const publicUrl = await uploadFile(file, 'orders', `signatures/${id}`);
-
             if (publicUrl) {
                 await updateOrder(id, { customerSignature: publicUrl });
                 if (order?.quoteId) {
@@ -312,178 +300,197 @@ const MobileOrderDetail: React.FC = () => {
         }
     };
 
-
-    if (!order || !technician) {
-        return null;
-    }
-
-    const formatTime = (isoString: string) => {
-        return new Date(isoString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    };
+    if (!order || !technician) return null;
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
             {/* Header */}
-            <div className="bg-gradient-to-r from-primary to-blue-600 text-white p-4 sticky top-0 z-10 shadow-lg">
-                <div className="flex items-center gap-3">
+            <div className="bg-[#1e293b] text-white p-4 sticky top-0 z-10 shadow-xl border-b border-white/5">
+                <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/mobile/dashboard')}
-                        className="p-2 rounded-full hover:bg-white/20 transition-colors"
+                        className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 transition-all active:scale-90"
                     >
-                        <span className="material-symbols-outlined">arrow_back</span>
+                        <span className="material-symbols-outlined text-white">arrow_back</span>
                     </button>
                     <div className="flex-1">
-                        <h1 className="text-lg font-bold">Ordem #{order.id}</h1>
-                        <p className="text-sm text-white/80">{order.clientName}</p>
+                        <p className="text-[#F97316] text-[10px] font-black uppercase tracking-[0.2em] leading-none mb-1">Detalhes da OS</p>
+                        <h1 className="text-lg font-black tracking-tight leading-none">#{order.id.substring(0, 8)}</h1>
                     </div>
                 </div>
             </div>
 
             <div className="p-4 space-y-4">
                 {/* Order Information Card */}
-                <div className="bg-white rounded-xl shadow-md p-4">
-                    <h2 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">description</span>
-                        Resumo do Pedido
-                    </h2>
-                    <p className="text-sm text-gray-600 mb-2">{order.description}</p>
-                    <div className="flex gap-2">
-                        <span className="px-2 py-1 bg-gray-100 rounded text-xs font-semibold text-gray-600 uppercase tracking-wider">{order.serviceType}</span>
-                        <span className={`px-2 py-1 rounded text-xs font-semibold uppercase tracking-wider ${order.priority === 'urgente' ? 'bg-red-100 text-red-600' :
-                            order.priority === 'alta' ? 'bg-orange-100 text-orange-600' :
-                                'bg-blue-100 text-blue-600'
-                            }`}>{order.priority}</span>
+                <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-100">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Cliente</span>
+                            <h2 className="font-black text-gray-900 text-lg leading-tight">{order.clientName}</h2>
+                        </div>
+                        <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${order.priority === 'urgente' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'}`}>
+                            {order.priority}
+                        </div>
                     </div>
+                    <div className="space-y-4">
+                        <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-2xl">
+                            <span className="material-symbols-outlined text-gray-400 mt-0.5">bolt</span>
+                            <p className="text-sm text-gray-600 font-medium leading-relaxed">{order.description}</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <span className="px-3 py-1.5 bg-gray-100 rounded-xl text-[10px] font-black text-gray-500 uppercase tracking-wider">{order.serviceType}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Workflow Progress */}
+                <div className="flex items-center gap-2 px-2 py-4">
+                    <div className={`h-2 flex-1 rounded-full ${order.status === 'em_andamento' ? 'bg-[#F97316]' : order.status === 'concluida' ? 'bg-[#F97316]' : 'bg-gray-200'}`}></div>
+                    <div className={`h-2 flex-1 rounded-full ${order.status === 'concluida' ? 'bg-green-500' : 'bg-gray-200'}`}></div>
                 </div>
 
                 {/* Unified Workflow State Machine */}
                 {(order.status === 'nova' || order.status === 'pendente') ? (
-                    <div className="space-y-4">
-                        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-                            <h2 className="font-bold text-blue-800 flex items-center gap-2">
-                                <span className="material-symbols-outlined">login</span>
-                                PASSO 1: Dando Início
-                            </h2>
-                            <p className="text-xs text-blue-600 mt-1">Registre fotos do local e uma observação de como o serviço está começando.</p>
-                        </div>
-
-                        {/* Initial Photos section */}
-                        <div className="bg-white rounded-xl shadow-md p-4">
-                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary">add_a_photo</span>
-                                Fotos do Início
-                            </h3>
-                            <div className="grid grid-cols-3 gap-2 mb-3">
-                                {photos.map(photo => (
-                                    <div key={photo.id} className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                                        <img src={photo.url} alt="Início" className="w-full h-full object-cover" />
-                                    </div>
-                                ))}
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-4 bg-white rounded-3xl p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-5">
+                                <TrendingUp className="w-16 h-16" />
                             </div>
-                            <label className="flex items-center justify-center gap-2 w-full py-3 bg-blue-50 text-primary font-bold rounded-lg border-2 border-dashed border-primary cursor-pointer active:bg-blue-100 transition-colors">
-                                {isUploadingPhoto ? (
-                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-white" />
-                                ) : (
-                                    <span className="material-symbols-outlined">camera_enhance</span>
-                                )}
-                                <span>{isUploadingPhoto ? 'Enviando...' : 'Tirar Foto do Início'}</span>
-                                <input type="file" accept="image/*" capture="environment" onChange={handlePhotoUpload} className="hidden" />
-                            </label>
+                            <div className="w-12 h-12 rounded-2xl bg-[#F97316]/10 flex items-center justify-center text-[#F97316] shrink-0">
+                                <span className="material-symbols-outlined font-black">login</span>
+                            </div>
+                            <div>
+                                <h2 className="font-black text-gray-900 uppercase tracking-tighter leading-none mb-1">Passo 1: Preparação</h2>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-tight">Registre o início e fotos do local</p>
+                            </div>
                         </div>
 
-                        {/* Initial Notes section */}
-                        <div className="bg-white rounded-xl shadow-md p-4">
-                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary">edit_note</span>
-                                Texto de Início
+                        {/* Initial Photos */}
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="p-6">
+                                <h3 className="font-black text-gray-900 text-sm uppercase tracking-tighter mb-4 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[#F97316]">add_a_photo</span>
+                                    Evidências de Início
+                                </h3>
+                                <div className="grid grid-cols-3 gap-3 mb-6">
+                                    {photos.filter(p => !p.type || p.type === 'start').map(photo => (
+                                        <div key={photo.id} className="aspect-square rounded-[1.25rem] overflow-hidden bg-gray-50 border border-gray-100 shadow-inner">
+                                            <img src={photo.url} alt="Início" className="w-full h-full object-cover" />
+                                        </div>
+                                    ))}
+                                    {isUploadingPhoto && (
+                                        <div className="aspect-square rounded-[1.25rem] bg-gray-50 flex items-center justify-center border border-dashed border-gray-200 animate-pulse">
+                                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#F97316] border-t-transparent" />
+                                        </div>
+                                    )}
+                                </div>
+                                <label className="flex items-center justify-center gap-3 w-full py-4 bg-[#F97316] text-white font-black rounded-2xl shadow-lg shadow-orange-500/20 active:scale-95 transition-all cursor-pointer">
+                                    <span className="material-symbols-outlined">camera_hint</span>
+                                    <span>TIRAR FOTO DO LOCAL</span>
+                                    <input type="file" accept="image/*" capture="environment" onChange={handlePhotoUpload} className="hidden" />
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Initial Notes */}
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+                            <h3 className="font-black text-gray-900 text-sm uppercase tracking-tighter mb-4 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[#1e293b]">edit_note</span>
+                                Diagnóstico Inicial
                             </h3>
                             <textarea
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                                 rows={3}
-                                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                                placeholder="Descreva o início (ex: 'Dando início dos trabalhos com...')"
+                                className="w-full rounded-[1.25rem] border border-gray-100 bg-gray-50 p-4 text-sm font-medium focus:ring-4 focus:ring-orange-500/5 outline-none transition-all placeholder:text-gray-400"
+                                placeholder="Relate as condições iniciais..."
                             />
                         </div>
 
                         <button
                             onClick={handleStartOrderIntegrated}
                             disabled={isSaving}
-                            className="w-full h-14 bg-primary text-white font-bold rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all text-lg"
+                            className="w-full h-16 bg-[#1e293b] text-white font-black rounded-2xl shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all text-lg uppercase tracking-widest border-b-4 border-gray-950 active:border-b-0"
                         >
                             {isSaving ? (
                                 <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
                             ) : (
-                                <span className="material-symbols-outlined">play_circle</span>
+                                <span className="material-symbols-outlined font-black">play_arrow</span>
                             )}
-                            Fazer Check-in e Iniciar
+                            REGISTRAR CHECK-IN
                         </button>
                     </div>
                 ) : order.status === 'em_andamento' ? (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-4 bg-white rounded-3xl p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+                            <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-600 shrink-0">
+                                <span className="material-symbols-outlined font-black">task_alt</span>
+                            </div>
+                            <div>
+                                <h2 className="font-black text-gray-900 uppercase tracking-tighter leading-none mb-1">Passo 2: Finalização</h2>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-tight">Relate o feito e colha a assinatura</p>
+                            </div>
+                        </div>
+
                         {additionalItems.length > 0 && !signature && (
-                            <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-lg">
-                                <h2 className="font-bold text-orange-800 flex items-center gap-2">
-                                    <span className="material-symbols-outlined">pending_actions</span>
-                                    Aguardando Aprovação
-                                </h2>
-                                <p className="text-xs text-orange-600 mt-1">
-                                    Existem itens adicionais neste orçamento. Colha a assinatura do cliente para autorizar a execução.
-                                </p>
+                            <div className="bg-orange-50/50 border border-orange-200 rounded-3xl p-6 flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white shrink-0">
+                                        <span className="material-symbols-outlined text-sm font-black">priority_high</span>
+                                    </div>
+                                    <p className="text-sm font-black text-orange-800 uppercase tracking-tight">Autorização Pendente</p>
+                                </div>
+                                <p className="text-xs text-orange-700 font-medium leading-relaxed">Existem itens adicionais. Colha a assinatura para autorizar os novos valores.</p>
                             </div>
                         )}
-                        <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
-                            <h2 className="font-bold text-green-800 flex items-center gap-2">
-                                <span className="material-symbols-outlined">task_alt</span>
-                                PASSO 2: Finalizando Trabalho
-                            </h2>
-                            <p className="text-xs text-green-600 mt-1">Adicione as fotos finais, o relatório do que foi feito e colha a assinatura do cliente.</p>
-                        </div>
 
-                        {/* Photos during/finish */}
-                        <div className="bg-white rounded-xl shadow-md p-4">
-                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary">add_photo_alternate</span>
-                                Fotos do Serviço / Final
-                            </h3>
-                            <div className="grid grid-cols-3 gap-2 mb-3">
-                                {photos.map(photo => (
-                                    <div key={photo.id} className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                                        <img src={photo.url} alt="Serviço" className="w-full h-full object-cover" />
-                                    </div>
-                                ))}
-                            </div>
-                            <label className="flex items-center justify-center gap-2 w-full py-3 bg-green-50 text-green-700 font-bold rounded-lg border-2 border-dashed border-green-400 cursor-pointer active:bg-green-100 transition-colors">
-                                {isUploadingPhoto ? (
-                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-green-700 border-t-white" />
-                                ) : (
+                        {/* Final Photos */}
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="p-6">
+                                <h3 className="font-black text-gray-900 text-sm uppercase tracking-tighter mb-4 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-green-600">photo_library</span>
+                                    Evidências Finais
+                                </h3>
+                                <div className="grid grid-cols-3 gap-3 mb-6">
+                                    {photos.filter(p => p.type === 'finish').map(photo => (
+                                        <div key={photo.id} className="aspect-square rounded-[1.25rem] overflow-hidden bg-gray-50 border border-gray-100 shadow-inner">
+                                            <img src={photo.url} alt="Final" className="w-full h-full object-cover" />
+                                        </div>
+                                    ))}
+                                    {isUploadingPhoto && (
+                                        <div className="aspect-square rounded-[1.25rem] bg-gray-50 flex items-center justify-center border border-dashed border-gray-200 animate-pulse">
+                                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-green-600 border-t-transparent" />
+                                        </div>
+                                    )}
+                                </div>
+                                <label className="flex items-center justify-center gap-3 w-full py-4 bg-green-600 text-white font-black rounded-2xl shadow-lg shadow-green-500/20 active:scale-95 transition-all cursor-pointer">
                                     <span className="material-symbols-outlined">camera_enhance</span>
-                                )}
-                                <span>{isUploadingPhoto ? 'Enviando...' : 'Adicionar Mais Fotos'}</span>
-                                <input type="file" accept="image/*" capture="environment" onChange={handlePhotoUpload} className="hidden" />
-                            </label>
+                                    <span>FOTO DO SERVIÇO PRONTO</span>
+                                    <input type="file" accept="image/*" capture="environment" onChange={handlePhotoUpload} className="hidden" />
+                                </label>
+                            </div>
                         </div>
 
-                        {/* Relay notes during finish */}
-                        <div className="bg-white rounded-xl shadow-md p-4">
-                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary">rate_review</span>
-                                Relatório Final / Observações
+                        {/* Report */}
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+                            <h3 className="font-black text-gray-900 text-sm uppercase tracking-tighter mb-4 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[#1e293b]">description</span>
+                                Relatório da Execução
                             </h3>
                             <textarea
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                                 rows={4}
-                                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:ring-2 focus:ring-green-100 outline-none transition-all"
-                                placeholder="Relate o que foi feito (ex: 'Finalizado com ajuste de...')"
+                                className="w-full rounded-[1.25rem] border border-gray-100 bg-gray-50 p-4 text-sm font-medium focus:ring-4 focus:ring-green-500/5 outline-none transition-all placeholder:text-gray-400"
+                                placeholder="Relate o que foi feito detalhadamente..."
                             />
                         </div>
 
-                        {/* Produtos e Serviços */}
-                        <div className="bg-white rounded-xl shadow-md p-4 space-y-4">
-                            <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary">request_quote</span>
-                                Serviços e Peças Adicionais
+                        {/* Materials/Services List */}
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-4">
+                            <h3 className="font-black text-gray-900 text-sm uppercase tracking-tighter flex items-center gap-2">
+                                <span className="material-symbols-outlined text-green-600">shopping_bag</span>
+                                Materiais e Serviços
                             </h3>
                             <OrderItemSelector
                                 items={additionalItems}
@@ -491,82 +498,42 @@ const MobileOrderDetail: React.FC = () => {
                                 inventory={inventory}
                                 productsServices={products}
                             />
-
-                            {/* Workflow Links */}
-                            {additionalItems.length > 0 && (
-                                <div className="pt-2 border-t border-gray-100">
-                                    {order.quoteId ? (
-                                        <div className={`p-4 rounded-xl flex items-center justify-between ${quotes.find(q => q.id === order.quoteId)?.status === 'approved'
-                                            ? 'bg-green-50 text-green-700 border border-green-200'
-                                            : 'bg-amber-50 text-amber-700 border border-amber-200'
-                                            }`}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="material-symbols-outlined">
-                                                    {quotes.find(q => q.id === order.quoteId)?.status === 'approved' ? 'check_circle' : 'history'}
-                                                </span>
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-black uppercase tracking-tight">Status do Orçamento</span>
-                                                    <span className="text-sm font-bold">
-                                                        {quotes.find(q => q.id === order.quoteId)?.status === 'approved' ? 'APROVADO P/ EXECUÇÃO' : 'AGUARDANDO APROVAÇÃO'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            {quotes.find(q => q.id === order.quoteId)?.status !== 'approved' && (
-                                                <button onClick={handleShareOrder} className="p-2 bg-white rounded-lg shadow-sm">
-                                                    <span className="material-symbols-outlined text-primary">share</span>
-                                                </button>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <button
-                                            onClick={async () => {
-                                                if (id) {
-                                                    const newQuote = await createQuoteFromOrder(id, additionalItems, notes);
-                                                    if (newQuote) {
-                                                        showToast('success', 'Orçamento gerado! Colha a assinatura do cliente.');
-                                                    }
-                                                }
-                                            }}
-                                            className="w-full py-4 bg-primary/10 text-primary font-black rounded-xl border-2 border-dashed border-primary/30 flex items-center justify-center gap-2 active:scale-95 transition-all text-sm uppercase"
-                                        >
-                                            <span className="material-symbols-outlined">add_task</span>
-                                            Gerar Orçamento p/ Aprovação
-                                        </button>
-                                    )}
-                                </div>
-                            )}
                         </div>
 
-                        {/* Signature section */}
-                        <div className="bg-white rounded-xl shadow-md p-4">
-                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary">draw</span>
-                                Assinatura do Cliente
-                            </h3>
+                        {/* Validation & Signature */}
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 overflow-hidden relative">
                             {signature ? (
-                                <div className="bg-green-100 border border-green-300 rounded-xl p-4 flex items-center justify-center gap-3 text-green-800">
-                                    <span className="material-symbols-outlined text-3xl">verified</span>
-                                    <div>
-                                        <p className="font-bold">Assinatura Coletada</p>
-                                        <button onClick={() => setIsSignatureModalOpen(true)} className="text-xs underline">Mudar assinatura</button>
+                                <div className="flex flex-col items-center gap-4 py-4">
+                                    <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center text-green-600">
+                                        <span className="material-symbols-outlined text-4xl font-black">verified</span>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="font-black text-gray-900 uppercase tracking-tight">Assinatura Capturada</p>
+                                        <button onClick={() => setIsSignatureModalOpen(true)} className="text-[10px] font-black uppercase tracking-widest text-[#F97316] mt-1 underline">Mudar assinatura</button>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={handleShareOrder}
-                                        className="h-14 bg-white border-2 border-primary text-primary font-bold rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all text-sm"
-                                    >
-                                        <span className="material-symbols-outlined">share</span>
-                                        Enviar Cliente
-                                    </button>
-                                    <button
-                                        onClick={() => setIsSignatureModalOpen(true)}
-                                        className="h-14 bg-purple-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all text-sm"
-                                    >
-                                        <span className="material-symbols-outlined">gesture</span>
-                                        Colher Assinatura
-                                    </button>
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="w-1.5 h-6 bg-[#F97316] rounded-full"></div>
+                                        <h3 className="font-black text-gray-900 text-sm uppercase tracking-tighter">Validação do Cliente</h3>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={handleShareOrder}
+                                            className="h-16 bg-white border-2 border-gray-100 text-[#1e293b] font-black rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all text-sm uppercase tracking-widest shadow-sm"
+                                        >
+                                            <span className="material-symbols-outlined">share</span>
+                                            WhatsApp
+                                        </button>
+                                        <button
+                                            onClick={() => setIsSignatureModalOpen(true)}
+                                            className="h-16 bg-[#F97316] text-white font-black rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 active:scale-95 transition-all text-sm uppercase tracking-widest"
+                                        >
+                                            <span className="material-symbols-outlined">gesture</span>
+                                            Assinar
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -574,56 +541,54 @@ const MobileOrderDetail: React.FC = () => {
                         <button
                             onClick={handleCompleteOrderIntegrated}
                             disabled={isSaving}
-                            className="w-full h-16 bg-green-600 text-white font-bold rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all text-xl"
+                            className="w-full h-20 bg-green-600 text-white font-black rounded-2xl shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all text-xl uppercase tracking-widest border-b-[6px] border-green-800 active:border-b-0 mb-8"
                         >
                             {isSaving ? (
-                                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
+                                <div className="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent" />
                             ) : (
-                                <span className="material-symbols-outlined text-2xl">check_circle</span>
+                                <span className="material-symbols-outlined text-3xl font-black">check_circle</span>
                             )}
-                            Fazer Check-out e CONCLUIR
+                            Finalizar Ordem
                         </button>
                     </div>
                 ) : (
-                    <div className="space-y-4 pb-10">
-                        <div className="bg-green-600 rounded-2xl shadow-lg p-6 text-center text-white">
-                            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <span className="material-symbols-outlined text-4xl">verified</span>
+                    <div className="space-y-6 pb-10">
+                        <div className="bg-green-600 rounded-[2.5rem] shadow-xl p-8 text-center text-white relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+                                <TrendingUp className="w-64 h-64 -translate-y-20 -translate-x-20" />
                             </div>
-                            <h2 className="text-xl font-bold">Serviço Concluído</h2>
-                            <p className="text-sm text-white/80">Finalizado em {order.completedDate && new Date(order.completedDate).toLocaleDateString()} às {order.completedDate && new Date(order.completedDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 relative z-10 backdrop-blur-md border border-white/30">
+                                <span className="material-symbols-outlined text-4xl font-black">verified</span>
+                            </div>
+                            <h2 className="text-2xl font-black uppercase tracking-tighter italic mb-1 relative z-10">Serviço Concluído</h2>
+                            <p className="text-xs text-white/80 font-bold uppercase tracking-widest relative z-10">Finalizado em {order.completedDate && new Date(order.completedDate).toLocaleDateString()}</p>
                         </div>
 
-                        {/* Summary of what was done */}
-                        <div className="bg-white rounded-xl shadow-md p-4">
-                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary">analytics</span>
-                                Relatório do Serviço
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+                            <h3 className="font-black text-xs uppercase tracking-widest mb-4 flex items-center gap-2 text-gray-400">
+                                <span className="material-symbols-outlined text-primary text-sm">analytics</span>
+                                Relatório Final
                             </h3>
-                            <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-700 italic border-l-4 border-gray-300">
-                                {order.serviceNotes || 'Nenhuma observação registrada.'}
+                            <div className="bg-gray-50 p-5 rounded-2xl text-sm text-gray-700 font-medium leading-relaxed italic border-l-4 border-primary">
+                                {order.serviceNotes || 'Nenhuma observação extra registrada.'}
                             </div>
                         </div>
 
-                        {/* Approved Items Summary */}
                         {additionalItems.length > 0 && (
-                            <div className="bg-white rounded-xl shadow-md p-4">
-                                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-primary">receipt_long</span>
-                                    Produtos e Serviços Aprovados
-                                </h3>
-                                <div className="space-y-2">
+                            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+                                <h3 className="font-black text-xs uppercase tracking-widest mb-4 text-gray-400">Materiais e Serviços</h3>
+                                <div className="space-y-3">
                                     {additionalItems.map((item, idx) => (
-                                        <div key={idx} className="flex justify-between text-sm">
-                                            <span className="text-gray-600">{item.quantity}x {item.name}</span>
-                                            <span className="font-bold text-gray-900">
+                                        <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                                            <span className="text-sm font-bold text-gray-600">{item.quantity}x {item.name}</span>
+                                            <span className="font-black text-gray-900">
                                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.total)}
                                             </span>
                                         </div>
                                     ))}
-                                    <div className="pt-2 border-t border-gray-100 flex justify-between items-center bg-primary/5 -mx-4 px-4 py-2 mt-2">
-                                        <span className="font-bold text-gray-900">Total do Orçamento:</span>
-                                        <span className="text-lg font-black text-primary">
+                                    <div className="pt-4 flex justify-between items-center text-lg">
+                                        <span className="font-black text-gray-900 uppercase tracking-tighter">Total Final:</span>
+                                        <span className="font-black text-[#F97316]">
                                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
                                                 additionalItems.reduce((sum, item) => sum + item.total, 0)
                                             )}
@@ -633,50 +598,18 @@ const MobileOrderDetail: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Photos section */}
-                        {photos.length > 0 && (
-                            <div className="bg-white rounded-xl shadow-md p-4">
-                                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-primary">collections</span>
-                                    fotos do Registro
-                                </h3>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {photos.map(photo => (
-                                        <div key={photo.id} className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                                            <img src={photo.url} alt="Evidência" className="w-full h-full object-cover" />
-                                        </div>
-                                    ))}
+                        {order.customerSignature && (
+                            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 text-center">
+                                <h3 className="font-black text-xs uppercase tracking-widest mb-4 text-gray-400">Assinatura do Cliente</h3>
+                                <div className="bg-gray-50 rounded-2xl p-6 border-2 border-dashed border-gray-200">
+                                    <img src={order.customerSignature} alt="Assinatura" className="max-h-32 mx-auto mix-blend-multiply" />
                                 </div>
                             </div>
                         )}
 
-                        {/* SIGNATURE VISUALIZATION */}
-                        <div className="bg-white rounded-xl shadow-md p-4">
-                            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary">history_edu</span>
-                                Assinatura do Cliente
-                            </h3>
-                            {order.customerSignature ? (
-                                <div className="bg-gray-50 rounded-xl p-4 border-2 border-dashed border-gray-200">
-                                    <img
-                                        src={order.customerSignature}
-                                        alt="Assinatura"
-                                        className="max-h-32 mx-auto mix-blend-multiply"
-                                    />
-                                    <div className="mt-3 pt-3 border-t border-gray-100 text-center">
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase">Assinado Digitalmente pelo Cliente</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="p-4 text-center text-gray-400 italic text-sm">
-                                    Nenhuma assinatura registrada.
-                                </div>
-                            )}
-                        </div>
-
                         <button
                             onClick={() => navigate('/mobile/dashboard')}
-                            className="w-full py-4 bg-gray-900 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all"
+                            className="w-full h-16 bg-[#1e293b] text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all uppercase tracking-widest text-sm"
                         >
                             Voltar para o Painel
                         </button>
@@ -686,81 +619,79 @@ const MobileOrderDetail: React.FC = () => {
 
             {/* Signature Modal Overlay */}
             {isSignatureModalOpen && (
-                <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-[100] animate-in fade-in duration-200">
-                    <div className="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter italic leading-none mb-1">Autorização de Execução</h3>
-                            <p className="text-[10px] text-gray-500 font-bold uppercase leading-tight">
-                                Autorizo a execução dos serviços e peças detalhadas nesse orçamento/ordemdeserviço
-                            </p>
-                        </div>
-                        <button onClick={() => setIsSignatureModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1">
-                            <span className="material-symbols-outlined">close</span>
-                        </button>
-                    </div>
-
-                    {/* Budget Approval Summary */}
-                    {additionalItems.length > 0 && (
-                        <div className="mb-6 bg-gray-50 rounded-xl p-4 border border-gray-200">
-                            <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Resumo do Orçamento</h4>
-                            <div className="space-y-2 max-h-32 overflow-y-auto mb-3">
-                                {additionalItems.map((item, idx) => (
-                                    <div key={idx} className="flex justify-between text-sm">
-                                        <span className="text-gray-700">{item.quantity}x {item.name}</span>
-                                        <span className="font-medium text-gray-900">
-                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.total)}
-                                        </span>
-                                    </div>
-                                ))}
+                <div className="fixed inset-0 bg-[#1e293b]/95 flex items-end sm:items-center justify-center z-[100] p-4 animate-in fade-in slide-in-from-bottom duration-300 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl">
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tighter italic leading-none mb-2">Assinatura Digital</h3>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide leading-tight max-w-[250px]">
+                                    Autorizo a execução e estou ciente dos materiais aplicados.
+                                </p>
                             </div>
-                            <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
-                                <span className="font-bold text-gray-900">Total a Aprovar:</span>
-                                <span className="text-lg font-black text-primary">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                                        additionalItems.reduce((sum, item) => sum + item.total, 0)
-                                    )}
-                                </span>
-                            </div>
+                            <button onClick={() => setIsSignatureModalOpen(false)} className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 active:scale-90 transition-all">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
                         </div>
-                    )}
 
-                    <div className="bg-gray-100 border-x-2 border-t-2 border-b-4 border-gray-300 rounded-2xl overflow-hidden mb-6 relative h-64 touch-none shadow-inner border-double">
-                        <canvas
-                            ref={canvasRef}
-                            width={500}
-                            height={300}
-                            className="w-full h-full cursor-crosshair"
-                            onMouseDown={startDrawing}
-                            onMouseMove={draw}
-                            onMouseUp={endDrawing}
-                            onMouseLeave={endDrawing}
-                            onTouchStart={startDrawing}
-                            onTouchMove={draw}
-                            onTouchEnd={endDrawing}
-                        />
-                        <div className="absolute bottom-2 left-0 right-0 text-center text-[10px] text-gray-400 font-bold uppercase pointer-events-none">Espaço para assinatura manuscrita</div>
-                    </div>
+                        {/* Budget Summary in Modal */}
+                        {additionalItems.length > 0 && (
+                            <div className="mb-6 bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Resumo Financeiro</h4>
+                                <div className="space-y-2 max-h-32 overflow-y-auto mb-4 pr-2">
+                                    {additionalItems.map((item, idx) => (
+                                        <div key={idx} className="flex justify-between text-xs">
+                                            <span className="font-bold text-gray-600">{item.quantity}x {item.name}</span>
+                                            <span className="font-black text-gray-900">
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.total)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="pt-3 border-t border-gray-200 flex justify-between items-center">
+                                    <span className="font-black text-gray-900 text-xs uppercase">Valor a Aprovar</span>
+                                    <span className="text-lg font-black text-[#F97316]">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                                            additionalItems.reduce((sum, item) => sum + item.total, 0)
+                                        )}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <button
-                            onClick={clearSignature}
-                            className="h-14 bg-gray-100 text-gray-600 font-black rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 uppercase text-sm border-b-4 border-gray-300 active:border-b-0"
-                        >
-                            <span className="material-symbols-outlined">delete_sweep</span>
-                            Limpar
-                        </button>
-                        <button
-                            onClick={handleSaveSignature}
-                            disabled={isSaving}
-                            className="h-14 bg-primary text-white font-black rounded-xl shadow-lg flex items-center justify-center gap-2 uppercase text-sm border-b-4 border-blue-800 active:border-b-0 disabled:opacity-50"
-                        >
-                            {isSaving ? (
-                                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
-                            ) : (
-                                <span className="material-symbols-outlined">verified</span>
-                            )}
-                            Confirmar
-                        </button>
+                        <div className="bg-gray-100 border-x-2 border-t-2 border-b-4 border-gray-300 rounded-[2rem] overflow-hidden mb-8 relative h-64 touch-none shadow-inner">
+                            <canvas
+                                ref={canvasRef}
+                                className="w-full h-full cursor-crosshair"
+                                onMouseDown={startDrawing}
+                                onMouseMove={draw}
+                                onMouseUp={endDrawing}
+                                onMouseLeave={endDrawing}
+                                onTouchStart={startDrawing}
+                                onTouchMove={draw}
+                                onTouchEnd={endDrawing}
+                            />
+                            <div className="absolute bottom-4 left-0 right-0 text-center text-[10px] text-gray-400 font-bold uppercase pointer-events-none tracking-widest">Assine dentro do quadro</div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <button
+                                onClick={clearSignature}
+                                className="h-16 bg-gray-50 text-gray-500 font-black rounded-2xl active:scale-95 transition-all uppercase text-xs tracking-widest"
+                            >
+                                Limpar
+                            </button>
+                            <button
+                                onClick={handleSaveSignature}
+                                disabled={isSaving}
+                                className="h-16 bg-[#F97316] text-white font-black rounded-2xl shadow-lg shadow-orange-500/20 active:scale-95 transition-all uppercase text-xs tracking-widest border-b-4 border-orange-800 active:border-b-0"
+                            >
+                                {isSaving ? (
+                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mx-auto" />
+                                ) : (
+                                    'Confirmar'
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
