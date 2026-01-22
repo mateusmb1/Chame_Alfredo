@@ -13,6 +13,8 @@ import { Invoice } from '../types/invoice';
 import { Appointment } from '../types/appointment';
 import { Conversation, Message } from '../types/communication';
 
+export type { Client, Order, InventoryItem, Quote, Contract, Technician, Project, ProjectActivity, ProductService, Invoice, Appointment, Conversation, Message };
+
 export interface CompanyProfile {
     id: string;
     company_name: string;
@@ -43,6 +45,11 @@ interface AppContextType {
     appointments: Appointment[];
     conversations: Conversation[];
     messages: Message[];
+
+    // Appointment operations
+    addAppointment: (appointment: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+    updateAppointment: (id: string, updates: Partial<Appointment>) => Promise<void>;
+    deleteAppointment: (id: string) => Promise<void>;
 
     // Client operations
     addClient: (client: Omit<Client, 'id' | 'status' | 'createdAt'>) => Promise<void>;
@@ -144,8 +151,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Initial Fetch & Real-time Subscriptions
     useEffect(() => {
         const fetchData = async () => {
-            // Use Promise.all with manual error catching to simulate allSettled behavior safely
-            // This ensures strict compatibility and prevents unhandled rejections from crashing the app
             const queries = [
                 supabase.from('clients').select('*'),
                 supabase.from('orders').select('*'),
@@ -186,7 +191,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                                 : mapper(res.value.data)
                             );
                         } catch (err) {
-                            console.error('Error mapping data:', err); // Catch mapping errors
+                            console.error('Error mapping data:', err);
                         }
                     }
                     if (res.value.error) {
@@ -205,8 +210,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             processResult(contractsRes, setContracts, mapContractFromDB);
             processResult(projectsRes, setProjects, mapProjectFromDB);
             processResult(activitiesRes, setProjectActivities, mapActivityFromDB);
+            processResult(appointmentsRes, setAppointments, mapAppointmentFromDB);
+            processResult(conversationsRes, setConversations, mapConversationFromDB);
+            processResult(messagesRes, setMessages, mapMessageFromDB);
 
-            // New tables processing
             if (productsRes.status === 'fulfilled' && productsRes.value?.data) {
                 setProducts(productsRes.value.data.map((p: any) => ({
                     ...p,
@@ -230,22 +237,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 })));
             }
 
-            if (appointmentsRes.status === 'fulfilled' && appointmentsRes.value?.data) {
-                setAppointments(appointmentsRes.value.data.map((a: any) => ({
-                    ...a,
-                    startTime: a.start_time,
-                    endTime: a.end_time,
-                    orderId: a.order_id,
-                    clientId: a.client_id,
-                    technicianId: a.technician_id,
-                    createdAt: a.created_at,
-                    updatedAt: a.updated_at
-                })));
-            }
-
-            processResult(conversationsRes, setConversations, mapConversationFromDB);
-            processResult(messagesRes, setMessages, mapMessageFromDB);
-
             if (profileRes.status === 'fulfilled' && profileRes.value?.data) {
                 const profileData = profileRes.value.data;
                 setCompanyProfile({
@@ -268,29 +259,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         fetchData();
 
-        // Real-time subscriptions
-        // FIX: Bug 1 - Realtime Subscriptions cleanup with unsubscribe()
-        // Channels need to be properly unsubscribed to avoid memory leaks
         const channels = [
             supabase.channel('clients_all').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, payload => handleRealtimeUpdate(payload, setClients, mapClientFromDB)).subscribe(),
             supabase.channel('orders_all_sub').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => handleRealtimeUpdate(payload, setOrders, mapOrderFromDB, 'orders')).subscribe(),
             supabase.channel('techs_all').on('postgres_changes', { event: '*', schema: 'public', table: 'technicians' }, payload => handleRealtimeUpdate(payload, setTechnicians, (x) => x as any)).subscribe(),
             supabase.channel('inv_all').on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, payload => handleRealtimeUpdate(payload, setInventory, mapInventoryFromDB)).subscribe(),
+            supabase.channel('appt_all').on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, payload => handleRealtimeUpdate(payload, setAppointments, mapAppointmentFromDB)).subscribe(),
             supabase.channel('quotes_all').on('postgres_changes', { event: '*', schema: 'public', table: 'quotes' }, payload => handleRealtimeUpdate(payload, setQuotes, mapQuoteFromDB)).subscribe(),
             supabase.channel('contracts_all').on('postgres_changes', { event: '*', schema: 'public', table: 'contracts' }, payload => handleRealtimeUpdate(payload, setContracts, mapContractFromDB)).subscribe(),
             supabase.channel('projects_all').on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, payload => handleRealtimeUpdate(payload, setProjects, mapProjectFromDB)).subscribe(),
             supabase.channel('acts_all').on('postgres_changes', { event: '*', schema: 'public', table: 'project_activities' }, payload => handleRealtimeUpdate(payload, setProjectActivities, mapActivityFromDB)).subscribe(),
             supabase.channel('conv_all').on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, payload => handleRealtimeUpdate(payload, setConversations, mapConversationFromDB)).subscribe(),
-            supabase.channel('msg_all').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => handleRealtimeUpdate(payload, setMessages, mapMessageFromDB, 'messages')).subscribe(),
+            supabase.channel('msg_all').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => handleRealtimeUpdate(payload, setMessages, mapMessageFromDB, 'messages')).subscribe()
         ];
 
         return () => {
-            channels.forEach(channel => {
-                channel.unsubscribe();
-                supabase.removeChannel(channel);
-            });
+            channels.forEach(channel => channel.unsubscribe());
         };
-    }, []);
+    }, [supabase, showToast]);
 
     // Generic Realtime Handler with Bug 3 Check (Race Condition)
     const handleRealtimeUpdate = (payload: any, setter: React.Dispatch<React.SetStateAction<any[]>>, mapper: (data: any) => any, tableName?: string) => {
@@ -546,6 +532,66 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...(updatedAt !== undefined && { updated_at: updatedAt }),
         };
     };
+
+    const mapAppointmentFromDB = (data: any): Appointment => ({
+        ...data,
+        startTime: data.start_time,
+        endTime: data.end_time,
+        orderId: data.order_id,
+        clientId: data.client_id,
+        technicianId: data.technician_id,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
+    });
+
+    const mapAppointmentToDB = (apt: Partial<Appointment>) => {
+        const { startTime, endTime, orderId, clientId, technicianId, createdAt, updatedAt, ...rest } = apt;
+        return {
+            ...rest,
+            ...(startTime && { start_time: startTime }),
+            ...(endTime && { end_time: endTime }),
+            ...(orderId && { order_id: orderId }),
+            ...(clientId && { client_id: clientId }),
+            ...(technicianId && { technician_id: technicianId }),
+            ...(createdAt && { created_at: createdAt }),
+            ...(updatedAt && { updated_at: updatedAt }),
+        };
+    };
+
+    const addAppointment = React.useCallback(async (appointment: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) => {
+        const dbApt = mapAppointmentToDB(appointment);
+        const { data, error } = await supabase.from('appointments').insert([dbApt]).select().single();
+        if (error) {
+            console.error('Error adding appointment:', error);
+            showToast('error', 'Erro ao agendar compromisso.');
+        } else if (data) {
+            setAppointments(prev => [...prev, mapAppointmentFromDB(data)]);
+            showToast('success', 'Compromisso agendado com sucesso.');
+        }
+    }, [supabase, showToast]);
+
+    const updateAppointment = React.useCallback(async (id: string, updates: Partial<Appointment>) => {
+        const dbUpdate = mapAppointmentToDB(updates);
+        const { data, error } = await supabase.from('appointments').update(dbUpdate).eq('id', id).select().single();
+        if (error) {
+            console.error('Error updating appointment:', error);
+            showToast('error', 'Erro ao atualizar compromisso.');
+        } else if (data) {
+            setAppointments(prev => prev.map(a => a.id === id ? mapAppointmentFromDB(data) : a));
+            showToast('success', 'Compromisso atualizado.');
+        }
+    }, [supabase, showToast]);
+
+    const deleteAppointment = React.useCallback(async (id: string) => {
+        const { error } = await supabase.from('appointments').delete().eq('id', id);
+        if (error) {
+            console.error('Error deleting appointment:', error);
+            showToast('error', 'Erro ao deletar compromisso.');
+        } else {
+            setAppointments(prev => prev.filter(a => a.id !== id));
+            showToast('success', 'Compromisso removido.');
+        }
+    }, [supabase, showToast]);
 
     // Client operations (Mapping already added)
 
@@ -1226,6 +1272,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setOnNewMessage,
 
         // Communication operations
+        addAppointment,
+        updateAppointment,
+        deleteAppointment,
         sendMessage,
         getOrCreateConversation,
         uploadChatFile,
@@ -1243,7 +1292,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         authenticateTechnician, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
         addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder, setOnNewMessage,
         sendMessage, getOrCreateConversation, uploadChatFile, uploadFile, generateMonthlyInvoices,
-        companyProfile, updateCompanyProfile
+        companyProfile, updateCompanyProfile, addAppointment, updateAppointment, deleteAppointment
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

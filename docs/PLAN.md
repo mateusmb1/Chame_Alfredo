@@ -1,37 +1,38 @@
-# Plano de Implementação: Redesign Premium da Página de Serviços/Ordens
+# Plano de Implementação: Redesign Premium e Correção da Agenda (Planejamento)
 
-Este plano visa elevar a estética e a usabilidade da página de Ordens de Serviço (Serviços), transformando-a em uma central de comando de alto impacto visual ("Command Center").
+Este plano visa elevar a estética da página de Planejamento (Agenda) e corrigir as funcionalidades de alocação de recursos e interação com o calendário.
 
-## 🎨 DESIGN COMMITMENT: "Industrial Command Center"
+## 🎨 DESIGN COMMITMENT: "Precision Scheduler"
 
-- **Topological Choice:** Romperemos o grid 50/50 interno dos cards por uma estrutura de camadas sobrepostas e zonas de contraste agressivo (Dark/Light).
-- **Risk Factor:** Uso de bordas afiadas (0-2px) em elementos de status para evocar uma sensação técnica e profissional "Zero Error". 
-- **Readability Conflict:** Utilizaremos tipografia massiva para o ID da OS em segundo plano (background watermarks) para facilitar a busca visual rápida sem poluir o conteúdo.
-- **Cliché Liquidation:** Removeremos o uso excessivo de sombras suaves arredondadas em favor de profundidade por sobreposição de camadas de cores sólidas.
+- **Topological Choice:** Utilizaremos um layout de grade técnica com foco em profundidade. O calendário deixará de ser uma tabela simples para se tornar um "painel de monitoramento", com efeitos de vidro (glassmorphism) sutis e áreas de foco dinâmicas.
+- **Risk Factor:** Bordas extremamente nítidas (2px) para os slots de tempo, evocando precisão militar/industrial. Uso de animações de "Spring Physics" para a transição entre meses.
+- **Readability Conflict:** IDs técnicos e metadados serão exibidos em micro-tipografia, permitindo uma densidade de informação maior sem sacrificar o visual "clean".
+- **Cliché Liquidation:** Removeremos os botões de controle padrão do navegador em favor de uma barra de ferramentas customizada integrada ao cabeçalho premium.
 
 ## 📋 Fases de Implementação
 
-### Fase 1: Redesign dos Cards de OS (Grid Mode)
-- Implementar "Status Bars" verticais na borda esquerda dos cards.
-- Refatorar a zona do técnico para um estilo "Profile Badge" mais moderno.
-- Adicionar marca d'água com o número da OS no fundo do card.
-- Melhorar o contraste dos budgets e datas.
+### Fase 1: Arquitetura de Dados (AppContext)
+- Adicionar `addAppointment`, `updateAppointment` e `deleteAppointment` à interface `AppContextType`.
+- Implementar estas funções no `AppProvider` com integração ao Supabase.
+- Adicionar mappers (mapAppointmentFromDB, mapAppointmentToDB).
 
-### Fase 2: Interatividade e Micro-Animações
-- Adicionar animações de entrada escalonadas (staggered reveal) usando CSS Vanilla/Tailwind.
-- Implementar efeitos de "Hover Lift" com escala asimétrica.
-- Refinar as transições entre a visão de Grid e Lista.
+### Fase 2: Redesign da Interface (Agenda.tsx)
+- Refatorar o cabeçalho para seguir o padrão "Command Center".
+- Implementar o novo design dos cards de dia (slots).
+- Adicionar animações de entrada e transição.
+- Criar o `AppointmentModal` para adição e edição de compromissos.
 
-### Fase 3: Refinamento da Barra de Filtros e Tabs
-- Transformar as abas em uma barra de estado persistente com indicadores de contagem.
-- Melhorar o input de busca com foco em "Premium Search Experience".
+### Fase 3: Correção de Funcionalidades
+- Ligar o botão "Alocar Recurso" ao modal de criação.
+- Ligar os cliques nos dias do calendário para abrir o modal com a data pré-selecionada.
+- Adicionar handlers de clique nos eventos existentes para edição/deleção.
 
 ### Fase 4: Verificação e Auditoria
-- Validar se o "Purple Ban" (proibição de roxo) foi mantido.
-- Verificar consistência no modo escuro.
-- Rodar `lint_runner.py` para garantir integridade do código.
+- Validar conformidade com as regras do `frontend-specialist`.
+- Rodar `lint_runner.py` e `npx tsc --noEmit`.
 
 ## 👥 Agentes Envolvidos
-1. **project-planner**: Orquestração e Estratégia.
-2. **frontend-specialist**: Implementação do Redesign e Animações.
-3. **test-engineer**: Auditoria de UI e Scripts de Verificação.
+1. **project-planner**: Orquestração e Planejamento de Tarefas.
+2. **backend-specialist**: Implementação das operações de dados no Contexto.
+3. **frontend-specialist**: Redesign UI/UX e implementação do Modal.
+4. **test-engineer**: Verificação de bugs e lints.

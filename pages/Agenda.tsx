@@ -20,12 +20,19 @@ import {
   Building,
   Target
 } from 'lucide-react';
+import AppointmentModal from '../components/AppointmentModal';
+import { Appointment } from '../types/appointment';
 
 const Agenda: React.FC = () => {
   const { appointments } = useApp();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day' | 'list'>('month');
   const [showFilters, setShowFilters] = useState(false);
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
@@ -59,6 +66,26 @@ const Agenda: React.FC = () => {
   const handlePrevMonth = () => setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
   const handleNextMonth = () => setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
 
+  const handleDayClick = (dayNum: number) => {
+    const date = new Date(currentYear, currentMonth, dayNum);
+    setSelectedDate(date);
+    setSelectedAppointment(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEventClick = (e: React.MouseEvent, apt: Appointment) => {
+    e.stopPropagation();
+    setSelectedAppointment(apt);
+    setSelectedDate(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleNewResource = () => {
+    setSelectedDate(new Date());
+    setSelectedAppointment(null);
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="max-w-[1700px] mx-auto space-y-10 animate-in fade-in duration-700">
       {/* Premium Header Control */}
@@ -87,6 +114,7 @@ const Agenda: React.FC = () => {
             <button onClick={() => setViewMode('list')} className={`h-12 w-14 flex items-center justify-center rounded-xl transition-all ${viewMode === 'list' ? 'bg-primary text-white shadow-lg' : 'text-gray-300'}`}><List className="w-5 h-5" /></button>
           </div>
           <button
+            onClick={handleNewResource}
             className="h-16 px-10 bg-[#1e293b] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs flex items-center gap-4 hover:bg-primary transition-all shadow-2xl hover:shadow-primary/20 hover:-translate-y-1"
           >
             <Zap className="w-5 h-5" />
@@ -108,7 +136,7 @@ const Agenda: React.FC = () => {
               <section>
                 <h4 className="text-[9px] font-black text-primary uppercase tracking-[0.2em] mb-4">Corpo Técnico</h4>
                 <div className="space-y-4">
-                  {['Especialista A', 'Especialista B', 'Trainee C'].map(name => (
+                  {['Especialista A', 'Especialista B', 'Trainee C'].map((name, i) => (
                     <label key={name} className="flex items-center justify-between cursor-pointer group">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-white/5 flex items-center justify-center text-[10px] font-bold text-gray-400 group-hover:bg-primary group-hover:text-white transition-all">{name[name.length - 1]}</div>
@@ -169,7 +197,8 @@ const Agenda: React.FC = () => {
                   return (
                     <div
                       key={day}
-                      className={`relative group rounded-[2.5rem] flex flex-col transition-all p-4 border overflow-hidden
+                      onClick={() => handleDayClick(day)}
+                      className={`relative group rounded-[2.5rem] flex flex-col transition-all p-4 border overflow-hidden cursor-pointer
                       ${isToday
                           ? 'bg-[#1e293b] text-white shadow-2xl scale-[1.05] z-10 border-transparent'
                           : 'bg-gray-50/50 dark:bg-white/5 border-gray-50 dark:border-gray-800 hover:border-primary/20 hover:bg-white dark:hover:bg-white/10 hover:shadow-xl'}`}
@@ -181,6 +210,7 @@ const Agenda: React.FC = () => {
                         {dayEvents.map((evt, i) => (
                           <div
                             key={i}
+                            onClick={(e) => handleEventClick(e, evt)}
                             className={`px-3 py-1.5 rounded-xl border text-[8px] font-black uppercase tracking-widest truncate transition-all active:scale-95 shadow-sm
                             ${isToday ? 'bg-white/10 border-white/10 text-white' : statusColors[evt.status as keyof typeof statusColors] || 'bg-white text-gray-400'}`}
                           >
@@ -205,7 +235,11 @@ const Agenda: React.FC = () => {
                 </div>
               ) : (
                 appointments.map((apt, i) => (
-                  <div key={i} className="group flex items-center gap-8 bg-gray-50/50 dark:bg-white/5 rounded-[3rem] p-8 border border-transparent hover:border-primary/20 hover:bg-white dark:hover:bg-white/10 transition-all cursor-pointer relative overflow-hidden">
+                  <div
+                    key={i}
+                    onClick={(e) => handleEventClick(e, apt)}
+                    className="group flex items-center gap-8 bg-gray-50/50 dark:bg-white/5 rounded-[3rem] p-8 border border-transparent hover:border-primary/20 hover:bg-white dark:hover:bg-white/10 transition-all cursor-pointer relative overflow-hidden"
+                  >
                     {/* Event Type Accent */}
                     <div className="absolute left-0 top-0 h-full w-2 bg-primary"></div>
 
@@ -247,6 +281,13 @@ const Agenda: React.FC = () => {
           )}
         </div>
       </div>
+
+      <AppointmentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialDate={selectedDate}
+        appointment={selectedAppointment}
+      />
 
       <style dangerouslySetInnerHTML={{
         __html: `
