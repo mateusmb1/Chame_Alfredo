@@ -130,24 +130,27 @@ export const useLeadCapture = () => {
             }
 
             // 2. Create Order
+            if (!clientId) throw new Error('Não foi possível identificar seu cadastro (ID ausente).')
+
             const protocol = generateProtocol()
             const priority = determinePriority(formData)
+            const finalClientName = formData.name?.trim() || 'Cliente Site'
 
             // Construct description from services
-            const serviceNames = formData.services.join(', ')
+            const serviceNames = formData.services.length > 0 ? formData.services.join(', ') : 'Serviços não especificados'
             const description = `Solicitação via Landing Page. Serviços: ${serviceNames}. ${formData.otherServiceDescription ? `Obs: ${formData.otherServiceDescription}` : ''} ${formData.isEmergency ? '[EMERGÊNCIA]' : ''}`
 
             const { error: orderError } = await supabase
                 .from('orders')
                 .insert([{
                     client_id: clientId,
-                    client_name: formData.name,
-                    service_type: formData.services.length > 0 ? formData.services[0].toLowerCase() : 'outros', // Ensure matching enum or string. Landing.tsx had mapped values. I'll rely on string for now.
+                    client_name: finalClientName,
+                    service_type: formData.services.length > 0 ? formData.services[0] : 'outros',
                     description: description,
                     status: 'nova',
                     priority: priority,
-                    origin: 'landing_form',
-                    protocol: protocol
+                    origin: 'landing_form'
+                    // protocol: removed - generated via DB trigger
                 }])
 
             if (orderError) throw orderError

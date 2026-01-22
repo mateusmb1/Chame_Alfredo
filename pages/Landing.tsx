@@ -99,6 +99,12 @@ const Landing: React.FC = () => {
 
       const serviceInfo = servicePriorityMap[selectedService] || { priority: 'media', serviceType: 'Outros' }
 
+      if (!clientData?.id) {
+        throw new Error('Identificação do cliente pendente. Por favor, reinicie o formulário.')
+      }
+
+      const finalClientName = formData.name?.trim() || 'Cliente Site'
+
       // Create order
       const { error: orderError } = await supabase
         .from('orders')
@@ -110,11 +116,14 @@ const Landing: React.FC = () => {
           status: 'nova',
           priority: serviceInfo.priority,
           value: 0,
-          origin: 'landing_hero',
-          protocol: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`
+          origin: 'landing_hero'
+          // protocol: removed - DB will handle via trigger
         }])
 
-      if (orderError) throw orderError
+      if (orderError) {
+        console.error('Erro detalhado do Supabase (Orders):', orderError)
+        throw orderError
+      }
 
       // Show final success
       setShowSuccessMessage(true)

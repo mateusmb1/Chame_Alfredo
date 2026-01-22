@@ -299,7 +299,7 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
                                 className="w-full sm:w-auto bg-[#F97316] hover:bg-orange-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
                             >
                                 {loading ? (
-                                    <>Processing...</>
+                                    <>Processando...</>
                                 ) : (
                                     <>Solicitar Agora <CheckCircle className="ml-2 w-4 h-4" /></>
                                 )}
