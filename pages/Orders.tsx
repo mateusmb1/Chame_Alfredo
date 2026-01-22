@@ -261,80 +261,98 @@ const Orders: React.FC = () => {
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-8 pb-20">
-          {filteredOrders.map(order => {
+          {filteredOrders.map((order, index) => {
             const config = getStatusConfig(order.status);
             const priority = getPriorityInfo(order.priority);
             return (
               <div
                 key={order.id}
-                className={`group relative bg-white dark:bg-[#101622] rounded-[3rem] p-8 border transition-all hover:translate-y-[-4px]
-                  ${selectedIds.includes(order.id) ? 'border-primary ring-8 ring-primary/5 bg-gray-50/50' : 'border-gray-100 dark:border-gray-800/50 shadow-sm'}`}
+                style={{ animationDelay: `${index * 50}ms` }}
+                className={`group relative bg-white dark:bg-[#101622] rounded-2xl p-0 border transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 animate-in slide-in-from-bottom-8 fade-in 
+                  ${selectedIds.includes(order.id) ? 'border-primary ring-8 ring-primary/5' : 'border-gray-100 dark:border-gray-800/50 shadow-sm'}`}
               >
-                {/* Card Header */}
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(order.id)}
-                        onChange={() => setSelectedIds(prev => prev.includes(order.id) ? prev.filter(i => i !== order.id) : [...prev, order.id])}
-                        className="w-6 h-6 rounded-lg border-2 border-gray-200 text-primary focus:ring-primary/10 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all cursor-pointer opacity-0 group-hover:opacity-100 checked:opacity-100 absolute inset-0 z-10"
-                      />
-                      <div className={`w-6 h-6 rounded-lg border-2 border-dashed flex items-center justify-center transition-all ${selectedIds.includes(order.id) ? 'bg-primary border-primary scale-0' : 'border-gray-200 opacity-20'}`}></div>
-                    </div>
-                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-2 ${config.color}`}>
-                      <config.icon className="w-3.5 h-3.5" />
-                      {config.label}
-                    </span>
-                    {order.origin?.startsWith('landing_') && (
-                      <span className="px-3 py-1 bg-primary/10 text-primary rounded-lg text-[8px] font-black uppercase tracking-widest border border-primary/20">
-                        SITE LEAD
+                {/* Visual Accent - Color Bar */}
+                <div className={`absolute left-0 top-0 bottom-0 w-2 rounded-l-2xl ${config.color.split(' ')[1]}`}></div>
+
+                {/* Background Watermark ID */}
+                <div className="absolute top-10 right-4 text-[7rem] font-black text-gray-400/5 select-none pointer-events-none tracking-tighter italic">
+                  #{order.id.split('-')[0].slice(-3)}
+                </div>
+
+                <div className="p-8 relative z-10">
+                  {/* Card Header */}
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(order.id)}
+                          onChange={() => setSelectedIds(prev => prev.includes(order.id) ? prev.filter(i => i !== order.id) : [...prev, order.id])}
+                          className="w-5 h-5 rounded border-2 border-gray-200 text-primary focus:ring-primary/10 transition-all cursor-pointer opacity-20 group-hover:opacity-100 checked:opacity-100"
+                        />
+                      </div>
+                      <span className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center gap-2 ${config.color} border border-current opacity-80`}>
+                        <config.icon className="w-3 h-3" />
+                        {config.label}
                       </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => navigate(`/orders/${order.id}`)} className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400 hover:text-primary transition-all shadow-sm"><Eye className="w-5 h-5" /></button>
-                    <button onClick={() => handleOpenEditModal(order)} className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400 hover:text-blue-500 transition-all shadow-sm"><Edit2 className="w-5 h-5" /></button>
-                    <button onClick={() => { setOrderToDelete(order.id); setIsDeleteDialogOpen(true); }} className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400 hover:text-red-500 transition-all shadow-sm"><Trash2 className="w-5 h-5" /></button>
-                  </div>
-                </div>
-
-                <div className="mb-8">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] leading-none">OS #{order.id.split('-')[0]}</span>
-                    <div className={`h-[5px] w-[5px] rounded-full ${priority.color} ${order.priority === 'urgente' ? 'animate-pulse scale-150' : ''}`}></div>
-                    <span className={`text-[9px] font-black uppercase tracking-widest ${order.priority === 'urgente' ? 'text-red-500' : 'text-gray-300'}`}>{priority.label}</span>
-                  </div>
-                  <h3 className="text-2xl font-black text-[#1e293b] dark:text-white tracking-tighter italic uppercase leading-tight mb-2 group-hover:text-primary transition-colors cursor-pointer" onClick={() => navigate(`/orders/${order.id}`)}>
-                    {order.clientName}
-                  </h3>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{order.serviceType}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-6 p-6 bg-gray-50/50 dark:bg-white/5 rounded-[2rem] border border-gray-100 dark:border-gray-800/50 mb-8">
-                  <div className="space-y-1">
-                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1 text-center">Data Agendada</p>
-                    <p className="text-sm font-black text-[#1e293b] dark:text-gray-300 text-center">{new Date(order.scheduledDate).toLocaleDateString('pt-BR')}</p>
-                  </div>
-                  <div className="space-y-1 text-right">
-                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1 text-center">Budget Total</p>
-                    <p className="text-sm font-black text-primary text-center leading-none">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.value)}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-800">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-[1.2rem] bg-gradient-to-tr from-[#1e293b] to-black flex items-center justify-center text-white text-xs font-black shadow-lg">
-                      {order.technicianName?.split(' ').map(n => n[0]).join('')}
+                      {order.origin?.startsWith('landing_') && (
+                        <span className="px-3 py-1 bg-primary text-white rounded-lg text-[8px] font-black uppercase tracking-widest animate-pulse">
+                          SITE LIVE
+                        </span>
+                      )}
                     </div>
-                    <div>
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none mb-1">Responsável</p>
-                      <p className="text-xs font-black text-[#1e293b] dark:text-white tracking-widest">{order.technicianName}</p>
+
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                      <button onClick={() => navigate(`/orders/${order.id}`)} className="w-9 h-9 rounded-lg bg-[#1e293b] text-white flex items-center justify-center hover:bg-primary transition-all"><Eye className="w-4 h-4" /></button>
+                      <button onClick={() => handleOpenEditModal(order)} className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-blue-500 transition-all"><Edit2 className="w-4 h-4" /></button>
+                      <button onClick={() => { setOrderToDelete(order.id); setIsDeleteDialogOpen(true); }} className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-red-500 transition-all"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </div>
-                  <div className="w-10 h-10 rounded-2xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-300 group-hover:text-primary transition-all">
-                    <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+
+                  {/* Identification */}
+                  <div className="mb-8 border-l-4 border-gray-100 dark:border-gray-800 pl-6 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">OS CENTRAL</span>
+                      <div className={`h-1.5 w-1.5 rounded-full ${priority.color}`}></div>
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{priority.label}</span>
+                    </div>
+                    <h3 className="text-3xl font-black text-[#1e293b] dark:text-white tracking-tighter uppercase italic leading-none group-hover:tracking-normal transition-all duration-500">
+                      {order.clientName}
+                    </h3>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.1em]">{order.serviceType}</p>
+                  </div>
+
+                  {/* Technical Data Blocks */}
+                  <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-gray-800/50 group-hover:border-primary/20 transition-colors text-center">
+                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-2">Previsão</p>
+                      <p className="text-sm font-black text-[#1e293b] dark:text-gray-300 flex items-center justify-center gap-2">
+                        <Calendar className="w-3.5 h-3.5 text-primary" />
+                        {new Date(order.scheduledDate).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <div className="p-5 bg-[#1e293b] rounded-xl border border-transparent text-center shadow-xl shadow-[#1e293b]/5 group-hover:bg-primary transition-colors duration-500">
+                      <p className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2">Budget OS</p>
+                      <p className="text-sm font-black text-white flex items-center justify-center gap-1">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.value)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Footer - Profile */}
+                  <div className="flex items-center justify-between pt-6 border-t border-gray-50 dark:border-gray-800">
+                    <div className="flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-[#1e293b] dark:text-white text-[10px] font-black border border-gray-200/50 dark:border-white/5 shadow-inner">
+                        {order.technicianName?.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Supervisor Técnico</p>
+                        <p className="text-[11px] font-black text-[#1e293b] dark:text-white tracking-widest uppercase">{order.technicianName}</p>
+                      </div>
+                    </div>
+                    <button className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-300 group-hover:text-primary group-hover:bg-primary/5 transition-all">
+                      <ChevronRight className="w-5 h-5 transition-transform group-hover:rotate-90" />
+                    </button>
                   </div>
                 </div>
               </div>

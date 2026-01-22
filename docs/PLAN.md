@@ -1,31 +1,37 @@
-# Plano de Implementação: Visibilidade de Solicitações da Landing Page (Leads)
+# Plano de Implementação: Redesign Premium da Página de Serviços/Ordens
 
-Este plano visa tornar as solicitações feitas pelos clientes no site (Landing Page) visíveis e fáceis de identificar no painel administrativo.
+Este plano visa elevar a estética e a usabilidade da página de Ordens de Serviço (Serviços), transformando-a em uma central de comando de alto impacto visual ("Command Center").
 
-## 🛠️ Detalhes técnicos
-- As solicitações do site são salvas na tabela `orders` com os campos `origin: 'landing_quick_quote'` ou `origin: 'landing_form'`.
-- Atualmente, essas solicitações estão misturadas com as Ordens de Serviço (OS) comuns e não possuem um destaque visual.
+## 🎨 DESIGN COMMITMENT: "Industrial Command Center"
+
+- **Topological Choice:** Romperemos o grid 50/50 interno dos cards por uma estrutura de camadas sobrepostas e zonas de contraste agressivo (Dark/Light).
+- **Risk Factor:** Uso de bordas afiadas (0-2px) em elementos de status para evocar uma sensação técnica e profissional "Zero Error". 
+- **Readability Conflict:** Utilizaremos tipografia massiva para o ID da OS em segundo plano (background watermarks) para facilitar a busca visual rápida sem poluir o conteúdo.
+- **Cliché Liquidation:** Removeremos o uso excessivo de sombras suaves arredondadas em favor de profundidade por sobreposição de camadas de cores sólidas.
 
 ## 📋 Fases de Implementação
 
-### Fase 1: Atualização de Dados (Modelagem)
-- Adicionar o campo `origin` à interface `Order` em `types/order.ts`.
-- Atualizar os mapers `mapOrderFromDB` e `mapOrderToDB` em `AppContext.tsx` para garantir que o campo `origin` seja recuperado do Supabase.
+### Fase 1: Redesign dos Cards de OS (Grid Mode)
+- Implementar "Status Bars" verticais na borda esquerda dos cards.
+- Refatorar a zona do técnico para um estilo "Profile Badge" mais moderno.
+- Adicionar marca d'água com o número da OS no fundo do card.
+- Melhorar o contraste dos budgets e datas.
 
-### Fase 2: Identificação Visual em Serviços (Orders.tsx)
-- Adicionar uma nova aba "Site Leads" ou "Solicitações" na página de Serviços.
-- Exibir um badge visual (ex: "Site") nos cards e na lista para identificar a origem.
-- Adicionar um filtro rápido para ver apenas solicitações externas.
+### Fase 2: Interatividade e Micro-Animações
+- Adicionar animações de entrada escalonadas (staggered reveal) usando CSS Vanilla/Tailwind.
+- Implementar efeitos de "Hover Lift" com escala asimétrica.
+- Refinar as transições entre a visão de Grid e Lista.
 
-### Fase 3: Destaque no Dashboard (Dashboard.tsx)
-- Adicionar um pequeno indicador ou card no Dashboard mostrando quantas "Novas Solicitações" (leads não processados) existem hoje.
-- Refinar as "Atividades Recentes" para destacar quando uma atividade vem do site.
+### Fase 3: Refinamento da Barra de Filtros e Tabs
+- Transformar as abas em uma barra de estado persistente com indicadores de contagem.
+- Melhorar o input de busca com foco em "Premium Search Experience".
 
-### Fase 4: Verificação
-- Criar um lead de teste no site.
-- Verificar se ele aparece na aba correta no Painel ADM com o badge de origem.
+### Fase 4: Verificação e Auditoria
+- Validar se o "Purple Ban" (proibição de roxo) foi mantido.
+- Verificar consistência no modo escuro.
+- Rodar `lint_runner.py` para garantir integridade do código.
 
 ## 👥 Agentes Envolvidos
-1. **project-planner**: Responsável por este plano operacional.
-2. **backend-specialist**: Responsável por atualizar tipos e contextos (Typescript/Supabase mapping).
-3. **frontend-specialist**: Responsável pelas mudanças de UI (badges, abas e filtros).
+1. **project-planner**: Orquestração e Estratégia.
+2. **frontend-specialist**: Implementação do Redesign e Animações.
+3. **test-engineer**: Auditoria de UI e Scripts de Verificação.
