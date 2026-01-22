@@ -97,31 +97,46 @@ const Landing: React.FC = () => {
         'outro': { priority: 'media', serviceType: 'Outros Serviços' }
       }
 
+      // 1. Get or Create Client using secure RPC (bypasses RLS lookup restrictions)
+      const cleanPhone = formData.whatsapp.replace(/\D/g, '')
+      const { data: clientId, error: clientError } = await supabase
+        .rpc('get_or_create_client_v1', {
+          p_name: formData.name,
+          p_phone: formData.whatsapp,
+          p_type: 'pf',
+          p_status: 'active'
+        })
+
+      if (clientError) {
+        console.error('Erro ao identificar/criar cliente (RPC):', clientError)
+        throw new Error('Não foi possível processar seu cadastro. Por favor, tente pelo WhatsApp.')
+      }
+
       const serviceInfo = servicePriorityMap[selectedService] || { priority: 'media', serviceType: 'Outros' }
 
-      if (!clientData?.id) {
-        throw new Error('Identificação do cliente pendente. Por favor, reinicie o formulário.')
+      if (!clientId) {
+        throw new Error('Identificação do cliente falhou. Por favor, tente novamente.')
       }
 
       const finalClientName = formData.name?.trim() || 'Cliente Site'
 
-      // Create order
+      // 2. Create Order
       const { error: orderError } = await supabase
         .from('orders')
         .insert([{
-          client_id: clientData.id,
-          client_name: formData.name,
+          client_id: clientId,
+          client_name: finalClientName,
           service_type: serviceInfo.serviceType,
           description: `Solicitação via site - ${serviceInfo.serviceType}`,
           status: 'nova',
           priority: serviceInfo.priority,
           value: 0,
           origin: 'landing_hero'
-          // protocol: removed - DB will handle via trigger
+          // protocol: handled by DB trigger
         }])
 
       if (orderError) {
-        console.error('Erro detalhado do Supabase (Orders):', orderError)
+        console.error('Erro detalhado ao criar ordem:', orderError)
         throw orderError
       }
 
@@ -396,6 +411,22 @@ const Landing: React.FC = () => {
                   </div>
                 )}
               </form>
+              <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-center gap-4">
+                <div className="flex -space-x-2">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500">
+                      {['JS', 'MS', 'PC'][i - 1]}
+                    </div>
+                  ))}
+                </div>
+                <div className="text-[10px] text-gray-400 font-medium leading-tight">
+                  <span className="text-gray-600 font-bold block">Excelente (4.8/5)</span>
+                  2k+ atendimentos em Recife
+                </div>
+                <div className="ml-auto">
+                  <ShieldCheck className="w-8 h-8 text-[#84cc16] opacity-50" />
+                </div>
+              </div>
             </div>
           </div>
         </div>

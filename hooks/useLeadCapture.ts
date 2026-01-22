@@ -78,55 +78,18 @@ export const useLeadCapture = () => {
 
         try {
             const cleanPhone = formData.whatsapp.replace(/\D/g, '')
-            let clientId: string
+            // 1. Get or Create Client using secure RPC
+            const { data: clientId, error: clientError } = await supabase
+                .rpc('get_or_create_client_v1', {
+                    p_name: formData.name,
+                    p_phone: cleanPhone,
+                    p_type: 'pf',
+                    p_status: 'active'
+                })
 
-            // 1. Check or Create Client
-            const { data: existingClients, error: searchError } = await supabase
-                .from('clients')
-                .select('id, name, phone')
-                .eq('phone', cleanPhone)
-                .limit(1)
-
-            if (existingClients && existingClients.length > 0) {
-                clientId = existingClients[0].id
-                // Optional: Update client address if missing or changed? skipping for speed, keeping existing data safer
-            } else {
-                const { data: newClient, error: createError } = await supabase
-                    .from('clients')
-                    .insert([{
-                        name: formData.name,
-                        phone: cleanPhone,
-                        type: 'pf',
-                        status: 'active',
-                        address: `${formData.street}, ${formData.number}`,
-                        city: formData.city,
-                        cep: formData.cep,
-                        latitude: formData.latitude,
-                        longitude: formData.longitude,
-
-                    }])
-                    .select()
-                    .single()
-
-                if (createError) {
-                    // Handle duplicate key if the SELECT above failed due to RLS
-                    if (createError.code === '23505') {
-                        const { data: retryClient } = await supabase
-                            .from('clients')
-                            .select('id')
-                            .eq('phone', cleanPhone)
-                            .single()
-                        if (retryClient) {
-                            clientId = retryClient.id
-                        } else {
-                            throw new Error('Este telefone já está cadastrado, mas não conseguimos recuperar seus dados por questões de privacidade. Por favor, fale conosco pelo WhatsApp.')
-                        }
-                    } else {
-                        throw createError
-                    }
-                } else {
-                    clientId = newClient.id
-                }
+            if (clientError) {
+                console.error('RPC Client Error:', clientError)
+                throw new Error('Não foi possível identificar seu cadastro. Por favor, fale conosco pelo WhatsApp.')
             }
 
             // 2. Create Order
