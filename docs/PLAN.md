@@ -1,29 +1,31 @@
-# Plano de Correção: Erro no Painel OS e Melhoria de UI em Clientes
+# Plano de Implementação: Visibilidade de Solicitações da Landing Page (Leads)
 
-Este plano visa corrigir o crash na página de Ordens de Serviço e melhorar a experiência visual na página de Clientes.
+Este plano visa tornar as solicitações feitas pelos clientes no site (Landing Page) visíveis e fáceis de identificar no painel administrativo.
 
-## 🛠️ Detalhes dos Problemas
-1.  **Página de Serviços (Orders.tsx):** Erro `ReferenceError: handleConfirmDelete is not defined`. Funções de deleção foram referenciadas mas não implementadas.
-2.  **Página de Clientes (Clients.tsx):** Reclamação sobre a visualização. A UI atual pode estar saturada ou pouco intuitiva em dispositivos específicos.
+## 🛠️ Detalhes técnicos
+- As solicitações do site são salvas na tabela `orders` com os campos `origin: 'landing_quick_quote'` ou `origin: 'landing_form'`.
+- Atualmente, essas solicitações estão misturadas com as Ordens de Serviço (OS) comuns e não possuem um destaque visual.
 
 ## 📋 Fases de Implementação
 
-### Fase 1: Correção de Crítico (Orders.tsx)
-- Implementar `handleConfirmDelete`.
-- Implementar `handleConfirmBulkDelete`.
-- Garantir que `deleteOrders` exista no `AppContext`.
+### Fase 1: Atualização de Dados (Modelagem)
+- Adicionar o campo `origin` à interface `Order` em `types/order.ts`.
+- Atualizar os mapers `mapOrderFromDB` e `mapOrderToDB` em `AppContext.tsx` para garantir que o campo `origin` seja recuperado do Supabase.
 
-### Fase 2: Refatoração de UI (Clients.tsx)
-- Tornar a lista de clientes mais compacta e elegante.
-- Refinar o estado "Ativo" da lista para ser menos agressivo visualmente.
-- Ajustar espaçamentos no painel de detalhes para melhor legibilidade.
+### Fase 2: Identificação Visual em Serviços (Orders.tsx)
+- Adicionar uma nova aba "Site Leads" ou "Solicitações" na página de Serviços.
+- Exibir um badge visual (ex: "Site") nos cards e na lista para identificar a origem.
+- Adicionar um filtro rápido para ver apenas solicitações externas.
 
-### Fase 3: Verificação
-- Testar deleção individual e em massa.
-- Validar nova visualização de clientes.
+### Fase 3: Destaque no Dashboard (Dashboard.tsx)
+- Adicionar um pequeno indicador ou card no Dashboard mostrando quantas "Novas Solicitações" (leads não processados) existem hoje.
+- Refinar as "Atividades Recentes" para destacar quando uma atividade vem do site.
+
+### Fase 4: Verificação
+- Criar um lead de teste no site.
+- Verificar se ele aparece na aba correta no Painel ADM com o badge de origem.
 
 ## 👥 Agentes Envolvidos
-1.  **project-planner:** Responsável por este plano.
-2.  **frontend-specialist:** Implementará as melhorias de UI e corrigirá os handlers.
-3.  **debugger:** Verificará a causa raiz do erro de referência e garantirá a estabilidade.
-4.  **test-engineer:** Validará as funcionalidades de deleção.
+1. **project-planner**: Responsável por este plano operacional.
+2. **backend-specialist**: Responsável por atualizar tipos e contextos (Typescript/Supabase mapping).
+3. **frontend-specialist**: Responsável pelas mudanças de UI (badges, abas e filtros).

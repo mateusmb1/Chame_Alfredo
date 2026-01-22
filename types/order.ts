@@ -26,6 +26,7 @@ export interface Order {
   items?: any[];
   asset_info?: any;
   quoteId?: string; // Link to related quote
+  origin?: string; // Added to distinguish source (landing_form, landing_quick_quote, etc)
 }
 
 export interface CreateOrderData {

@@ -55,10 +55,11 @@ const Dashboard: React.FC = () => {
     const activeContracts = contracts.filter(c => c.status === 'ativo').length;
     const totalContractValue = contracts.filter(c => c.status === 'ativo').reduce((sum, c) => sum + c.value, 0);
     const lowStockItems = inventory.filter(i => i.status === 'estoque_baixo' || i.status === 'esgotado').length;
+    const siteLeads = orders.filter(o => o.origin?.startsWith('landing_') && (o.status === 'nova' || o.status === 'pendente')).length;
 
     return {
       totalOrders, pendingOrders, inProgressOrders, completedOrders, overdueOrders,
-      totalClients, condominiums, individuals, activeContracts, totalContractValue, lowStockItems
+      totalClients, condominiums, individuals, activeContracts, totalContractValue, lowStockItems, siteLeads
     };
   }, [orders, clients, contracts, inventory]);
 
@@ -169,12 +170,13 @@ const Dashboard: React.FC = () => {
           trend={2}
         />
         <StatCard
-          title="Revenue"
-          value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format((metrics.totalContractValue + orders.filter(o => o.status === 'concluida').reduce((sum, o) => sum + (o.value || 0), 0)))}
-          subtitle="Faturamento corrente"
-          icon={TrendingUp}
-          color="bg-emerald-500"
-          trend={18}
+          title="Leads do Site"
+          value={metrics.siteLeads}
+          subtitle="Novas solicitações"
+          icon={Users}
+          color="bg-primary"
+          trend={metrics.siteLeads > 0 ? 100 : 0}
+          onClick={() => navigate('/orders', { state: { activeTab: 'leads' } })}
         />
       </div>
 
@@ -356,9 +358,14 @@ const Dashboard: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-lg font-black text-[#1e293b] dark:text-white tracking-tighter uppercase italic">OS #{order.id}</h4>
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wide truncate max-w-[200px] sm:max-w-none">
-                      {order.clientName} • {order.serviceType}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-gray-400 font-bold uppercase tracking-wide truncate max-w-[200px] sm:max-w-none">
+                        {order.clientName} • {order.serviceType}
+                      </p>
+                      {order.origin?.startsWith('landing_') && (
+                        <span className="px-2 py-0.5 bg-primary/10 text-primary text-[7px] font-black rounded uppercase tracking-widest">SITE</span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-5">

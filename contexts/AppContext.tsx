@@ -489,6 +489,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         invoiceId: data.invoice_id,
         items: data.items || [],
         asset_info: data.asset_info,
+        origin: data.origin,
         createdAt: data.created_at,
         updatedAt: data.updated_at
     });
@@ -515,7 +516,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             clientId, clientName, serviceType, scheduledDate, completedDate,
             technicianId, technicianName, projectId, projectName,
             checkIn, checkOut, servicePhotos, serviceNotes, customerSignature,
-            invoiced, invoiceId, items, asset_info,
+            invoiced, invoiceId, items, asset_info, origin,
             createdAt, updatedAt, ...rest
         } = order;
 
@@ -540,6 +541,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...(order.quoteId !== undefined && { quote_id: order.quoteId }),
             ...(items !== undefined && { items: items }),
             ...(asset_info !== undefined && { asset_info: asset_info }),
+            ...(origin !== undefined && { origin: origin }),
             ...(createdAt !== undefined && { created_at: createdAt }),
             ...(updatedAt !== undefined && { updated_at: updatedAt }),
         };

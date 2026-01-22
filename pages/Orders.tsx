@@ -152,7 +152,11 @@ const Orders: React.FC = () => {
   const filteredOrders = orders.filter(o => {
     const matchesSearch = o.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === 'todas' || o.status === activeTab;
+    const matchesTab = activeTab === 'todas'
+      ? true
+      : activeTab === 'leads'
+        ? o.origin?.startsWith('landing_')
+        : o.status === activeTab;
     return matchesSearch && matchesTab;
   }).sort((a, b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime());
 
@@ -229,7 +233,7 @@ const Orders: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-2">
-          {['todas', 'nova', 'pendente', 'em_andamento', 'concluida'].map(tab => (
+          {['todas', 'leads', 'nova', 'pendente', 'em_andamento', 'concluida'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -238,7 +242,7 @@ const Orders: React.FC = () => {
                   ? 'bg-[#1e293b] text-white shadow-xl shadow-gray-200 dark:shadow-none'
                   : 'bg-white dark:bg-[#101622] text-gray-400 border border-gray-100 dark:border-gray-800 hover:border-primary/50'}`}
             >
-              {tab === 'todas' ? 'Tudo' : getStatusConfig(tab).label}
+              {tab === 'todas' ? 'Tudo' : tab === 'leads' ? '💻 Site Leads' : getStatusConfig(tab).label}
             </button>
           ))}
         </div>
@@ -282,6 +286,11 @@ const Orders: React.FC = () => {
                       <config.icon className="w-3.5 h-3.5" />
                       {config.label}
                     </span>
+                    {order.origin?.startsWith('landing_') && (
+                      <span className="px-3 py-1 bg-primary/10 text-primary rounded-lg text-[8px] font-black uppercase tracking-widest border border-primary/20">
+                        SITE LEAD
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
