@@ -46,7 +46,8 @@ const Landing: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     whatsapp: '',
-    service: '' // Will be populated after initial submit
+    services: [] as string[],
+    description: ''
   })
 
   // New state for 2-step process
@@ -70,13 +71,13 @@ const Landing: React.FC = () => {
     })
   }
 
-  // Handle service selection click
-  const handleServiceSelect = async (selectedService: string) => {
+  const handleFinalSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     if (!clientData) return
+    if (formData.services.length === 0) return alert('Por favor, selecione ao menos um serviço.')
 
     setIsSubmitting(true)
     try {
-      // Map service to priority and description
       const servicePriorityMap: Record<string, { priority: string; serviceType: string }> = {
         'manutencao': { priority: 'media', serviceType: 'Manutenção Geral' },
         'portao': { priority: 'alta', serviceType: 'Portão Automático' },
@@ -85,61 +86,57 @@ const Landing: React.FC = () => {
         'outro': { priority: 'media', serviceType: 'Outros Serviços' }
       }
 
-      // 1. Get or Create Client using secure RPC (bypasses RLS lookup restrictions)
       const cleanPhone = formData.whatsapp.replace(/\D/g, '')
       const { data: clientId, error: clientError } = await supabase
         .rpc('get_or_create_client_v1', {
           p_name: formData.name,
-          p_phone: formData.whatsapp,
+          p_phone: cleanPhone,
           p_type: 'pf',
           p_status: 'active'
         })
 
-      if (clientError) {
-        console.error('Erro ao identificar/criar cliente (RPC):', clientError)
-        throw new Error('Não foi possível processar seu cadastro. Por favor, tente pelo WhatsApp.')
-      }
+      if (clientError) throw clientError
+      if (!clientId) throw new Error('Falha na identificação do cliente.')
 
-      const serviceInfo = servicePriorityMap[selectedService] || { priority: 'media', serviceType: 'Outros' }
+      const serviceNames = formData.services.map(s => servicePriorityMap[s]?.serviceType || s).join(', ')
+      const finalDescription = `[QUICK] Serviços: ${serviceNames}. Obs: ${formData.description}`
+      const primaryService = formData.services[0]
+      const serviceInfo = servicePriorityMap[primaryService] || { priority: 'media', serviceType: 'Serviço Geral' }
 
-      if (!clientId) {
-        throw new Error('Identificação do cliente falhou. Por favor, tente novamente.')
-      }
-
-      const finalClientName = formData.name?.trim() || 'Cliente Site'
-
-      // 2. Create Order
       const { error: orderError } = await supabase
         .from('orders')
         .insert([{
           client_id: clientId,
-          client_name: finalClientName,
-          service_type: serviceInfo.serviceType,
-          description: `Solicitação via site - ${serviceInfo.serviceType}`,
+          client_name: formData.name,
+          service_type: serviceNames.length > 50 ? 'Múltiplos Serviços' : serviceNames,
+          description: finalDescription,
           status: 'nova',
           priority: serviceInfo.priority,
-          value: 0,
-          origin: 'landing_hero'
-          // protocol: handled by DB trigger
+          origin: 'landing_quick_quote'
         }])
 
-      if (orderError) {
-        console.error('Erro detalhado ao criar ordem:', orderError)
-        throw orderError
-      }
+      if (orderError) throw orderError
 
-      // Show final success
       setShowSuccessMessage(true)
-      setStep('initial') // Reset to initial for next user or same user
-      setFormData({ name: '', whatsapp: '', service: '' })
+      setStep('initial')
+      setFormData({ name: '', whatsapp: '', services: [], description: '' })
       setTimeout(() => setShowSuccessMessage(false), 5000)
 
-    } catch (error) {
-      console.error('Erro ao salvar serviço:', error)
-      alert('Ocorreu um erro ao salvar sua opção.')
+    } catch (error: any) {
+      console.error('Erro ao salvar:', error)
+      alert('Erro ao processar: ' + (error.message || 'Verifique sua conexão.'))
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const toggleService = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      services: prev.services.includes(id)
+        ? prev.services.filter(s => s !== id)
+        : [...prev.services, id]
+    }))
   }
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -360,42 +357,47 @@ const Landing: React.FC = () => {
                 ) : (
                   <div className="space-y-3 animate-fade-in">
                     <p className="text-[#1e293b] font-bold text-center mb-2">Qual serviço você precisa?</p>
+                    {[
+                      { id: 'portao', label: 'Portão' },
+                      { id: 'seguranca', label: 'Câmeras' },
+                      { id: 'preventiva', label: 'Preventiva' },
+                      { id: 'outro', label: 'Outro' }
+                    ].map(s => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => toggleService(s.id)}
+                        className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${formData.services.includes(s.id)
+                          ? 'border-[#F97316] bg-orange-50 text-[#F97316]'
+                          : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                          }`}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                    <textarea
+                      placeholder="Algum detalhe adicional? (Opcional)"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none text-sm h-20 resize-none mt-4"
+                    />
+
                     <button
                       type="button"
-                      onClick={() => handleServiceSelect('portao')}
-                      className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-[#F97316] hover:bg-orange-50 transition flex items-center"
+                      onClick={() => handleFinalSubmit()}
+                      disabled={isSubmitting || formData.services.length === 0}
+                      className="w-full bg-[#1e293b] hover:bg-gray-800 text-white font-bold py-3 rounded-lg transition shadow-lg flex justify-center items-center disabled:opacity-50 mt-4"
                     >
-                      <div className="w-4 h-4 border-2 border-gray-400 rounded mr-3 flex items-center justify-center"></div>
-                      <span className="font-medium text-gray-700">Portão Automático</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleServiceSelect('seguranca')}
-                      className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-[#F97316] hover:bg-orange-50 transition flex items-center"
-                    >
-                      <div className="w-4 h-4 border-2 border-gray-400 rounded mr-3 flex items-center justify-center"></div>
-                      <span className="font-medium text-gray-700">Câmeras / Segurança</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleServiceSelect('preventiva')}
-                      className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-[#F97316] hover:bg-orange-50 transition flex items-center"
-                    >
-                      <div className="w-4 h-4 border-2 border-gray-400 rounded mr-3 flex items-center justify-center"></div>
-                      <span className="font-medium text-gray-700">Manutenção Preventiva</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleServiceSelect('outro')}
-                      className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-[#F97316] hover:bg-orange-50 transition flex items-center"
-                    >
-                      <div className="w-4 h-4 border-2 border-gray-400 rounded mr-3 flex items-center justify-center"></div>
-                      <span className="font-medium text-gray-700">Outro</span>
+                      {isSubmitting ? 'Processando...' : 'Solicitar Agora'}
                     </button>
 
-                    {isSubmitting && (
-                      <div className="text-center text-xs text-gray-500 mt-2">Processando...</div>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setStep('initial')}
+                      className="w-full text-gray-400 text-xs hover:underline mt-2"
+                    >
+                      Voltar
+                    </button>
                   </div>
                 )}
               </form>
