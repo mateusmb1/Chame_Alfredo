@@ -190,79 +190,90 @@ const Inventory: React.FC = () => {
                 </div>
             </div>
 
-            {/* Inventory Asset Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8 pb-20">
-                {paginatedItems.length === 0 ? (
-                    <div className="col-span-full py-32 bg-white dark:bg-[#101622] rounded-[3rem] border-4 border-dashed border-gray-50 dark:border-gray-800 flex flex-col items-center justify-center text-gray-200">
-                        <HardDrive className="w-20 h-20 mb-6 opacity-40" />
-                        <p className="font-black text-xs uppercase tracking-[0.3em]">Patrimônio em Branco</p>
-                    </div>
-                ) : (
-                    paginatedItems.map(item => {
-                        const status = getStockStatus(item);
-                        return (
-                            <div
-                                key={item.id}
-                                className="group relative bg-white dark:bg-[#101622] rounded-[3rem] p-8 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-2xl hover:translate-y-[-8px] transition-all overflow-hidden"
-                            >
-                                <div className="flex items-start justify-between mb-8">
-                                    <div className={`p-4 rounded-2xl ${status.color} shadow-inner`}>
-                                        <Package className="w-7 h-7" />
-                                    </div>
-                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => handleOpenEditModal(item)} className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400 hover:text-blue-500 transition-all shadow-sm">
-                                            <Edit2 className="w-5 h-5" />
-                                        </button>
-                                        <button onClick={() => { setItemToDelete(item.id); setIsDeleteDialogOpen(true); }} className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-400 hover:text-red-500 transition-all shadow-sm">
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="mb-8">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest leading-none">SKU: {item.sku}</span>
-                                        <div className="h-1 w-1 rounded-full bg-gray-200"></div>
-                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">{item.category}</span>
-                                    </div>
-                                    <h3 className="text-xl font-black text-[#1e293b] dark:text-white leading-tight tracking-tighter italic uppercase group-hover:text-primary transition-colors truncate">{item.name}</h3>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4 p-5 bg-gray-50/50 dark:bg-white/5 rounded-[2rem] border border-gray-100 dark:border-gray-800/50 mb-8 items-center text-center">
-                                    <div className="space-y-1">
-                                        <span className="text-[8px] font-black uppercase text-gray-400 tracking-widest block mb-1">Custódia</span>
-                                        <div className="flex items-baseline justify-center gap-1">
-                                            <span className="text-2xl font-black text-[#1e293b] dark:text-white leading-none italic">{item.quantity}</span>
-                                            <span className="text-[10px] font-black text-gray-300 uppercase">{item.unit || 'un'}</span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1 border-l border-gray-100 dark:border-gray-800">
-                                        <span className="text-[8px] font-black uppercase text-gray-400 tracking-widest block mb-1">Custo Un.</span>
-                                        <p className="text-sm font-black text-emerald-600 leading-none">{formatCurrency(item.price || 0)}</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between pt-6 border-t border-gray-50 dark:border-gray-800">
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="w-4 h-4 text-gray-300" />
-                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.location || 'Local Não Definido'}</span>
-                                    </div>
-                                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${status.color}`}>
-                                        {status.label}
-                                    </span>
-                                </div>
-
-                                {/* Smart Progress Bar for Stock */}
-                                <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-50 dark:bg-gray-900">
-                                    <div
-                                        className={`h-full transition-all duration-700 ${item.quantity <= item.minQuantity ? 'bg-[#F97316]' : 'bg-primary'}`}
-                                        style={{ width: `${Math.min(100, (item.quantity / (item.minQuantity * 3 || 1)) * 100)}%` }}
-                                    />
-                                </div>
-                            </div>
-                        );
-                    })
-                )}
+            {/* Inventory Asset List - Industrial Premium Redesign */}
+            <div className="bg-white dark:bg-[#101622] rounded-[2.5rem] border border-gray-100 dark:border-gray-800/50 shadow-2xl overflow-hidden pb-10">
+                <div className="overflow-x-auto no-scrollbar">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-gray-50 dark:border-gray-800/50 bg-gray-50/30 dark:bg-white/1">
+                                <th className="px-8 py-6 text-[9px] font-black uppercase tracking-[0.3em] text-gray-400">Ativo / SKU</th>
+                                <th className="px-8 py-6 text-[9px] font-black uppercase tracking-[0.3em] text-gray-400">Categoria</th>
+                                <th className="px-8 py-6 text-[9px] font-black uppercase tracking-[0.3em] text-gray-400">Qtd / Un</th>
+                                <th className="px-8 py-6 text-[9px] font-black uppercase tracking-[0.3em] text-gray-400">Custo Total</th>
+                                <th className="px-8 py-6 text-[9px] font-black uppercase tracking-[0.3em] text-gray-400">Localização</th>
+                                <th className="px-8 py-6 text-[9px] font-black uppercase tracking-[0.3em] text-gray-400">Status</th>
+                                <th className="px-8 py-6 text-right"></th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50 dark:divide-gray-800/30">
+                            {paginatedItems.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="py-32 text-center text-gray-200">
+                                        <HardDrive className="w-20 h-20 mx-auto mb-6 opacity-40" />
+                                        <p className="font-black text-xs uppercase tracking-[0.3em]">Patrimônio em Branco</p>
+                                    </td>
+                                </tr>
+                            ) : (
+                                paginatedItems.map(item => {
+                                    const status = getStockStatus(item);
+                                    return (
+                                        <tr key={item.id} className="group hover:bg-gray-50/50 dark:hover:bg-primary/5 transition-all">
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`p-3 rounded-xl ${status.color.split(' ')[1]} ${status.color.split(' ')[0]} shadow-inner opacity-80`}>
+                                                        <Package className="w-5 h-5" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-sm font-black text-[#1e293b] dark:text-white uppercase italic tracking-tighter leading-tight group-hover:text-primary transition-colors">{item.name}</h4>
+                                                        <span className="text-[10px] font-mono font-bold text-gray-400 tracking-wider">#{item.sku}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-[#1e293b]/60 dark:text-gray-400 border border-gray-100 dark:border-gray-800 px-3 py-1 rounded-lg bg-white dark:bg-white/5">{item.category}</span>
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className={`text-xl font-black italic tracking-tighter ${item.quantity <= item.minQuantity ? 'text-[#F97316]' : 'text-[#1e293b] dark:text-white'}`}>{item.quantity}</span>
+                                                    <span className="text-[9px] font-black text-gray-300 uppercase">{item.unit || 'un'}</span>
+                                                </div>
+                                                <div className="w-16 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mt-1">
+                                                    <div className={`h-full ${item.quantity <= item.minQuantity ? 'bg-[#F97316]' : 'bg-primary'}`} style={{ width: `${Math.min(100, (item.quantity / (item.minQuantity * 3 || 1)) * 100)}%` }}></div>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <p className="text-xs font-black text-emerald-600 dark:text-emerald-500 italic tracking-tighter">{formatCurrency(item.price * item.quantity)}</p>
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{formatCurrency(item.price)} / un</p>
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center gap-2">
+                                                    <MapPin className="w-3.5 h-3.5 text-gray-300" />
+                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate max-w-[120px]">{item.location || 'N/A'}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${status.color}`}>
+                                                    <status.icon className="w-3 h-3" />
+                                                    {status.label}
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-5 text-right">
+                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => handleOpenEditModal(item)} className="w-9 h-9 rounded-xl bg-white dark:bg-white/10 shadow-sm border border-gray-100 dark:border-gray-800 flex items-center justify-center text-gray-400 hover:text-primary transition-all">
+                                                        <Edit2 className="w-4 h-4" />
+                                                    </button>
+                                                    <button onClick={() => { setItemToDelete(item.id); setIsDeleteDialogOpen(true); }} className="w-9 h-9 rounded-xl bg-white dark:bg-white/10 shadow-sm border border-gray-100 dark:border-gray-800 flex items-center justify-center text-gray-400 hover:text-red-500 transition-all">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Tactical Pagination */}

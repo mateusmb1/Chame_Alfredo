@@ -160,6 +160,7 @@ const Dashboard: React.FC = () => {
           icon={Clock}
           color="bg-[#F97316]"
           trend={-5}
+          onClick={() => navigate('/orders', { state: { statusFilter: 'pendente' } })}
         />
         <StatCard
           title="Critical Path"
@@ -168,6 +169,7 @@ const Dashboard: React.FC = () => {
           icon={AlertCircle}
           color="bg-red-500"
           trend={2}
+          onClick={() => navigate('/orders', { state: { overdueFilter: true } })}
         />
         <StatCard
           title="Leads do Site"
