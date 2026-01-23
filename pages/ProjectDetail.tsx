@@ -11,7 +11,7 @@ const ProjectDetail: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'team' | 'documents' | 'notes' | 'timeline'>('overview');
 
   const project = projects.find(p => p.id === id);
-  
+
   if (!project) {
     return (
       <div className="flex h-full flex-col p-8">
@@ -127,7 +127,7 @@ const ProjectDetail: React.FC = () => {
             <span className="text-gray-400 text-sm font-medium">/</span>
             <span className="text-gray-900 dark:text-white text-sm font-medium">#{project.id}</span>
           </div>
-          
+
           {/* Page Heading & Actions */}
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -145,6 +145,10 @@ const ProjectDetail: React.FC = () => {
                 <span className="material-symbols-outlined text-base">edit</span>
                 <span className="truncate">Editar Projeto</span>
               </button>
+              <Link to={`/new-order?projectId=${project.id}`} className="flex w-auto cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-emerald-600 text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-emerald-700">
+                <span className="material-symbols-outlined text-base">add_circle</span>
+                <span className="truncate">Criar OS</span>
+              </Link>
               <button className="flex w-auto cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-gray-50 dark:hover:bg-gray-700">
                 <span className="material-symbols-outlined text-base">add_task</span>
                 <span className="truncate">Nova Tarefa</span>
@@ -206,11 +210,10 @@ const ProjectDetail: React.FC = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
+                  className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab.id
                       ? 'border-primary text-primary'
                       : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
+                    }`}
                 >
                   <span className="material-symbols-outlined text-base">{tab.icon}</span>
                   {tab.label}
@@ -314,7 +317,7 @@ const ProjectDetail: React.FC = () => {
                       <p className="text-sm text-gray-500 dark:text-gray-400">Gerente do Projeto</p>
                     </div>
                   </div>
-                  
+
                   {/* Team Members */}
                   {teamMembers.map(member => (
                     <div key={member.id} className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">

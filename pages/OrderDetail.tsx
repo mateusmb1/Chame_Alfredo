@@ -3,21 +3,120 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { Order } from '../types/order';
 
+import { supabase } from '../src/lib/supabase';
+import SignaturePad from '../components/SignaturePad';
+import CurrencyInput from '../components/CurrencyInput';
+import { useToast } from '../contexts/ToastContext';
 
+interface ExtraItem {
+  id?: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  approved: boolean;
+}
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { orders, clients, updateOrder } = useApp();
+  const { showToast } = useToast();
   const [order, setOrder] = useState<Order | null>(null);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+
+  // Extra Items State
+  const [extraItems, setExtraItems] = useState<ExtraItem[]>([]);
+  const [newExtraItem, setNewExtraItem] = useState<ExtraItem>({ description: '', quantity: 1, unit_price: 0, total_price: 0, approved: false });
+  const [isTechMode, setIsTechMode] = useState(false); // Toggle for Technician View
+  const [signature, setSignature] = useState<string | null>(null);
+  const [isLoadingExtras, setIsLoadingExtras] = useState(false);
 
   useEffect(() => {
     const foundOrder = orders.find(o => o.id === id);
     if (foundOrder) {
       setOrder(foundOrder);
+      fetchExtras(foundOrder.id);
     }
   }, [id, orders]);
+
+  const fetchExtras = async (orderId: string) => {
+    const { data, error } = await supabase
+      .from('order_extra_items')
+      .select('*')
+      .eq('order_id', orderId);
+    if (data) setExtraItems(data);
+  };
+
+  const handleAddExtraItem = async () => {
+    if (!order || !newExtraItem.description) return;
+    setIsLoadingExtras(true);
+    try {
+      const itemToSave = {
+        order_id: order.id,
+        description: newExtraItem.description,
+        quantity: newExtraItem.quantity,
+        unit_price: newExtraItem.unit_price,
+        approved: false
+      };
+
+      const { data, error } = await supabase.from('order_extra_items').insert([itemToSave]).select().single();
+      if (error) throw error;
+      if (data) {
+        setExtraItems([...extraItems, data]);
+        setNewExtraItem({ description: '', quantity: 1, unit_price: 0, total_price: 0, approved: false });
+        showToast('success', 'Item extra adicionado!');
+      }
+    } catch (e: any) {
+      showToast('error', 'Erro ao adicionar item.');
+    } finally {
+      setIsLoadingExtras(false);
+    }
+  };
+
+  const handleApproveExtras = async () => {
+    if (!order || !signature) {
+      showToast('error', 'A assinatura é obrigatória para aprovação.');
+      return;
+    }
+
+    // 1. Update all items to approved
+    // 2. Save signature to order
+    // 3. Change status to 'pendente' or 'em_andamento'
+    try {
+      await supabase.from('order_extra_items').update({ approved: true }).eq('order_id', order.id);
+
+      // Save signature (assuming customer_signature column handles base64 or url)
+      // If image storage is needed, we usually upload to bucket first. For now, assuming base64 text or we need to upload.
+      // Let's implement lightweight upload flow or just save base64 if column allows text/varchar(large).
+      // Since `customer_signature` in Order type is string (url usually), let's upload.
+
+      const sigFile = await fetch(signature).then(r => r.blob());
+      const fileName = `sig_${order.id}_${Date.now()}.png`;
+      const { data: uploadData, error: uploadError } = await supabase.storage.from('signatures').upload(fileName, sigFile);
+
+      let publicUrl = signature; // Fallback to base64 if upload fails? No, usually database TEXT limit.
+
+      if (!uploadError && uploadData) {
+        const { data } = supabase.storage.from('signatures').getPublicUrl(fileName);
+        publicUrl = data.publicUrl;
+      }
+
+      updateOrder(order.id, {
+        customerSignature: publicUrl,
+        // Automatically add extras to service notes or keep separate
+      });
+
+      // Refresh local items
+      setExtraItems(prev => prev.map(i => ({ ...i, approved: true })));
+      showToast('success', 'Itens aprovados com sucesso!');
+      setSignature(null);
+    } catch (error) {
+      showToast('error', 'Erro na aprovação.');
+    }
+  };
+
+  const totalExtras = extraItems.reduce((sum, start) => sum + (start.quantity * start.unit_price), 0);
 
   if (!order) {
     return (
@@ -130,10 +229,125 @@ const OrderDetail: React.FC = () => {
           </div>
         </header>
 
+        {/* Technician Toggle */}
+        <div className="flex justify-end mb-4">
+          <label className="flex items-center cursor-pointer gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-lg">
+            <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Modo Técnico</span>
+            <input type="checkbox" checked={isTechMode} onChange={e => setIsTechMode(e.target.checked)} className="toggle toggle-primary" />
+          </label>
+        </div>
+
         {/* Layout Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Column (Left) */}
           <div className="lg:col-span-2 flex flex-col gap-8">
+
+            {/* Extras & Approval Section */}
+            <div className="bg-white dark:bg-[#18202F] rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Itens Adicionais & Diagnóstico</h2>
+                <span className="text-sm font-bold text-primary">Total Extra: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalExtras)}</span>
+              </div>
+
+              {/* List of Extras */}
+              <div className="p-0">
+                {extraItems.length > 0 ? (
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-gray-50 dark:bg-gray-800/50">
+                      <tr>
+                        <th className="px-6 py-3 font-semibold text-gray-900 dark:text-white">Descrição</th>
+                        <th className="px-6 py-3 font-semibold text-gray-900 dark:text-white text-right">Qtd</th>
+                        <th className="px-6 py-3 font-semibold text-gray-900 dark:text-white text-right">Valor Unit.</th>
+                        <th className="px-6 py-3 font-semibold text-gray-900 dark:text-white text-right">Total</th>
+                        <th className="px-6 py-3 font-semibold text-gray-900 dark:text-white text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {extraItems.map(item => (
+                        <tr key={item.id}>
+                          <td className="px-6 py-3 text-gray-700 dark:text-gray-300">{item.description}</td>
+                          <td className="px-6 py-3 text-right text-gray-700 dark:text-gray-300">{item.quantity}</td>
+                          <td className="px-6 py-3 text-right text-gray-700 dark:text-gray-300">R$ {item.unit_price}</td>
+                          <td className="px-6 py-3 text-right font-bold text-gray-900 dark:text-white">R$ {(item.quantity * item.unit_price).toFixed(2)}</td>
+                          <td className="px-6 py-3 text-center">
+                            {item.approved ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Aprovado</span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Pendente</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="p-6 text-center text-gray-500 text-sm">Nenhum item adicional registrado.</div>
+                )}
+              </div>
+
+              {/* Technician Add Form */}
+              {isTechMode && (
+                <div className="p-6 bg-gray-50 dark:bg-gray-800/20 border-t border-gray-200 dark:border-gray-800">
+                  <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Adicionar Item / Peça / Serviço Extra</h4>
+                  <div className="flex flex-col md:flex-row gap-3">
+                    <input
+                      type="text"
+                      placeholder="Descrição do item..."
+                      className="flex-1 rounded-lg border-gray-300 text-sm"
+                      value={newExtraItem.description}
+                      onChange={e => setNewExtraItem({ ...newExtraItem, description: e.target.value })}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Qtd"
+                      className="w-20 rounded-lg border-gray-300 text-sm"
+                      value={newExtraItem.quantity}
+                      onChange={e => setNewExtraItem({ ...newExtraItem, quantity: parseFloat(e.target.value) })}
+                    />
+                    <CurrencyInput
+                      placeholder="Valor Unit."
+                      className="w-32 rounded-lg border-gray-300 text-sm"
+                      value={newExtraItem.unit_price}
+                      onChange={val => setNewExtraItem({ ...newExtraItem, unit_price: val })}
+                    />
+                    <button
+                      onClick={handleAddExtraItem}
+                      disabled={isLoadingExtras}
+                      className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      Adicionar
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Client Approval */}
+              {extraItems.some(i => !i.approved) && !isTechMode && (
+                <div className="p-6 bg-yellow-50 dark:bg-yellow-900/10 border-t border-yellow-100 dark:border-yellow-900/20">
+                  <h4 className="text-sm font-bold text-yellow-800 dark:text-yellow-200 mb-2">Aprovação Necessária</h4>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-4">
+                    Existem itens adicionais que requerem sua autorização para prosseguir. O valor total acrescido será de <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(extraItems.filter(i => !i.approved).reduce((s, x) => s + (x.quantity * x.unit_price), 0))}</strong>.
+                  </p>
+
+                  <div className="max-w-md mx-auto">
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Sua Assinatura</label>
+                    <SignaturePad
+                      onSave={setSignature}
+                      onClear={() => setSignature(null)}
+                      className="mb-4"
+                    />
+                    {signature && (
+                      <button
+                        onClick={handleApproveExtras}
+                        className="w-full py-3 bg-green-600 text-white rounded-xl font-bold uppercase tracking-widest hover:bg-green-700 shadow-lg"
+                      >
+                        Aprovar Orçamento Extra
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             {/* Card: Detalhes do Cliente */}
             <div className="bg-white dark:bg-[#18202F] rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
               <div className="p-6 border-b border-gray-200 dark:border-gray-800">

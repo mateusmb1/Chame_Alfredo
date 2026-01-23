@@ -66,6 +66,13 @@ const Clients: React.FC = () => {
     email: '',
     phone: '',
     cpfCnpj: '',
+    street: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: '',
+    zipCode: '',
     address: ''
   });
 
@@ -74,7 +81,7 @@ const Clients: React.FC = () => {
   const handleOpenNewClientModal = () => {
     setIsEditMode(false);
     setEditingClientId(null);
-    setFormData({ name: '', type: 'pf', cpfCnpj: '', email: '', phone: '', address: '' });
+    setFormData({ name: '', type: 'pf', cpfCnpj: '', email: '', phone: '', address: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', zipCode: '' });
     setIsModalOpen(true);
   };
 
@@ -83,11 +90,18 @@ const Clients: React.FC = () => {
     setEditingClientId(client.id);
     setFormData({
       name: client.name,
-      type: client.type,
+      type: client.type || 'pf',
       cpfCnpj: client.cpfCnpj || '',
       email: client.email,
       phone: client.phone,
-      address: client.address
+      address: client.address,
+      street: client.street || '',
+      number: client.number || '',
+      complement: client.complement || '',
+      neighborhood: client.neighborhood || '',
+      city: client.city || '',
+      state: client.state || '',
+      zipCode: client.zip_code || ''
     });
     setIsModalOpen(true);
   };
@@ -112,7 +126,15 @@ const Clients: React.FC = () => {
         ...prev,
         name: data.razao_social || data.nome_fantasia || prev.name,
         phone: data.telefone_1 || prev.phone,
-        email: data.email || prev.email
+        email: data.email || prev.email,
+        street: data.logradouro || '',
+        number: data.numero || '',
+        complement: data.complemento || '',
+        neighborhood: data.bairro || '',
+        city: data.municipio || '',
+        state: data.uf || '',
+        zipCode: data.cep || '',
+        address: `${data.logradouro}, ${data.numero} - ${data.bairro}, ${data.municipio} - ${data.uf}`
       }));
       showToast('success', 'Dados do CNPJ carregados!');
     } catch (error) {
@@ -125,10 +147,23 @@ const Clients: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isEditMode && editingClientId) {
-      updateClient(editingClientId, formData);
+      // Ensure specific fields are passed correctly to the update function
+      const clientUpdateData = {
+        ...formData,
+        // Ensure address is constructed locally if needed, but we prefer structured data
+        address: formData.address || `${formData.street}, ${formData.number} - ${formData.neighborhood}, ${formData.city}/${formData.state}`,
+        zip_code: formData.zipCode // map zipCode to zip_code for DB
+      };
+
+      updateClient(editingClientId, clientUpdateData as any);
       showToast('success', 'Cliente atualizado!');
     } else {
-      addClient(formData);
+      const clientData = {
+        ...formData,
+        address: formData.address || `${formData.street}, ${formData.number} - ${formData.neighborhood}, ${formData.city}/${formData.state}`,
+        zip_code: formData.zipCode
+      };
+      addClient(clientData as any);
       showToast('success', 'Cliente adicionado!');
     }
     setIsModalOpen(false);
@@ -503,15 +538,92 @@ const Clients: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Endereço Operacional</label>
-            <textarea
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              rows={3}
-              className="w-full p-5 rounded-[1.8rem] bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold focus:ring-4 focus:ring-[#F97316]/5 focus:border-[#F97316]/50 dark:text-white transition-all uppercase placeholder:opacity-20"
-              placeholder="RUA, NÚMERO, BAIRRO, CIDADE/UF"
-            />
+          <div className="space-y-4">
+            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 ml-2 font-bold">Endereço & Localização</h4>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">CEP</label>
+                <input
+                  type="text"
+                  value={formData.zipCode}
+                  onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+                  className="w-full h-12 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold px-4 dark:text-white"
+                  placeholder="00000-000"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Rua / Logradouro</label>
+                <input
+                  type="text"
+                  value={formData.street}
+                  onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                  className="w-full h-12 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold px-4 dark:text-white"
+                  placeholder="Av. Paulista"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Número</label>
+                <input
+                  type="text"
+                  value={formData.number}
+                  onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                  className="w-full h-12 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold px-4 dark:text-white"
+                  placeholder="1000"
+                />
+              </div>
+              <div className="space-y-2 col-span-2 md:col-span-1">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Complemento</label>
+                <input
+                  type="text"
+                  value={formData.complement}
+                  onChange={(e) => setFormData({ ...formData, complement: e.target.value })}
+                  className="w-full h-12 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold px-4 dark:text-white"
+                  placeholder="Sala 10"
+                />
+              </div>
+              <div className="space-y-2 col-span-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Bairro</label>
+                <input
+                  type="text"
+                  value={formData.neighborhood}
+                  onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
+                  className="w-full h-12 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold px-4 dark:text-white"
+                  placeholder="Centro"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Cidade</label>
+                <input
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  className="w-full h-12 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold px-4 dark:text-white"
+                  placeholder="São Paulo"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Estado</label>
+                <input
+                  type="text"
+                  value={formData.state}
+                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  className="w-full h-12 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold px-4 dark:text-white"
+                  placeholder="SP"
+                />
+              </div>
+            </div>
+
+            {/* Hidden legacy address field for compatibility if needed, or keep it sync */}
+            <div className="hidden">
+              <input type="hidden" value={formData.address} />
+            </div>
           </div>
         </form>
       </Modal>

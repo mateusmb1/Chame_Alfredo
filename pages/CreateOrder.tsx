@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useToast } from '../contexts/ToastContext';
 
 const CreateOrder: React.FC = () => {
   const navigate = useNavigate();
-  const { clients, technicians, addOrder } = useApp();
+  const [searchParams] = useSearchParams();
+  const initialProjectId = searchParams.get('projectId');
+  const { clients, technicians, addOrder, projects } = useApp();
   const { showToast } = useToast();
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -20,8 +22,24 @@ const CreateOrder: React.FC = () => {
     scheduledTime: '',
     technicianId: '',
     priority: 'media' as 'baixa' | 'media' | 'alta' | 'urgente',
-    observations: ''
+    observations: '',
+    projectId: initialProjectId || '',
+    projectName: ''
   });
+
+  React.useEffect(() => {
+    if (initialProjectId && projects.length > 0) {
+      const proj = projects.find(p => p.id === initialProjectId);
+      if (proj) {
+        setFormData(prev => ({
+          ...prev,
+          projectId: proj.id,
+          projectName: proj.name,
+          clientId: proj.clientId || prev.clientId
+        }));
+      }
+    }
+  }, [initialProjectId, projects]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,8 +68,8 @@ const CreateOrder: React.FC = () => {
         technicianName: selectedTech?.name || '',
         value: 0,
         observations: formData.observations,
-        projectId: '',
-        projectName: ''
+        projectId: formData.projectId,
+        projectName: formData.projectName || (projects.find(p => p.id === formData.projectId)?.name || '')
       };
 
       // Assuming addOrder handles the DB insert and returns or triggers sync
@@ -251,7 +269,9 @@ const CreateOrder: React.FC = () => {
                     scheduledTime: '',
                     technicianId: '',
                     priority: 'media',
-                    observations: ''
+                    observations: '',
+                    projectId: '',
+                    projectName: ''
                   });
                 }} className="flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-[#333333] shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">Criar Nova</button>
                 <button onClick={() => navigate('/dashboard')} className="flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700/50">Ir para Dashboard</button>

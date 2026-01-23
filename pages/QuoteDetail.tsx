@@ -10,8 +10,10 @@ import {
     Plus,
     Trash2,
     FileText,
-    FolderPlus
+    FolderPlus,
+    Search
 } from 'lucide-react';
+import CurrencyInput from '../components/CurrencyInput';
 
 interface QuoteItem {
     qty: string;
@@ -25,7 +27,7 @@ const QuoteDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { showToast } = useToast();
-    const { quotes, clients, addProject, updateQuote, companyProfile } = useApp();
+    const { quotes, clients, addProject, updateQuote, companyProfile, products } = useApp();
     const [quote, setQuote] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -50,6 +52,7 @@ const QuoteDetail: React.FC = () => {
     const [items, setItems] = useState<QuoteItem[]>([
         { qty: '1', description: '', material: 0, labor: 0, other: 0 },
     ]);
+    const [suggestions, setSuggestions] = useState<{ idx: number; list: typeof products } | null>(null);
 
     // Tax rate
     const [taxRate, setTaxRate] = useState(10);
@@ -116,6 +119,27 @@ const QuoteDetail: React.FC = () => {
         const updated = [...items];
         updated[index] = { ...updated[index], [field]: value };
         setItems(updated);
+
+        if (field === 'description') {
+            const query = String(value).toLowerCase();
+            if (query.length > 1) {
+                const matches = products.filter(p => p.name.toLowerCase().includes(query));
+                setSuggestions({ idx: index, list: matches });
+            } else {
+                setSuggestions(null);
+            }
+        }
+    };
+
+    const selectProduct = (index: number, product: any) => {
+        const updated = [...items];
+        updated[index] = {
+            ...updated[index],
+            description: product.name,
+            material: product.price || 0 // Assuming price maps to material cost default
+        };
+        setItems(updated);
+        setSuggestions(null);
     };
 
     const addItem = () => {
@@ -413,39 +437,51 @@ const QuoteDetail: React.FC = () => {
                                                     placeholder="1"
                                                 />
                                             </td>
-                                            <td className="py-3 px-4">
+                                            <td className="py-3 px-4 relative">
                                                 <input
                                                     className="w-full text-sm text-slate-700 dark:text-slate-300 bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-slate-600 focus:border-primary focus:ring-0 rounded-lg py-1 px-2"
                                                     value={item.description}
                                                     onChange={(e) => updateItem(idx, 'description', e.target.value)}
                                                     placeholder="Descrição do serviço ou material"
+                                                    onBlur={() => setTimeout(() => setSuggestions(null), 200)}
+                                                />
+                                                {suggestions && suggestions.idx === idx && suggestions.list.length > 0 && (
+                                                    <div className="absolute top-full left-0 w-full z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                                                        {suggestions.list.map(prod => (
+                                                            <div
+                                                                key={prod.id}
+                                                                className="px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer text-sm"
+                                                                onClick={() => selectProduct(idx, prod)}
+                                                            >
+                                                                <span className="font-bold block">{prod.name}</span>
+                                                                <span className="text-xs text-slate-500">R$ {prod.price}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="py-3 px-4">
+                                                <CurrencyInput
+                                                    className="w-full text-right text-sm font-medium text-slate-700 dark:text-slate-300 bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-slate-600 focus:border-primary focus:ring-0 rounded-lg py-1"
+                                                    value={item.material}
+                                                    onChange={(val) => updateItem(idx, 'material', val)}
+                                                    placeholder="0,00"
                                                 />
                                             </td>
                                             <td className="py-3 px-4">
-                                                <input
-                                                    type="number"
+                                                <CurrencyInput
                                                     className="w-full text-right text-sm font-medium text-slate-700 dark:text-slate-300 bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-slate-600 focus:border-primary focus:ring-0 rounded-lg py-1"
-                                                    value={item.material || ''}
-                                                    onChange={(e) => updateItem(idx, 'material', parseFloat(e.target.value) || 0)}
-                                                    placeholder="0.00"
+                                                    value={item.labor}
+                                                    onChange={(val) => updateItem(idx, 'labor', val)}
+                                                    placeholder="0,00"
                                                 />
                                             </td>
                                             <td className="py-3 px-4">
-                                                <input
-                                                    type="number"
+                                                <CurrencyInput
                                                     className="w-full text-right text-sm font-medium text-slate-700 dark:text-slate-300 bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-slate-600 focus:border-primary focus:ring-0 rounded-lg py-1"
-                                                    value={item.labor || ''}
-                                                    onChange={(e) => updateItem(idx, 'labor', parseFloat(e.target.value) || 0)}
-                                                    placeholder="0.00"
-                                                />
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <input
-                                                    type="number"
-                                                    className="w-full text-right text-sm font-medium text-slate-700 dark:text-slate-300 bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-slate-600 focus:border-primary focus:ring-0 rounded-lg py-1"
-                                                    value={item.other || ''}
-                                                    onChange={(e) => updateItem(idx, 'other', parseFloat(e.target.value) || 0)}
-                                                    placeholder="0.00"
+                                                    value={item.other}
+                                                    onChange={(val) => updateItem(idx, 'other', val)}
+                                                    placeholder="0,00"
                                                 />
                                             </td>
                                             <td className="py-3 px-4 text-right">

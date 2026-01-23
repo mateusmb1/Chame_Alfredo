@@ -271,6 +271,9 @@ const Projects: React.FC = () => {
                   <button onClick={() => handleDeleteClick(project.id)} className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/5 rounded-xl transition-all">
                     <Trash2 className="w-4 h-4" />
                   </button>
+                  <Link to={`/new-order?projectId=${project.id}`} className="p-2.5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/5 rounded-xl transition-all" title="Criar Ordem de Serviço">
+                    <Briefcase className="w-4 h-4" />
+                  </Link>
                 </div>
               </div>
             );
