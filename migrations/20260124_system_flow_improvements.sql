@@ -4,6 +4,18 @@
 --              standardizes relational Order Items (linked to Inventory),
 --              and updates Enums for the new flow states.
 
+-- Ensure UUID extension exists
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Ensure helper function exists
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
 -- 1. ENUMS Updates
 -- ==============================================================================
 
@@ -15,7 +27,11 @@ EXCEPTION
 END $$;
 
 -- Update Order Status Enum (Add 'faturada')
-ALTER TYPE order_status_enum ADD VALUE IF NOT EXISTS 'faturada';
+DO $$ BEGIN
+    ALTER TYPE order_status_enum ADD VALUE 'faturada';
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Create Quote Status Enum (if not exists)
 DO $$ BEGIN
@@ -67,6 +83,7 @@ CREATE POLICY "Leads Insert Public" ON leads
     WITH CHECK (true);
 
 -- Triggers for Leads
+DROP TRIGGER IF EXISTS trg_update_leads_timestamp ON leads;
 CREATE TRIGGER trg_update_leads_timestamp
     BEFORE UPDATE ON leads
     FOR EACH ROW
