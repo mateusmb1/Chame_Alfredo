@@ -517,6 +517,19 @@ const Clients: React.FC = () => {
                 required
               />
             </div>
+
+            {formData.type === 'pj' && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Nome Fantasia (Apelido)</label>
+                <input
+                  type="text"
+                  value={formData.fantasyName}
+                  onChange={(e) => setFormData({ ...formData, fantasyName: e.target.value })}
+                  className="w-full h-14 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold focus:ring-4 focus:ring-[#F97316]/5 focus:border-[#F97316]/50 dark:text-white px-5 transition-all"
+                  placeholder="NOME DA FACHADA"
+                />
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
