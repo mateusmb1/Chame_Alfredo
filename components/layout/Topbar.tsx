@@ -1,10 +1,24 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Bell, Plus, Menu } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
 const Topbar: React.FC = () => {
+    const navigate = useNavigate();
     const { companyProfile } = useApp();
     const [searchQuery, setSearchQuery] = useState('');
+
+    const handleSearch = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && searchQuery.trim()) {
+            // Se for número, pode ser uma busca por OS ID
+            if (/^\d+$/.test(searchQuery.trim())) {
+                navigate(`/orders/${searchQuery.trim()}`);
+            } else {
+                // Caso contrário, vai para a página de clientes ou ordens com filtro
+                navigate(`/orders?q=${encodeURIComponent(searchQuery.trim())}`);
+            }
+        }
+    };
 
     return (
         <header className="h-16 flex items-center justify-between px-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-40 transition-colors">
@@ -17,6 +31,7 @@ const Topbar: React.FC = () => {
                     className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearch}
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                     <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-1.5 font-sans text-[10px] font-medium text-slate-400">
@@ -28,7 +43,10 @@ const Topbar: React.FC = () => {
             {/* Right Side Actions */}
             <div className="flex items-center gap-4">
                 {/* Quick Add Button */}
-                <button className="hidden sm:flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all group">
+                <button
+                    onClick={() => navigate('/orders/new')}
+                    className="hidden sm:flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all group"
+                >
                     <Plus size={16} className="group-hover:rotate-90 transition-transform" />
                     <span>Criar OS</span>
                 </button>
@@ -40,7 +58,10 @@ const Topbar: React.FC = () => {
                 </div>
 
                 {/* Notifications */}
-                <button className="relative p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                <button
+                    onClick={() => navigate('/mobile/notifications')}
+                    className="relative p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                >
                     <Bell size={20} />
                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900" />
                 </button>
@@ -48,11 +69,14 @@ const Topbar: React.FC = () => {
                 {/* User Info */}
                 <div className="h-8 w-[1px] bg-slate-200 dark:border-slate-700 mx-1" />
                 <div className="flex items-center gap-3">
-                    <div className="text-right hidden md:block">
-                        <p className="text-xs font-bold text-slate-900 dark:text-white leading-none mb-1 uppercase tracking-tight">João Alfredo</p>
+                    <div className="text-right hidden md:block" onClick={() => navigate('/settings')}>
+                        <p className="text-xs font-bold text-slate-900 dark:text-white leading-none mb-1 uppercase tracking-tight cursor-pointer hover:text-primary transition-colors">João Alfredo</p>
                         <p className="text-[10px] text-primary font-black uppercase tracking-widest leading-none">Admin Alpha</p>
                     </div>
-                    <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 relative overflow-hidden group cursor-pointer hover:border-primary transition-colors">
+                    <div
+                        onClick={() => navigate('/settings')}
+                        className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 relative overflow-hidden group cursor-pointer hover:border-primary transition-colors"
+                    >
                         {/* Profile avatar placeholder */}
                         <div className="w-full h-full flex items-center justify-center font-bold text-slate-400">A</div>
                     </div>

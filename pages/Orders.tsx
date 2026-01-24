@@ -23,6 +23,7 @@ import PageShell from '../components/layout/PageShell';
 import Toolbar from '../components/layout/Toolbar';
 import DataTable from '../components/tables/DataTable';
 import ServiceOrderDrawer from '../components/dashboard/ServiceOrderDrawer';
+import OrderGrid from '../components/dashboard/OrderGrid';
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
@@ -138,18 +139,26 @@ const Orders: React.FC = () => {
             </div>
           </Toolbar>
 
-          <DataTable
-            columns={tableColumns}
-            data={filteredOrders}
-            onRowClick={(row) => handleEdit(row.id)}
-            rowActions={(row) => (
-              <div className="flex items-center gap-1">
-                <button onClick={(e) => { e.stopPropagation(); navigate(`/orders/${row.id}`); }} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-primary"><Eye size={14} /></button>
-                <button onClick={(e) => { e.stopPropagation(); handleEdit(row.id); }} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-blue-500"><Edit2 size={14} /></button>
-                <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
-              </div>
-            )}
-          />
+          {viewMode === 'list' ? (
+            <DataTable
+              columns={tableColumns}
+              data={filteredOrders}
+              onRowClick={(row) => handleEdit(row.id)}
+              rowActions={(row) => (
+                <div className="flex items-center gap-1">
+                  <button onClick={(e) => { e.stopPropagation(); navigate(`/orders/${row.id}`); }} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-primary"><Eye size={14} /></button>
+                  <button onClick={(e) => { e.stopPropagation(); handleEdit(row.id); }} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-blue-500"><Edit2 size={14} /></button>
+                  <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
+                </div>
+              )}
+            />
+          ) : (
+            <OrderGrid
+              orders={filteredOrders}
+              onOrderClick={(order) => handleEdit(order.id)}
+              getStatusConfig={getStatusConfig}
+            />
+          )}
 
           <ServiceOrderDrawer
             open={drawerOpen}
