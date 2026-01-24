@@ -1,6 +1,7 @@
 export interface Client {
   id: string;
-  name: string;
+  name: string; // Razão Social for PJ
+  fantasyName?: string; // Nome Fantasia
   email: string;
   phone: string;
   address: string;

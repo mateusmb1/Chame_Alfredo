@@ -92,13 +92,13 @@ const OrderDetail: React.FC = () => {
       // Since `customer_signature` in Order type is string (url usually), let's upload.
 
       const sigFile = await fetch(signature).then(r => r.blob());
-      const fileName = `sig_${order.id}_${Date.now()}.png`;
-      const { data: uploadData, error: uploadError } = await supabase.storage.from('signatures').upload(fileName, sigFile);
+      const fileName = `signatures/sig_${order.id}_${Date.now()}.png`;
+      const { data: uploadData, error: uploadError } = await supabase.storage.from('orders').upload(fileName, sigFile);
 
-      let publicUrl = signature; // Fallback to base64 if upload fails? No, usually database TEXT limit.
+      let publicUrl = signature;
 
       if (!uploadError && uploadData) {
-        const { data } = supabase.storage.from('signatures').getPublicUrl(fileName);
+        const { data } = supabase.storage.from('orders').getPublicUrl(fileName);
         publicUrl = data.publicUrl;
       }
 

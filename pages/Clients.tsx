@@ -62,6 +62,7 @@ const Clients: React.FC = () => {
 
   const [formData, setFormData] = useState({
     name: '',
+    fantasyName: '',
     type: 'pf' as 'pf' | 'pj',
     email: '',
     phone: '',
@@ -90,6 +91,7 @@ const Clients: React.FC = () => {
     setEditingClientId(client.id);
     setFormData({
       name: client.name,
+      fantasyName: client.fantasyName || '',
       type: client.type || 'pf',
       cpfCnpj: client.cpfCnpj || '',
       email: client.email,
@@ -124,7 +126,8 @@ const Clients: React.FC = () => {
 
       setFormData(prev => ({
         ...prev,
-        name: data.razao_social || data.nome_fantasia || prev.name,
+        name: data.razao_social || prev.name,
+        fantasyName: data.nome_fantasia || '',
         phone: data.telefone_1 || prev.phone,
         email: data.email || prev.email,
         street: data.logradouro || '',
@@ -175,9 +178,9 @@ const Clients: React.FC = () => {
   }, [contracts, selectedClient?.id]);
 
   return (
-    <div className="flex flex-col h-full space-y-10 animate-in fade-in duration-700">
+    <div className="flex flex-col h-full space-y-10 animate-in fade-in duration-700" >
       {/* Dynamic Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-10 border-b border-gray-100 dark:border-gray-800/50">
+      < div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-10 border-b border-gray-100 dark:border-gray-800/50" >
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-1.5 h-8 bg-[#F97316] rounded-full"></div>
@@ -197,7 +200,7 @@ const Clients: React.FC = () => {
           <UserPlus className="w-5 h-5" />
           <span>Cadastrar Novo</span>
         </button>
-      </div>
+      </div >
 
       <div className="flex flex-col lg:flex-row gap-10 flex-1 min-h-0">
         {/* Navigation/Search & List Area */}
@@ -242,8 +245,11 @@ const Clients: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <h3 className={`font-black text-base italic tracking-tighter uppercase mb-0.5 truncate
                       ${selectedClient?.id === client.id ? 'text-primary dark:text-white' : 'text-[#1e293b] dark:text-white'}`}>
-                      {client.name}
+                      {client.fantasyName || client.name}
                     </h3>
+                    {client.fantasyName && client.name !== client.fantasyName && (
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">{client.name}</p>
+                    )}
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1 opacity-60">
                         {client.type === 'pf' ? <User className="w-3 h-3" /> : <Building2 className="w-3 h-3" />}
@@ -633,7 +639,7 @@ const Clients: React.FC = () => {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}} />
-    </div>
+    </div >
   );
 };
 

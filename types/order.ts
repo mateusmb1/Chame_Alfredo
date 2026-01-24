@@ -27,6 +27,9 @@ export interface Order {
   asset_info?: any;
   quoteId?: string; // Link to related quote
   origin?: string; // Added to distinguish source (landing_form, landing_quick_quote, etc)
+  approvalStatus?: 'pending_check' | 'approved' | 'rejected';
+  approvalSignature?: string;
+  approvalDate?: string;
 }
 
 export interface CreateOrderData {

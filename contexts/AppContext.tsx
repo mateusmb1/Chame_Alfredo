@@ -315,17 +315,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         contracts: data.contracts || [],
         lastLogin: data.last_login,
         preferences: data.preferences,
+        fantasyName: data.fantasy_name,
     });
 
     // Helper to map App client to DB client
     const mapClientToDB = (client: Partial<Client>) => {
-        const { cpfCnpj, serviceHistory, createdAt, ...rest } = client;
+        const { cpfCnpj, serviceHistory, createdAt, fantasyName, ...rest } = client;
         return {
             ...rest,
             ...(cpfCnpj !== undefined && { cpf_cnpj: cpfCnpj }),
             ...(serviceHistory !== undefined && { service_history: serviceHistory }),
             ...(client.lastLogin !== undefined && { last_login: client.lastLogin }),
             ...(client.preferences !== undefined && { preferences: client.preferences }),
+            ...(fantasyName !== undefined && { fantasy_name: fantasyName }),
             // createdAt is usually handled by DB default, but if passed:
             ...(createdAt !== undefined && { created_at: createdAt }),
         };
@@ -476,6 +478,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         items: data.items || [],
         asset_info: data.asset_info,
         origin: data.origin,
+        approvalStatus: data.approval_status,
+        approvalSignature: data.approval_signature,
+        approvalDate: data.approval_date,
         createdAt: data.created_at,
         updatedAt: data.updated_at
     });
@@ -528,6 +533,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...(items !== undefined && { items: items }),
             ...(asset_info !== undefined && { asset_info: asset_info }),
             ...(origin !== undefined && { origin: origin }),
+            ...(order.approvalStatus !== undefined && { approval_status: order.approvalStatus }),
+            ...(order.approvalSignature !== undefined && { approval_signature: order.approvalSignature }),
+            ...(order.approvalDate !== undefined && { approval_date: order.approvalDate }),
             ...(createdAt !== undefined && { created_at: createdAt }),
             ...(updatedAt !== undefined && { updated_at: updatedAt }),
         };
@@ -912,6 +920,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         // Add creation activity
         if (data) {
+            setProjects(prev => [...prev, mapProjectFromDB(data)]);
             addProjectActivity({
                 projectId: data.id,
                 type: 'criacao',
@@ -922,7 +931,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             });
 
         }
-    }, [mapProjectToDB, supabase, addProjectActivity]);
+    }, [mapProjectToDB, supabase, addProjectActivity, mapProjectFromDB]);
 
     const updateProject = React.useCallback(async (id: string, updates: Partial<Project>) => {
         const dbUpdate = mapProjectToDB(updates);

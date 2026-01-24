@@ -18,6 +18,7 @@ import {
     X,
     FileText
 } from 'lucide-react';
+import OrderItemSelector, { OrderLineItem } from './OrderItemSelector';
 
 interface QuoteFormProps {
     initialData?: Quote;
@@ -26,7 +27,7 @@ interface QuoteFormProps {
 
 const QuoteForm: React.FC<QuoteFormProps> = ({ initialData, isEditing = false }) => {
     const navigate = useNavigate();
-    const { clients, addQuote, updateQuote, uploadFile } = useApp();
+    const { clients, addQuote, updateQuote, uploadFile, inventory, products } = useApp();
     const { showToast } = useToast();
 
     const [clientId, setClientId] = useState(initialData?.clientId || '');
@@ -36,13 +37,21 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ initialData, isEditing = false })
     const [issueDate, setIssueDate] = useState(
         initialData?.createdAt ? new Date(initialData.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     );
-    const [items, setItems] = useState<Omit<QuoteItem, 'id' | 'totalPrice'>[]>(
-        initialData?.items.map(i => ({
+
+    // Convert initial QuoteItems to OrderLineItems for the selector
+    const [items, setItems] = useState<OrderLineItem[]>(
+        initialData?.items.map((i, idx) => ({
+            id: i.id || `item-${idx}`,
+            type: 'product', // Default to product if unknown, or infer logic if needed
+            name: i.description,
             description: i.description,
             quantity: i.quantity,
-            unitPrice: i.unitPrice
-        })) || [{ description: '', quantity: 1, unitPrice: 0 }]
+            unitPrice: i.unitPrice,
+            total: i.quantity * i.unitPrice,
+            sourceId: undefined // quote items might not have sourceId stored initially
+        })) || []
     );
+
     const [paymentTerms, setPaymentTerms] = useState(initialData?.paymentTerms || 'Pagamento em até 30 dias após a emissão da fatura.');
     const [notes, setNotes] = useState(initialData?.notes || '');
     const [discount, setDiscount] = useState(initialData?.discount || 0);
@@ -51,24 +60,8 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ initialData, isEditing = false })
     const [isUploading, setIsUploading] = useState(false);
 
     // Derived state
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const subtotal = items.reduce((sum, item) => sum + item.total, 0);
     const total = subtotal - discount + (subtotal * (tax / 100));
-
-    const handleAddItem = () => {
-        setItems([...items, { description: '', quantity: 1, unitPrice: 0 }]);
-    };
-
-    const handleRemoveItem = (index: number) => {
-        const newItems = [...items];
-        newItems.splice(index, 1);
-        setItems(newItems);
-    };
-
-    const handleItemChange = (index: number, field: keyof typeof items[0], value: string | number) => {
-        const newItems = [...items];
-        newItems[index] = { ...newItems[index], [field]: value };
-        setItems(newItems);
-    };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -111,9 +104,18 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ initialData, isEditing = false })
             return;
         }
 
-        const quoteData: any = { // Using any to bypass strict type check for create/update diffs, validated by logic
+        // Convert OrderLineItems back to QuoteItems
+        const quoteItems: QuoteItem[] = items.map(i => ({
+            id: i.id.startsWith('item-') ? undefined : i.id, // Remove temp IDs
+            description: i.name, // or combine name + description
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            totalPrice: i.total
+        }));
+
+        const quoteData: any = {
             clientId,
-            items,
+            items: quoteItems,
             validityDate,
             paymentTerms,
             notes,
@@ -169,7 +171,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ initialData, isEditing = false })
                                 <button
                                     type="button"
                                     className="absolute right-2 flex items-center justify-center size-8 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
-                                    onClick={() => navigate('/clients/new')} // Assuming this route exists or we can add a modal later
+                                    onClick={() => navigate('/clients/new')}
                                 >
                                     <Plus className="w-5 h-5" />
                                 </button>
@@ -211,58 +213,12 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ initialData, isEditing = false })
 
             {/* Section: Itens do Orçamento */}
             <div className="bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
-                <h2 className="text-slate-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] mb-6">Itens do Orçamento</h2>
-                <div className="overflow-x-auto">
-                    <div className="grid grid-cols-[1fr,100px,150px,150px,50px] gap-4 pb-2 border-b border-slate-200 dark:border-slate-800 text-sm font-medium text-slate-500 dark:text-slate-400 min-w-[600px]">
-                        <span>Descrição</span>
-                        <span className="text-right">Qtd.</span>
-                        <span className="text-right">Valor Unit.</span>
-                        <span className="text-right">Subtotal</span>
-                        <span></span>
-                    </div>
-                    {items.map((item, index) => (
-                        <div key={index} className="grid grid-cols-[1fr,100px,150px,150px,50px] gap-4 items-center py-4 border-b border-slate-200 dark:border-slate-800 min-w-[600px]">
-                            <input
-                                className="form-input w-full rounded-lg border-slate-300 dark:border-slate-700 bg-[#f6f6f8] dark:bg-[#101622] h-12 text-sm px-3 dark:text-white"
-                                placeholder="Descrição do serviço ou produto"
-                                value={item.description}
-                                onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                            />
-                            <input
-                                className="form-input w-full rounded-lg border-slate-300 dark:border-slate-700 bg-[#f6f6f8] dark:bg-[#101622] h-12 text-right text-sm px-3 dark:text-white"
-                                type="number"
-                                min="1"
-                                value={item.quantity}
-                                onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))}
-                            />
-                            <input
-                                className="form-input w-full rounded-lg border-slate-300 dark:border-slate-700 bg-[#f6f6f8] dark:bg-[#101622] h-12 text-right text-sm px-3 dark:text-white"
-                                type="number"
-                                placeholder="0.00"
-                                value={item.unitPrice}
-                                onChange={(e) => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))}
-                            />
-                            <p className="text-right text-slate-800 dark:text-slate-200 text-sm font-medium">
-                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.quantity * item.unitPrice)}
-                            </p>
-                            <button
-                                type="button"
-                                className="flex items-center justify-center size-8 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400"
-                                onClick={() => handleRemoveItem(index)}
-                            >
-                                <Trash2 className="w-5 h-5" />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-                <button
-                    type="button"
-                    className="mt-6 flex items-center gap-2 text-primary font-medium text-sm hover:underline"
-                    onClick={handleAddItem}
-                >
-                    <PlusCircle className="w-5 h-5" />
-                    Adicionar Item
-                </button>
+                <OrderItemSelector
+                    items={items}
+                    onItemsChange={setItems}
+                    inventory={inventory}
+                    productsServices={products}
+                />
             </div>
 
             {/* Section: Totais e Condições */}
