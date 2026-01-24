@@ -613,15 +613,21 @@ const Clients: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">CEP</label>
-                <input
-                  type="text"
-                  value={formData.zipCode}
-                  onChange={handleCepChange}
-                  className="w-full h-12 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold px-4 dark:text-white"
-                  placeholder="00000-000"
-                  maxLength={9}
-                />
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">CEP *</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.zipCode}
+                    onChange={handleCepChange}
+                    className="w-full h-12 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold px-4 dark:text-white focus:ring-2 focus:ring-[#F97316]/20 transition-all font-mono"
+                    placeholder="00000-000"
+                    maxLength={9}
+                    required
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <Search className="w-3 h-3" />
+                  </div>
+                </div>
               </div>
               <div className="space-y-2 md:col-span-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Rua / Logradouro</label>
