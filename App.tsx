@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './contexts/AppContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { DashboardThemeProvider } from './contexts/DashboardThemeContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
@@ -54,43 +55,52 @@ import ClientChat from './pages/client/ClientChat';
 import ClientReports from './pages/client/ClientReports';
 
 // Layout wrapper to handle sidebar visibility
+import DashboardShell from './components/layout/DashboardShell';
+import { useDashboardTheme } from './contexts/DashboardThemeContext';
+
 const AppLayout: React.FC = () => {
-  return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Navigate to="/landing" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/orders/new" element={<CreateOrder />} />
-        <Route path="/orders/:id" element={<OrderDetail />} />
-        <Route path="/orders/:id/print" element={<ServiceOrderPrintConfig />} />
-        <Route path="/quotes" element={<Quotes />} />
-        <Route path="/quotes/new" element={<QuoteCreate />} />
-        <Route path="/quotes/:id" element={<QuoteDetail />} />
-        <Route path="/quotes/:id/edit" element={<QuoteEdit />} />
-        <Route path="/quotes/:id/print-config" element={<QuotePrintConfig />} />
-        <Route path="/invoices" element={<InvoiceList />} />
-        <Route path="/invoices/new" element={<InvoiceForm />} />
-        <Route path="/invoices/:id" element={<InvoicePreview />} />
-        <Route path="/invoices/:id/print-config" element={<InvoicePrintConfig />} />
-        <Route path="/contracts" element={<Contracts />} />
-        <Route path="/contracts/new" element={<Contracts />} />
-        <Route path="/contracts/:id" element={<Contracts />} />
-        <Route path="/products" element={<ProductList />} />
-        <Route path="/products/new" element={<ProductForm />} />
-        <Route path="/clients" element={<Clients />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/projects/:id" element={<ProjectDetail />} />
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/communication" element={<Communication />} />
-        <Route path="/agenda" element={<Agenda />} />
-        <Route path="/team" element={<Team />} />
-        <Route path="/team/:id" element={<TeamMemberProfile />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<Settings />} />
-      </Routes>
-    </Layout>
+  const { theme } = useDashboardTheme();
+
+  const content = (
+    <Routes>
+      <Route path="/" element={<Navigate to="/landing" replace />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/orders" element={<Orders />} />
+      <Route path="/orders/new" element={<CreateOrder />} />
+      <Route path="/orders/:id" element={<OrderDetail />} />
+      <Route path="/orders/:id/print" element={<ServiceOrderPrintConfig />} />
+      <Route path="/quotes" element={<Quotes />} />
+      <Route path="/quotes/new" element={<QuoteCreate />} />
+      <Route path="/quotes/:id" element={<QuoteDetail />} />
+      <Route path="/quotes/:id/edit" element={<QuoteEdit />} />
+      <Route path="/quotes/:id/print-config" element={<QuotePrintConfig />} />
+      <Route path="/invoices" element={<InvoiceList />} />
+      <Route path="/invoices/new" element={<InvoiceForm />} />
+      <Route path="/invoices/:id" element={<InvoicePreview />} />
+      <Route path="/invoices/:id/print-config" element={<InvoicePrintConfig />} />
+      <Route path="/contracts" element={<Contracts />} />
+      <Route path="/contracts/new" element={<Contracts />} />
+      <Route path="/contracts/:id" element={<Contracts />} />
+      <Route path="/products" element={<ProductList />} />
+      <Route path="/products/new" element={<ProductForm />} />
+      <Route path="/clients" element={<Clients />} />
+      <Route path="/projects" element={<Projects />} />
+      <Route path="/projects/:id" element={<ProjectDetail />} />
+      <Route path="/inventory" element={<Inventory />} />
+      <Route path="/communication" element={<Communication />} />
+      <Route path="/agenda" element={<Agenda />} />
+      <Route path="/team" element={<Team />} />
+      <Route path="/team/:id" element={<TeamMemberProfile />} />
+      <Route path="/reports" element={<Reports />} />
+      <Route path="/settings" element={<Settings />} />
+    </Routes>
   );
+
+  if (theme === 'commandCenter') {
+    return <DashboardShell>{content}</DashboardShell>;
+  }
+
+  return <Layout>{content}</Layout>;
 };
 
 const ClientAppLayout: React.FC = () => {
@@ -123,20 +133,23 @@ const MobileAppLayout: React.FC = () => {
   );
 };
 
+
 const App: React.FC = () => {
   return (
     <ToastProvider>
       <AppProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/landing" element={<Landing />} />
-            {/* <Route path="/lead-confirmation" element={<LeadConfirmation />} /> */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/mobile/*" element={<MobileAppLayout />} />
-            <Route path="/client/*" element={<ClientAppLayout />} />
-            <Route path="/*" element={<AppLayout />} />
-          </Routes>
-        </BrowserRouter>
+        <DashboardThemeProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/landing" element={<Landing />} />
+              {/* <Route path="/lead-confirmation" element={<LeadConfirmation />} /> */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/mobile/*" element={<MobileAppLayout />} />
+              <Route path="/client/*" element={<ClientAppLayout />} />
+              <Route path="/*" element={<AppLayout />} />
+            </Routes>
+          </BrowserRouter>
+        </DashboardThemeProvider>
       </AppProvider>
     </ToastProvider>
   );

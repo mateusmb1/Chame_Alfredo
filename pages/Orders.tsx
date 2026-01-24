@@ -1,561 +1,192 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
-import OrderItemSelector, { OrderLineItem } from '../components/OrderItemSelector';
 import { useApp } from '../contexts/AppContext';
 import { Order } from '../types/order';
 import { useToast } from '../contexts/ToastContext';
 import {
   Plus,
   Search,
-  Filter,
-  ChevronRight,
+  Eye,
   Edit2,
   Trash2,
-  Eye,
   Clock,
-  CheckCircle2,
-  AlertCircle,
-  Calendar,
-  DollarSign,
-  LayoutGrid,
-  List,
   Activity,
-  Zap,
-  Briefcase,
-  Users,
   ShieldCheck,
-  TrendingUp
+  LayoutGrid,
+  List
 } from 'lucide-react';
+
+// New Components
+import { useDashboardTheme } from '../contexts/DashboardThemeContext';
+import PageShell from '../components/layout/PageShell';
+import Toolbar from '../components/layout/Toolbar';
+import DataTable from '../components/tables/DataTable';
+import ServiceOrderDrawer from '../components/dashboard/ServiceOrderDrawer';
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
-  const { orders, clients, technicians, inventory, addOrder, updateOrder, deleteOrder, deleteOrders, addInventoryItem } = useApp();
+  const { orders, deleteOrder } = useApp();
   const { showToast } = useToast();
+  const { theme } = useDashboardTheme();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('todas');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
-  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
-  // Deletion handlers
-  const handleConfirmDelete = () => {
-    if (orderToDelete) {
-      deleteOrder(orderToDelete);
-      showToast('success', 'Registro removido com sucesso.');
-      setOrderToDelete(null);
-    }
-    setIsDeleteDialogOpen(false);
-  };
-
-  const handleConfirmBulkDelete = () => {
-    if (selectedIds.length > 0) {
-      deleteOrders(selectedIds);
-      showToast('success', `${selectedIds.length} registros purgados.`);
-      setSelectedIds([]);
-    }
-    setIsBulkDeleteDialogOpen(false);
-  };
-
-  const [formData, setFormData] = useState({
-    clientId: '',
-    clientName: '',
-    serviceType: '',
-    technicianId: '',
-    technicianName: '',
-    description: '',
-    priority: 'media' as 'baixa' | 'media' | 'alta' | 'urgente',
-    observations: ''
-  });
-
-  const [orderItems, setOrderItems] = useState<OrderLineItem[]>([]);
-
-  const handleOpenNewOrderModal = () => {
-    setIsEditMode(false);
-    setEditingOrderId(null);
-    setFormData({
-      clientId: '', clientName: '', serviceType: '', technicianId: '',
-      technicianName: '', description: '', priority: 'media', observations: ''
-    });
-    setOrderItems([]);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEditModal = (order: Order) => {
-    setIsEditMode(true);
-    setEditingOrderId(order.id);
-    setFormData({
-      clientId: order.clientId,
-      clientName: order.clientName,
-      serviceType: order.serviceType,
-      technicianId: order.technicianId,
-      technicianName: order.technicianName,
-      description: order.description,
-      priority: order.priority as any,
-      observations: order.observations || ''
-    });
-    setOrderItems(order.items?.map((item: any) => ({
-      id: item.id || `item-${Date.now()}`,
-      type: item.type || 'service',
-      name: item.name || item.description || '',
-      description: item.description,
-      quantity: item.quantity || 1,
-      unitPrice: item.unitPrice || 0,
-      total: item.total || (item.quantity * item.unitPrice) || 0,
-      sourceId: item.sourceId
-    })) || []);
-    setIsModalOpen(true);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const selectedClient = clients.find(c => c.id === formData.clientId);
-    const selectedTech = technicians.find(t => t.id === formData.technicianId);
-    const originalOrder = isEditMode && editingOrderId ? orders.find(o => o.id === editingOrderId) : null;
-    const totalValue = orderItems.reduce((sum, item) => sum + item.total, 0);
-
-    const orderData: any = {
-      ...formData,
-      clientName: selectedClient?.name || formData.clientName,
-      technicianName: selectedTech?.name || formData.technicianName,
-      scheduledDate: originalOrder?.scheduledDate || new Date().toISOString(),
-      completedDate: originalOrder?.completedDate || null,
-      value: totalValue,
-      items: orderItems.map(item => ({
-        id: item.id, type: item.type, name: item.name, description: item.description,
-        quantity: item.quantity, unitPrice: item.unitPrice, total: item.total, sourceId: item.sourceId
-      }))
-    };
-
-    if (formData.technicianId && (!isEditMode || (originalOrder && originalOrder.status === 'nova'))) {
-      orderData.status = 'pendente';
-    }
-
-    if (isEditMode && editingOrderId) {
-      updateOrder(editingOrderId, orderData);
-      showToast('success', 'OS centralizada e atualizada.');
-    } else {
-      addOrder(orderData);
-      showToast('success', 'Nova ordem lançada no sistema.');
-    }
-    setIsModalOpen(false);
-  };
-
-  const filteredOrders = orders.filter(o => {
-    const matchesSearch = o.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === 'todas'
-      ? true
-      : activeTab === 'leads'
-        ? o.origin?.startsWith('landing_')
-        : o.status === activeTab;
-    return matchesSearch && matchesTab;
-  }).sort((a, b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime());
+  const filteredOrders = useMemo(() => {
+    return orders.filter(o => {
+      const matchesSearch = o.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        o.id.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesTab = activeTab === 'todas'
+        ? true
+        : activeTab === 'leads'
+          ? o.origin?.startsWith('landing_')
+          : o.status === activeTab;
+      return matchesSearch && matchesTab;
+    }).sort((a, b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime());
+  }, [orders, searchQuery, activeTab]);
 
   const getStatusConfig = (status: string) => {
     switch (status) {
-      case 'nova': return { color: 'text-gray-400 bg-gray-50/50 dark:bg-white/5', label: 'Lançada', icon: Plus };
-      case 'em_andamento': return { color: 'text-blue-500 bg-blue-500/10', label: 'Em Curso', icon: Activity };
-      case 'pendente': return { color: 'text-[#F97316] bg-[#F97316]/10', label: 'Backlog', icon: Clock };
-      case 'concluida': return { color: 'text-emerald-500 bg-emerald-500/10', label: 'Finalizada', icon: ShieldCheck };
-      default: return { color: 'text-gray-500 bg-gray-50', label: status, icon: AlertCircle };
+      case 'nova': return { color: 'text-gray-400 bg-gray-50/50 dark:bg-white/5', label: 'Lançada' };
+      case 'em_andamento': return { color: 'text-blue-500 bg-blue-500/10', label: 'Em Curso' };
+      case 'pendente': return { color: 'text-[#F97316] bg-[#F97316]/10', label: 'Backlog' };
+      case 'concluida': return { color: 'text-emerald-500 bg-emerald-500/10', label: 'Finalizada' };
+      default: return { color: 'text-gray-500 bg-gray-50', label: status };
     }
   };
 
-  const getPriorityInfo = (priority: string) => {
-    switch (priority) {
-      case 'urgente': return { color: 'bg-red-500', label: 'CRÍTICO' };
-      case 'alta': return { color: 'bg-orange-500', label: 'ALTA' };
-      default: return { color: 'bg-blue-500', label: priority.toUpperCase() };
-    }
+  const handleEdit = (id: string) => {
+    setSelectedOrderId(id);
+    setDrawerOpen(true);
   };
+
+  const handleNew = () => {
+    setSelectedOrderId('new');
+    setDrawerOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    setOrderToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const tableColumns = [
+    {
+      header: 'Identificação',
+      accessor: (row: Order) => (
+        <div className="flex flex-col">
+          <span className="text-[11px] font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">{row.clientName}</span>
+          <span className="text-[9px] font-bold text-slate-400">OS #{row.id.substring(0, 8)}</span>
+        </div>
+      )
+    },
+    { header: 'Serviço', accessor: 'serviceType' as const },
+    { header: 'Técnico', accessor: 'technicianName' as const },
+    {
+      header: 'Previsão',
+      accessor: (row: Order) => new Date(row.scheduledDate).toLocaleDateString('pt-BR')
+    },
+    {
+      header: 'Status',
+      accessor: (row: Order) => {
+        const config = getStatusConfig(row.status);
+        return (
+          <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${config.color} border border-current opacity-80`}>
+            {config.label}
+          </span>
+        );
+      }
+    },
+    {
+      header: 'Budget',
+      accessor: (row: Order) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(row.value),
+      className: 'text-right font-black italic'
+    }
+  ];
+
+  if (theme === 'commandCenter') {
+    return (
+      <PageShell title="Controle de Serviços" breadcrumb={['Home', 'Serviços']}>
+        <div className="space-y-4">
+          <Toolbar
+            primaryAction={{
+              label: 'Nova OS',
+              icon: <Plus size={14} />,
+              onClick: handleNew
+            }}
+            views={[
+              { id: 'list', label: 'Lista', active: viewMode === 'list', onClick: () => setViewMode('list') },
+              { id: 'grid', label: 'Cards', active: viewMode === 'grid', onClick: () => setViewMode('grid') }
+            ]}
+          >
+            <div className="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+              {['todas', 'leads', 'nova', 'pendente', 'em_andamento', 'concluida'].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded transition-all ${activeTab === tab ? 'bg-white dark:bg-slate-950 text-primary shadow-sm' : 'text-slate-400'}`}
+                >
+                  {tab === 'todas' ? 'Tudo' : tab === 'leads' ? 'Leads' : getStatusConfig(tab).label}
+                </button>
+              ))}
+            </div>
+          </Toolbar>
+
+          <DataTable
+            columns={tableColumns}
+            data={filteredOrders}
+            onRowClick={(row) => handleEdit(row.id)}
+            rowActions={(row) => (
+              <div className="flex items-center gap-1">
+                <button onClick={(e) => { e.stopPropagation(); navigate(`/orders/${row.id}`); }} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-primary"><Eye size={14} /></button>
+                <button onClick={(e) => { e.stopPropagation(); handleEdit(row.id); }} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-blue-500"><Edit2 size={14} /></button>
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
+              </div>
+            )}
+          />
+
+          <ServiceOrderDrawer
+            open={drawerOpen}
+            orderId={selectedOrderId}
+            onClose={() => setDrawerOpen(false)}
+          />
+
+          <ConfirmDialog
+            isOpen={isDeleteDialogOpen}
+            onClose={() => setIsDeleteDialogOpen(false)}
+            onConfirm={() => { if (orderToDelete) deleteOrder(orderToDelete); setIsDeleteDialogOpen(false); showToast('success', 'Registro removido.'); }}
+            title="Excluir OS"
+            message="Tem certeza que deseja remover este registro permanentemente?"
+            type="danger"
+          />
+        </div>
+      </PageShell>
+    );
+  }
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
-      {/* Premium Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-10 border-b border-gray-100 dark:border-gray-800/50">
+    <div className="max-w-[1400px] mx-auto space-y-8 p-6">
+      <div className="flex justify-between items-end border-b border-slate-100 pb-6">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-1.5 h-8 bg-primary rounded-full"></div>
-            <p className="text-primary text-xs font-black uppercase tracking-[0.3em] leading-none">Fluxo de Operações</p>
-          </div>
-          <h1 className="text-5xl font-black text-[#1e293b] dark:text-white tracking-tighter leading-none mb-3 italic">
-            Serviços<span className="text-primary">.</span>
-          </h1>
-          <p className="text-gray-400 dark:text-gray-500 text-sm font-bold uppercase tracking-widest opacity-80">
-            Controle e auditoria de Ordens de Serviço.
-          </p>
+          <h1 className="text-3xl font-black text-slate-900 uppercase">Ordens de Serviço</h1>
+          <p className="text-slate-500 text-sm">Gerenciamento tradicional de serviços.</p>
         </div>
-
-        <div className="flex items-center gap-4">
-          {selectedIds.length > 0 && (
-            <button
-              onClick={() => setIsBulkDeleteDialogOpen(true)}
-              className="h-16 px-6 bg-red-500/10 text-red-500 rounded-2xl font-black uppercase tracking-widest text-[9px] hover:bg-red-500 hover:text-white transition-all shadow-lg active:scale-95"
-            >
-              DELETAR ({selectedIds.length})
-            </button>
-          )}
-          <button
-            onClick={handleOpenNewOrderModal}
-            className="h-16 px-10 bg-[#1e293b] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs flex items-center gap-4 hover:bg-primary transition-all shadow-2xl hover:shadow-primary/20 hover:-translate-y-1"
-          >
-            <Zap className="w-5 h-5 fill-current" />
-            <span>Emitir Nova OS</span>
-          </button>
-        </div>
+        <button onClick={handleNew} className="bg-[#1e293b] text-white px-8 py-3 rounded-xl font-black uppercase text-xs hover:bg-primary transition-all shadow-lg">Nova OS</button>
       </div>
 
-      {/* Control Bar */}
-      <div className="flex flex-col xl:flex-row xl:items-center gap-6">
-        <div className="flex-1 bg-white dark:bg-[#101622] rounded-[2.5rem] p-4 shadow-sm border border-gray-100 dark:border-gray-800/50 flex items-center gap-4 group">
-          <div className="relative flex-1">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="LOCALIZAR OS POR ID OU CLIENTE..."
-              className="w-full pl-14 pr-6 py-4 bg-gray-50/50 dark:bg-white/5 border-none rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest focus:ring-4 focus:ring-primary/5 dark:text-white"
-            />
-          </div>
-          <button className="h-14 w-14 flex items-center justify-center bg-gray-50 dark:bg-white/5 text-gray-400 rounded-2xl hover:text-primary transition-all">
-            <Filter className="w-6 h-6" />
-          </button>
-        </div>
+      <DataTable columns={tableColumns} data={filteredOrders} onRowClick={(row) => handleEdit(row.id)} />
 
-        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-2">
-          {['todas', 'leads', 'nova', 'pendente', 'em_andamento', 'concluida'].map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`h-14 px-8 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all
-                  ${activeTab === tab
-                  ? 'bg-[#1e293b] text-white shadow-xl shadow-gray-200 dark:shadow-none'
-                  : 'bg-white dark:bg-[#101622] text-gray-400 border border-gray-100 dark:border-gray-800 hover:border-primary/50'}`}
-            >
-              {tab === 'todas' ? 'Tudo' : tab === 'leads' ? '💻 Site Leads' : getStatusConfig(tab).label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center bg-white dark:bg-[#101622] p-2 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
-          <button onClick={() => setViewMode('grid')} className={`h-10 w-12 flex items-center justify-center rounded-xl transition-all ${viewMode === 'grid' ? 'bg-primary text-white shadow-lg' : 'text-gray-300'}`}><LayoutGrid className="w-5 h-5" /></button>
-          <button onClick={() => setViewMode('list')} className={`h-10 w-12 flex items-center justify-center rounded-xl transition-all ${viewMode === 'list' ? 'bg-primary text-white shadow-lg' : 'text-gray-300'}`}><List className="w-5 h-5" /></button>
-        </div>
-      </div>
-
-      {/* Grid Display */}
-      {filteredOrders.length === 0 ? (
-        <div className="bg-white dark:bg-[#101622] rounded-[3rem] p-20 text-center border-4 border-dashed border-gray-50 dark:border-gray-800">
-          <TrendingUp className="w-20 h-20 text-gray-100 mx-auto mb-6" />
-          <p className="text-gray-300 font-black uppercase tracking-[0.3em]">Nenhum registro encontrado no filtro atual</p>
-        </div>
-      ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-8 pb-20">
-          {filteredOrders.map((order, index) => {
-            const config = getStatusConfig(order.status);
-            const priority = getPriorityInfo(order.priority);
-            return (
-              <div
-                key={order.id}
-                style={{ animationDelay: `${index * 50}ms` }}
-                className={`group relative bg-white dark:bg-[#101622] rounded-2xl p-0 border transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 animate-in slide-in-from-bottom-8 fade-in 
-                  ${selectedIds.includes(order.id) ? 'border-primary ring-8 ring-primary/5' : 'border-gray-100 dark:border-gray-800/50 shadow-sm'}`}
-              >
-                {/* Visual Accent - Color Bar */}
-                <div className={`absolute left-0 top-0 bottom-0 w-2 rounded-l-2xl ${config.color.split(' ')[1]}`}></div>
-
-                {/* Background Watermark ID */}
-                <div className="absolute top-10 right-4 text-[7rem] font-black text-gray-400/5 select-none pointer-events-none tracking-tighter italic">
-                  #{order.id.split('-')[0].slice(-3)}
-                </div>
-
-                <div className="p-8 relative z-10">
-                  {/* Card Header */}
-                  <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(order.id)}
-                          onChange={() => setSelectedIds(prev => prev.includes(order.id) ? prev.filter(i => i !== order.id) : [...prev, order.id])}
-                          className="w-5 h-5 rounded border-2 border-gray-200 text-primary focus:ring-primary/10 transition-all cursor-pointer opacity-20 group-hover:opacity-100 checked:opacity-100"
-                        />
-                      </div>
-                      <span className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center gap-2 ${config.color} border border-current opacity-80`}>
-                        <config.icon className="w-3 h-3" />
-                        {config.label}
-                      </span>
-                      {order.origin?.startsWith('landing_') && (
-                        <span className="px-3 py-1 bg-primary text-white rounded-lg text-[8px] font-black uppercase tracking-widest animate-pulse">
-                          SITE LIVE
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                      <button onClick={() => navigate(`/orders/${order.id}`)} className="w-9 h-9 rounded-lg bg-[#1e293b] text-white flex items-center justify-center hover:bg-primary transition-all"><Eye className="w-4 h-4" /></button>
-                      <button onClick={() => handleOpenEditModal(order)} className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-blue-500 transition-all"><Edit2 className="w-4 h-4" /></button>
-                      <button onClick={() => { setOrderToDelete(order.id); setIsDeleteDialogOpen(true); }} className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-red-500 transition-all"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  </div>
-
-                  {/* Identification */}
-                  <div className="mb-8 border-l-4 border-gray-100 dark:border-gray-800 pl-6 space-y-2">
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">OS CENTRAL</span>
-                      <div className={`h-1.5 w-1.5 rounded-full ${priority.color}`}></div>
-                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{priority.label}</span>
-                    </div>
-                    <h3 className="text-3xl font-black text-[#1e293b] dark:text-white tracking-tighter uppercase italic leading-none group-hover:tracking-normal transition-all duration-500">
-                      {order.clientName}
-                    </h3>
-                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.1em]">{order.serviceType}</p>
-                  </div>
-
-                  {/* Technical Data Blocks */}
-                  <div className="grid grid-cols-2 gap-4 mb-8">
-                    <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-gray-800/50 group-hover:border-primary/20 transition-colors text-center">
-                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-2">Previsão</p>
-                      <p className="text-sm font-black text-[#1e293b] dark:text-gray-300 flex items-center justify-center gap-2">
-                        <Calendar className="w-3.5 h-3.5 text-primary" />
-                        {new Date(order.scheduledDate).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                    <div className="p-5 bg-[#1e293b] rounded-xl border border-transparent text-center shadow-xl shadow-[#1e293b]/5 group-hover:bg-primary transition-colors duration-500">
-                      <p className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2">Budget OS</p>
-                      <p className="text-sm font-black text-white flex items-center justify-center gap-1">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.value)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Footer - Profile */}
-                  <div className="flex items-center justify-between pt-6 border-t border-gray-50 dark:border-gray-800">
-                    <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-white/5 dark:to-white/10 flex items-center justify-center text-[#1e293b] dark:text-white text-[10px] font-black border border-gray-200/50 dark:border-white/5 shadow-inner">
-                        {order.technicianName?.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div>
-                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Supervisor Técnico</p>
-                        <p className="text-[11px] font-black text-[#1e293b] dark:text-white tracking-widest uppercase">{order.technicianName}</p>
-                      </div>
-                    </div>
-                    <button className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-300 group-hover:text-primary group-hover:bg-primary/5 transition-all">
-                      <ChevronRight className="w-5 h-5 transition-transform group-hover:rotate-90" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-[#101622] rounded-[3rem] shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden mb-20">
-          <div className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_140px] items-center gap-8 px-10 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] border-b border-gray-50 dark:border-gray-800">
-            <div className="flex justify-center"><input type="checkbox" checked={selectedIds.length === filteredOrders.length} onChange={() => setSelectedIds(selectedIds.length === filteredOrders.length ? [] : filteredOrders.map(o => o.id))} /></div>
-            <span>Identificação</span>
-            <span>Categoria</span>
-            <span>Proprietário</span>
-            <span>Fase Atual</span>
-            <span className="text-right">Ações</span>
-          </div>
-          {filteredOrders.map(order => {
-            const config = getStatusConfig(order.status);
-            return (
-              <div key={order.id} className="grid grid-cols-[80px_1fr_1fr_1fr_1fr_140px] items-center gap-8 px-10 py-8 border-b border-gray-50 dark:border-gray-800 last:border-b-0 hover:bg-gray-50 dark:hover:bg-white/5 transition-all group">
-                <div className="flex justify-center flex-shrink-0">
-                  <input type="checkbox" checked={selectedIds.includes(order.id)} onChange={() => setSelectedIds(prev => prev.includes(order.id) ? prev.filter(i => i !== order.id) : [...prev, order.id])} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-lg font-black text-[#1e293b] dark:text-white uppercase italic tracking-tighter truncate max-w-[200px]">{order.clientName}</span>
-                  <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">OS #{order.id.substring(0, 8)}</span>
-                </div>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{order.serviceType}</span>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-white/10 flex items-center justify-center text-[10px] font-black">{order.technicianName?.substring(0, 2).toUpperCase()}</div>
-                  <span className="text-[10px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">{order.technicianName}</span>
-                </div>
-                <div>
-                  <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest inline-flex items-center gap-2 ${config.color}`}>
-                    <config.icon className="w-3.5 h-3.5" />
-                    {config.label}
-                  </span>
-                </div>
-                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => navigate(`/orders/${order.id}`)} className="p-2 text-gray-400 hover:text-primary"><Eye className="w-5 h-5" /></button>
-                  <button onClick={() => handleOpenEditModal(order)} className="p-2 text-gray-400 hover:text-blue-500"><Edit2 className="w-5 h-5" /></button>
-                  <button onClick={() => { setOrderToDelete(order.id); setIsDeleteDialogOpen(true); }} className="p-2 text-gray-400 hover:text-red-500"><Trash2 className="w-5 h-5" /></button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Modern High-End Modal for OS */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={isEditMode ? 'ATUALIZAÇÃO DE REGISTRO : OS' : 'LANÇAMENTO DE NOVA OS'}
-        size="xl"
-        footer={
-          <div className="flex items-center gap-4 justify-end w-full px-10 pb-8">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
-            >
-              Abortar Operação
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="px-12 py-4 bg-[#1e293b] text-white rounded-[2rem] text-[10px] font-black uppercase tracking-widest shadow-2xl hover:bg-primary transition-all active:scale-95 flex items-center gap-3"
-            >
-              <ShieldCheck className="w-5 h-5" />
-              <span>Confirmar Registro</span>
-            </button>
-          </div>
-        }
-      >
-        <div className="p-10 space-y-10 custom-scrollbar max-h-[70vh] overflow-y-auto">
-          {/* Section 1: Entity Mapping */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Mapeamento de Cliente</label>
-              <select
-                value={formData.clientId}
-                onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                className="w-full h-16 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-black uppercase tracking-widest focus:ring-8 focus:ring-primary/5 dark:text-white px-5 outline-none transition-all"
-                required
-              >
-                <option value="">Selecione a Entidade</option>
-                {clients.map(client => (
-                  <option key={client.id} value={client.id}>{client.name.toUpperCase()}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Técnico Encarregado</label>
-              <select
-                value={formData.technicianId}
-                onChange={(e) => setFormData({ ...formData, technicianId: e.target.value })}
-                className="w-full h-16 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-black uppercase tracking-widest focus:ring-8 focus:ring-primary/5 dark:text-white px-5 outline-none transition-all"
-                required
-              >
-                <option value="">Delegar Responsável</option>
-                {technicians.map(tech => (
-                  <option key={tech.id} value={tech.id}>{tech.name.toUpperCase()}</option>
-                ))}
-              </select>
-            </div>
-          </section>
-
-          {/* Section 2: Service Classification */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Classificação de Serviço</label>
-              <select
-                value={formData.serviceType}
-                onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
-                className="w-full h-16 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-black uppercase tracking-widest focus:ring-8 focus:ring-primary/5 dark:text-white px-5 outline-none transition-all"
-                required
-              >
-                <option value="">TIPO DE INTERVENÇÃO</option>
-                <option value="Manutenção Preventiva">MANUTENÇÃO PREVENTIVA</option>
-                <option value="Instalação">INSTALAÇÃO / SETUP</option>
-                <option value="Reparo">REPARO TÉCNICO</option>
-                <option value="Substituição">SUBSTITUIÇÃO DE ATIVOS</option>
-              </select>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Escala de Prioridade</label>
-              <div className="flex gap-2 p-1.5 bg-gray-100 dark:bg-white/5 rounded-[1.5rem] border border-gray-200 dark:border-gray-800">
-                {(['baixa', 'media', 'alta', 'urgente'] as const).map(p => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, priority: p })}
-                    className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all
-                ${formData.priority === p
-                        ? 'bg-[#1e293b] text-white shadow-xl'
-                        : 'text-gray-400 hover:text-gray-600'}`}
-                  >
-                    {p === 'urgente' ? 'CRÍTICO' : p}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Section 3: Summary & Description */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Escopo Técnico (Descrição)</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={4}
-              className="w-full p-6 rounded-[2rem] bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold focus:ring-8 focus:ring-primary/5 dark:text-white transition-all uppercase placeholder:opacity-20"
-              placeholder="DETALHE A INTERVENÇÃO, PROBLEMAS RELATADOS E EXPECTATIVAS..."
-              required
-            />
-          </div>
-
-          {/* Section 4: Budget & Items Mapping */}
-          <div className="border-t border-gray-100 dark:border-gray-800 pt-10">
-            <div className="flex items-center gap-3 mb-6 ml-2">
-              <div className="w-1.5 h-6 bg-primary rounded-full"></div>
-              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">Materiais e Alocação de Recursos</h4>
-            </div>
-            <OrderItemSelector
-              items={orderItems}
-              onItemsChange={setOrderItems}
-              inventory={inventory}
-              productsServices={[]}
-              onAddNewProduct={(p) => { addInventoryItem(p); showToast('success', 'Hardware catalogado com sucesso.'); }}
-            />
-          </div>
-        </div>
-      </Modal>
-
-      {/* Delete Dialogs */}
-      <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={handleConfirmDelete}
-        title="Cancelar Ordem"
-        message="Esta ação irá remover o registro da OS permanentemente. Documentos gerados serão desativados."
-        confirmText="Confirmar Deleção"
-        cancelText="Manter Registro"
-        type="danger"
+      <ServiceOrderDrawer
+        open={drawerOpen}
+        orderId={selectedOrderId}
+        onClose={() => setDrawerOpen(false)}
       />
-
-      <ConfirmDialog
-        isOpen={isBulkDeleteDialogOpen}
-        onClose={() => setIsBulkDeleteDialogOpen(false)}
-        onConfirm={handleConfirmBulkDelete}
-        title="LIMPEZA EM MASSA"
-        message={`Deseja realmente purgar as ${selectedIds.length} ordens de serviço do ecossistema?`}
-        confirmText="Sim, Deletar Lote"
-        cancelText="Cancelar"
-        type="danger"
-      />
-
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}} />
     </div>
   );
 };

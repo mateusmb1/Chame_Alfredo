@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../src/lib/supabase';
 import { useToast } from '../contexts/ToastContext';
 import { useApp } from '../contexts/AppContext';
-import { Upload, Save, X, Loader2, Database, Lock, Key, Shield } from 'lucide-react';
+import { Upload, Save, X, Loader2, Database, Lock, Key, Shield, Palette } from 'lucide-react';
 import { DataImportModal } from '../components/DataImportModal';
+import ThemeSwitcher from '../components/settings/ThemeSwitcher';
 
 interface CompanySettings {
   id?: string;
@@ -399,6 +400,22 @@ const Settings: React.FC = () => {
 
           {/* Right Column: Information Forms */}
           <div className="lg:col-span-8 space-y-8">
+            {/* NEW: Dashboard Theme Selector */}
+            <div className="rounded-xl bg-white dark:bg-[#18202F] border border-slate-200 dark:border-gray-800 overflow-hidden">
+              <div className="p-8 border-b border-slate-200 dark:border-gray-800">
+                <div className="flex items-center gap-2 mb-1">
+                  <Palette className="w-5 h-5 text-primary" />
+                  <h2 className="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">
+                    Personalização do Painel
+                  </h2>
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
+                  Escolha o estilo de visualização que melhor se adapta ao seu fluxo de trabalho.
+                </p>
+                <ThemeSwitcher />
+              </div>
+            </div>
+
             <div className="rounded-xl bg-white dark:bg-[#18202F] border border-slate-200 dark:border-gray-800">
               {/* Contact Information Section */}
               <div className="p-8 border-b border-slate-200 dark:border-gray-800">
