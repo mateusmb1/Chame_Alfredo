@@ -1,49 +1,46 @@
-# 🏗️ Plano de Implementação: Design Option 2 (Central de Comando)
+# 📋 Plan: Operational Command Center Fixes
 
-## 🎯 Objetivo
-Transformar a interface do **Chame Alfredo** em um "Centro de Comando" moderno, denso e minimalista. O foco é a eficiência operacional, reduzindo scroll e centralizando informações críticas através de widgets modulares e um sistema de temas robusto.
+The Command Center implementation has introduced two critical issues:
+1. **CSS Leakage**: Raw design tokens and comments are visible at the top of the interface.
+2. **Chart Rendering Errors**: Recharts components are failing to determine container dimensions.
 
-## 🛠️ Agentes & Atribuições (Orquestração Phase 2)
-- **`database-architect`**: Persistência de preferências de tema do usuário no Supabase.
-- **`frontend-specialist`**: Construção da biblioteca de componentes (Shadcn-like) e layout macro.
-- **`performance-optimizer`**: Garantir que a densidade de dados não afete o tempo de renderização.
+## Proposed Strategy
 
----
+### 1. Style leakage in `index.html`
+- **Root Cause**: Missing `<style>` opening tag before the Command Center CSS tokens.
+- **Fix**: Add `<style>` tag correctly after line 50.
 
-## 📅 Fase 1: Fundação e Design System
-**Foco:** Infraestrutura de temas e componentes base.
+### 2. Chart Dimension Errors in `Dashboard.tsx`
+- **Root Cause**: `ResponsiveContainer` requires a parent with defined height. In logic-heavy components, initial render might provide invalid dimensions.
+- **Fix**: Ensure `WidgetCard` or its internal container provides a calculated or fixed minimum height. Check for conditional rendering race conditions.
 
-- [ ] **Contexto de Tema**: Criar `DashboardThemeContext.tsx` para gerenciar entre "Classic" e "CommandCenter".
-- [ ] **Tokens CSS**: Definir variáveis CSS (spacing 8/12px, cores neutras, shadows leves) em `index.css`.
-- [ ] **Layout Macro**: Implementar `DashboardShell`, `SidebarNav` (compacta) e `Topbar` (com busca global).
-
-## 🚀 Fase 2: Componentes de Dashboard
-**Foco:** Widgets e cartões de KPI.
-
-- [ ] **KpiCard**: Componente denso com rótulo, valor, delta e ícone.
-- [ ] **WidgetCard**: Container modular com título, ações internas e scroll opcional.
-- [ ] **ActivityFeed**: Feed de atividades otimizado estilo "timeline compacta".
-- [ ] **DashboardGrid**: Sistema de grid 12 colunas para mosaico de widgets.
-
-## 📋 Fase 3: Reformulação das Páginas
-**Foco:** Aplicar o novo padrão em todas as rotas operacionais.
-
-- [ ] **Monitor (Dashboard)**: Organizar os 5 blocos (KPIs, Cronograma, Funil de OS, Clientes, Atividades).
-- [ ] **Serviços (OS)**: Nova `DataTable` compacta com `ServiceOrderDrawer` (gaveta lateral).
-- [ ] **Agenda operacional**: Integração com o novo layout da `PageShell`.
-- [ ] **Ajustes**: Tela para alternar temas (`ThemeSwitcher`).
-
-## 🔍 Critérios de Verificação
-1. **Densidade**: A tela de "Monitor" deve mostrar os principais KPIs e atividades sem necessidade de scroll em telas 1080p.
-2. **Alternância de Tema**: A troca de tema deve ser instantânea (via data-attributes) e persistir após o refresh.
-3. **Responsividade**: O mosaico de widgets deve se adaptar corretamente para tablets e dispositivos móveis.
+### 3. Layout Duplication
+- **Observation**: The screenshot shows multiple sidebars/topbars.
+- **Root Cause**: `AppLayout` updated to wrap with `DashboardShell`, but some pages might still have their own internal layout logic or hardcoded navigation.
+- **Fix**: Audit `Dashboard.tsx` and `App.tsx` routes.
 
 ---
 
-## 🛑 User Approval Required
+## Proposed Changes
 
-![Aprovação](https://img.shields.io/badge/Aprova%C3%A7%C3%A3o-Pendente-orange)
+### [Frontend Components]
 
-**Confirmar Início da Fase 2?**
-- **Y**: Iniciarei a criação dos componentes base.
-- **N**: Ajustar pontos específicos do plano.
+#### [MODIFY] [index.html](file:///c:/Users/Mateus.B.Silva/OneDrive - Mota-Engil/Documentos/Documentos/Eu/SaaS/Chame_Alfredo/Chame_Alfredo/index.html)
+- Add `<style>` tag opening at line 51.
+
+#### [MODIFY] [Dashboard.tsx](file:///c:/Users/Mateus.B.Silva/OneDrive - Mota-Engil/Documentos/Documentos/Eu/SaaS/Chame_Alfredo/Chame_Alfredo/pages/Dashboard.tsx)
+- Adjust containers for `ResponsiveContainer` to guarantee height.
+
+#### [MODIFY] [DashboardShell.tsx](file:///c:/Users/Mateus.B.Silva/OneDrive - Mota-Engil/Documentos/Documentos/Eu/SaaS/Chame_Alfredo/Chame_Alfredo/components/layout/DashboardShell.tsx)
+- Ensure layout blocks (Sidebar/Topbar) are correctly structured to prevent duplication.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Run `npm run lint` to check for JSX/TS errors.
+
+### Manual Verification
+- Confirm with user if CSS code is gone from the header.
+- Verify if charts are rendering correctly.

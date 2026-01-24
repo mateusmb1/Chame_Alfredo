@@ -92,125 +92,123 @@ const Dashboard: React.FC = () => {
 
   if (theme === 'commandCenter') {
     return (
-      <DashboardShell>
-        <PageShell title="Monitor Operacional" breadcrumb={['Alfredo', 'Monitor']}>
-          <DashboardGrid columns={3} density="compact">
-            {/* KPI Row */}
-            <div className="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <KpiCard
-                label="OS Ativas"
-                value={metrics.totalOrders - metrics.completedOrders}
-                icon={Activity}
-                tone="warning"
-                delta={{ value: 12, direction: 'up' }}
-              />
-              <KpiCard
-                label="Atrasadas"
-                value={metrics.overdueOrders}
-                icon={AlertCircle}
-                tone="danger"
-                delta={{ value: 5, direction: 'down' }}
-              />
-              <KpiCard
-                label="Leads Hoje"
-                value={metrics.siteLeads}
-                icon={Users}
-                tone="success"
-              />
-              <KpiCard
-                label="SLA Médio"
-                value="2h 15m"
-                icon={Clock}
-              />
+      <PageShell title="Monitor Operacional" breadcrumb={['Alfredo', 'Monitor']}>
+        <DashboardGrid columns={3} density="compact">
+          {/* KPI Row */}
+          <div className="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KpiCard
+              label="OS Ativas"
+              value={metrics.totalOrders - metrics.completedOrders}
+              icon={Activity}
+              tone="warning"
+              delta={{ value: 12, direction: 'up' }}
+            />
+            <KpiCard
+              label="Atrasadas"
+              value={metrics.overdueOrders}
+              icon={AlertCircle}
+              tone="danger"
+              delta={{ value: 5, direction: 'down' }}
+            />
+            <KpiCard
+              label="Leads Hoje"
+              value={metrics.siteLeads}
+              icon={Users}
+              tone="success"
+            />
+            <KpiCard
+              label="SLA Médio"
+              value="2h 15m"
+              icon={Clock}
+            />
+          </div>
+
+          {/* Weekly Trend Widget */}
+          <WidgetCard id="trend-week" title="Tendência Semanal" span={6} subtitle="Volume de ordens por dia">
+            <div className="h-[250px] min-h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={weeklyOrdersData}>
+                  <defs>
+                    <linearGradient id="colorValueCmd" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#135bec" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#135bec" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(200,200,200,0.1)" />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 700 }}
+                  />
+                  <YAxis hide />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '10px' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#135bec"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorValueCmd)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
+          </WidgetCard>
 
-            {/* Weekly Trend Widget */}
-            <WidgetCard id="trend-week" title="Tendência Semanal" span={6} subtitle="Volume de ordens por dia">
-              <div className="h-[200px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={weeklyOrdersData}>
-                    <defs>
-                      <linearGradient id="colorValueCmd" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#135bec" stopOpacity={0.1} />
-                        <stop offset="95%" stopColor="#135bec" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(200,200,200,0.1)" />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 700 }}
-                    />
-                    <YAxis hide />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '10px' }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#135bec"
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#colorValueCmd)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </WidgetCard>
-
-            {/* OS Funnel Widget */}
-            <WidgetCard id="os-funnel" title="Funil Operacional" span={6} subtitle="Distribuição por status">
-              <div className="space-y-3 pt-2">
-                {orderStatusData.map(item => {
-                  const percentage = metrics.totalOrders > 0 ? (item.value / metrics.totalOrders) * 100 : 0;
-                  return (
-                    <div key={item.name}>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{item.name}</span>
-                        <span className="text-[10px] font-black text-slate-900 dark:text-white">{item.value} ({Math.round(percentage)}%)</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                          className="h-full transition-all duration-1000"
-                          style={{ width: `${percentage}%`, backgroundColor: item.color }}
-                        />
-                      </div>
+          {/* OS Funnel Widget */}
+          <WidgetCard id="os-funnel" title="Funil Operacional" span={6} subtitle="Distribuição por status">
+            <div className="space-y-3 pt-2">
+              {orderStatusData.map(item => {
+                const percentage = metrics.totalOrders > 0 ? (item.value / metrics.totalOrders) * 100 : 0;
+                return (
+                  <div key={item.name}>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{item.name}</span>
+                      <span className="text-[10px] font-black text-slate-900 dark:text-white">{item.value} ({Math.round(percentage)}%)</span>
                     </div>
-                  );
-                })}
-              </div>
-            </WidgetCard>
+                    <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full transition-all duration-1000"
+                        style={{ width: `${percentage}%`, backgroundColor: item.color }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </WidgetCard>
 
-            {/* Clients Summary Widget */}
-            <WidgetCard id="client-base" title="Base de Clientes" span={4}>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <Building size={14} className="text-primary mb-2" />
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">PJ / Condos</p>
-                  <p className="text-lg font-black text-slate-900 dark:text-white mt-1 italic tracking-tighter">{metrics.condominiums}</p>
-                </div>
-                <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <User size={14} className="text-primary mb-2" />
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">PF / Residenciais</p>
-                  <p className="text-lg font-black text-slate-900 dark:text-white mt-1 italic tracking-tighter">{metrics.individuals}</p>
-                </div>
+          {/* Clients Summary Widget */}
+          <WidgetCard id="client-base" title="Base de Clientes" span={4}>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                <Building size={14} className="text-primary mb-2" />
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">PJ / Condos</p>
+                <p className="text-lg font-black text-slate-900 dark:text-white mt-1 italic tracking-tighter">{metrics.condominiums}</p>
               </div>
-              <button
-                onClick={() => navigate('/clients')}
-                className="w-full mt-4 py-2 text-[9px] font-black uppercase tracking-widest text-primary border border-primary/20 rounded-lg hover:bg-primary/5 transition-all"
-              >
-                Ver Carteira Completa
-              </button>
-            </WidgetCard>
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                <User size={14} className="text-primary mb-2" />
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">PF / Residenciais</p>
+                <p className="text-lg font-black text-slate-900 dark:text-white mt-1 italic tracking-tighter">{metrics.individuals}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/clients')}
+              className="w-full mt-4 py-2 text-[9px] font-black uppercase tracking-widest text-primary border border-primary/20 rounded-lg hover:bg-primary/5 transition-all"
+            >
+              Ver Carteira Completa
+            </button>
+          </WidgetCard>
 
-            {/* Recent Activities Widget */}
-            <WidgetCard id="recent-activity" title="Atividades Recentes" span={8} scroll>
-              <ActivityFeed items={recentActivities} />
-            </WidgetCard>
-          </DashboardGrid>
-        </PageShell>
-      </DashboardShell>
+          {/* Recent Activities Widget */}
+          <WidgetCard id="recent-activity" title="Atividades Recentes" span={8} scroll>
+            <ActivityFeed items={recentActivities} />
+          </WidgetCard>
+        </DashboardGrid>
+      </PageShell>
     );
   }
 
