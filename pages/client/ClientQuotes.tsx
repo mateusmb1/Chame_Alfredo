@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Badge } from '../../downloader/components/Badge';
 import { Modal } from '../../downloader/components/Modal';
-import { SignaturePad } from '../../components/SignaturePad';
+import SignaturePad from '../../components/SignaturePad';
 import { useToast } from '../../contexts/ToastContext';
 import { FileText, CheckCircle, Download } from 'lucide-react';
 
