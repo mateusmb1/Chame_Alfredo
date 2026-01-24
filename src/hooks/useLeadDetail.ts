@@ -12,7 +12,7 @@ export const useLeadDetail = () => {
         setError(null)
         try {
             const { error: updateError } = await supabase
-                .from('orders')
+                .from('leads')
                 .update(updates)
                 .eq('id', leadId)
 

@@ -4,31 +4,25 @@ import { supabase } from '../lib/supabase'
 
 export interface Lead {
     id: string
-    protocol: string
-    created_at: string
-    status: 'nova' | 'agendada' | 'em_andamento' | 'concluida' | 'cancelada'
+    name: string
+    phone?: string
+    email?: string
+    origin: 'whatsapp' | 'landing_page' | 'manual' | 'referral' | string
+    status: 'novo' | 'qualificado' | 'perdido' | 'convertido'
     priority: 'urgente' | 'alta' | 'media' | 'baixa'
-    service_type: string
     description?: string
-    origin?: 'landing_form' | 'admin_manual' | 'phone'
-    client: {
-        id: string
-        name: string
-        phone: string
-        address?: string
-        neighborhood?: string
-        city?: string
-        uf?: string
-        latitude?: number
-        longitude?: number
-    } | null
+    service_interest?: string
+    expected_value?: number
+    client_id?: string
+    created_at: string
+    updated_at: string
 }
 
 export type LeadFiltersState = {
     status?: string
     priority?: string
     origin?: string
-    service_type?: string
+    service_type?: string // maps to service_interest
     dateRange?: '24h' | '7d' | '30d'
     search?: string
 }
@@ -45,13 +39,14 @@ export const useLeadsList = () => {
     const fetchLeads = useCallback(async () => {
         setLoading(true)
         let query = supabase
-            .from('orders')
-            .select('*, client:clients(*)', { count: 'exact' })
+            .from('leads')
+            .select('*', { count: 'exact' })
 
         if (filters.status) query = query.eq('status', filters.status)
         if (filters.priority) query = query.eq('priority', filters.priority)
         if (filters.origin) query = query.eq('origin', filters.origin)
-        if (filters.service_type) query = query.eq('service_type', filters.service_type)
+        if (filters.service_type) query = query.ilike('service_interest', `%${filters.service_type}%`)
+        if (filters.search) query = query.ilike('name', `%${filters.search}%`) // Basic search by name
 
         if (filters.dateRange) {
             const now = new Date()
@@ -61,9 +56,6 @@ export const useLeadsList = () => {
             if (filters.dateRange === '30d') past.setDate(now.getDate() - 30)
             query = query.gte('created_at', past.toISOString())
         }
-
-        // Note: Deep search on client name/phone is complex with standard querying unless using !inner join or RPC.
-        // We will skip deep search implementation for simplicity unless explicitly adding a stored procedure.
 
         // Sorting: created_at desc (newest first)
         query = query
@@ -75,24 +67,8 @@ export const useLeadsList = () => {
         if (error) {
             console.error('Error fetching leads:', error)
         } else {
-            // Apply client-side Priority sorting for the current page
-            // Ideal: Priority field should be an integer in DB for correct DB-side sorting.
-            const priorityMap: Record<string, number> = { 'urgente': 3, 'alta': 2, 'media': 1, 'baixa': 0 }
-
-            // Only re-sort if priority isn't the primary sort in DB (it isn't above).
-            // NOTE: This re-sorts ONLY the current page items, which is imperfect but improves visibility.
-            const sorted = (data as any[] || []).sort((a, b) => {
-                const pA = priorityMap[a.priority] ?? 0
-                const pB = priorityMap[b.priority] ?? 0
-                if (pA !== pB) return pB - pA // Higher priority first
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            })
-
-            // Filter search client-side for now if search is active (since we fetched a page, this breaks pagination for search, 
-            // but is a safe fallback without custom RPC). 
-            // Better: If search is active, don't paginate or fetch more? 
-            // Let's Just return the data for now.
-            setLeads(sorted as Lead[])
+             // Map DB response to Lead interface if needed, but names match mostly.
+            setLeads(data as Lead[])
             setTotal(count || 0)
         }
         setLoading(false)
@@ -102,8 +78,8 @@ export const useLeadsList = () => {
         fetchLeads()
 
         const channel = supabase
-            .channel('public:orders')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+            .channel('public:leads')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
                 fetchLeads()
             })
             .subscribe()

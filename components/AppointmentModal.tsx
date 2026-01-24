@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import Modal from './Modal';
 import {
@@ -29,6 +30,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     appointment
 }) => {
     const { technicians, orders, addAppointment, updateAppointment, deleteAppointment } = useApp();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
 
     // Form State
@@ -118,7 +120,20 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
             ) : <div />}
 
             <div className="flex items-center gap-3">
+                {!appointment && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            onClose();
+                            navigate('/orders/new', { state: { scheduledDate: formData.startTime.split('T')[0], scheduledTime: formData.startTime.split('T')[1] } });
+                        }}
+                        className="h-14 px-6 rounded-2xl bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500 hover:text-white transition-all font-black uppercase text-[10px] tracking-widest flex items-center gap-2"
+                    >
+                        <Zap className="w-4 h-4" /> Criar OS
+                    </button>
+                )}
                 <button
+                    type="button"
                     onClick={onClose}
                     className="h-14 px-8 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-all font-black uppercase text-[10px] tracking-widest"
                 >
@@ -129,7 +144,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     disabled={loading}
                     className="h-14 px-10 bg-[#1e293b] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-4 hover:bg-primary transition-all shadow-xl hover:shadow-primary/20 disabled:opacity-50"
                 >
-                    {loading ? 'Sincronizando...' : <><Zap className="w-4 h-4" /> <span>{appointment ? 'Atualizar' : 'Agendar'}</span></>}
+                    {loading ? 'Sincronizando...' : <><Clock className="w-4 h-4" /> <span>{appointment ? 'Atualizar' : 'Agendar'}</span></>}
                 </button>
             </div>
         </div>

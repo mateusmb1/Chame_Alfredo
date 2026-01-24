@@ -1,0 +1,541 @@
+Dá pra deixar o fluxo bem mais consistente, com menos “ilhas” de página e mais continuidade entre leads → SO → agenda → faturamento.
+​
+
+Ideia de macro-fluxo
+Entrada
+
+Leads (desembarque, WhatsApp, telefone) caem em uma fila única, com status “Novo”, “Qualificado”, “Perdido”.
+​
+
+A partir daqui, um clique vira proposta ou OS direto (para clientes recorrentes).
+
+Operação
+
+Proposta aprovada → cria OS já com dados do cliente, endereço, histórico, itens.
+
+OS entra automaticamente na Agenda, com alocação de técnico e janela de horário.
+
+Pós-atendimento
+
+OS concluídos fornecimentos de energia (nota, recibo, comprovante), histórico do cliente e consumo de estoque.
+​
+
+Dados voltam para Monitorar em KPIs (ticket médio, SLA, cancelamentos, recorrência).
+
+Melhorias de fluxo entre páginas
+1. Leads → Propostas → SO
+Pistas
+
+Página de Leads com: origem, canal, interesse, probabilidade.
+
+Botões rápidos em cada linha: “Criar proposta”, “Criar OS”, “Arquivar”.
+
+Isso evita que você cadastre cliente de novo quando você já tem o lead.
+
+Propostas
+
+Tela de Propostas com status (rascunho, enviado, aceita, recusada).
+
+A ação “Converter em OS” deve:
+
+Crie o SO já com itens, valores e cliente.
+
+Pergunte slot na Agenda (ou jogue pra “A agendar”).
+
+SO
+
+Na página do OS, precisa ter link claro de volta: ver lead / proposta original, ver histórico de contatos.
+
+Isso conecta comercial com operação sem retrabalho.
+​
+
+2. SO → Agenda (ida e volta)
+Da lista de OS
+
+Uma coluna “Agenda” com ícone indicando se está agendada, em espera, reagendada.
+
+Ação “Agendar” abre o Schedulermodal/gaveta com o cliente já selecionado.
+
+Na Agenda
+
+Clique em um slot vazio → “Criar OS” (já pré-preenche horário, técnico e unidade).
+
+Clique em um evento (OS) → abre a gaveta da OS com ações: iniciar, concluir, reagendar.
+​
+
+3. SO → Inventário / Ativos
+Ao criar OS
+
+O campo “Itens/serviços” usa dados do Inventário (preenchimento automático com preço, estoque, código).
+
+Isso reduz a variação de estoque e acelera o orçamento.
+
+Ao concluir OS
+
+Se OS tem itens de estoque, pergunte: “baixar do inventário?” com confirmação rápida.
+
+Se tiver manutenção recorrente, sugerimos já a próxima OS (contrato de manutenção).
+​
+
+4. Clientes como eixo central
+Página do Cliente
+
+Abas: “Resumo”, “Ordens de Serviço”, “Propostas”, “Agenda”, “Financeiro”, “Ativos instalados”.
+
+Em qualquer tela (Leads, OS, Agenda), clique no nome do cliente leva pra este hub.
+
+Isso substitui várias telas soltas para uma visão 360º do cliente.
+
+5. O que faz sentido remover ou simplificar
+Telas redundantes
+
+Se você tiver páginas que só listam dados sem ação (ex.: “Relatórios” soltos que só repetem cartões do Monitor), dá para fundir em uma aba de “Performance” dentro do próprio dashboard.
+
+Evitar páginas só para “visualizar um dado” quando uma gaveta ou modal resolver.
+
+Campos poucos usados
+
+Em fluxos críticos (Criar OS, Agendar, Fechar OS), deixa apenas: cliente, endereço, tipo de serviço, prioridade, técnico, janela de horário, itens.
+
+Campos complementares vão para uma seção “Detalhes avançados”.
+
+6. O que eu adicionaria
+Estados claros de pipeline
+
+Leads: Novo → Qualificado → Em proposta → Ganhou/Perdeu.
+
+SO: Aberta → Agendada → Em andamento → Concluída → Faturada.
+
+Cada estado mapeado em núcleos nos cartões, tabelas e agenda.
+
+Ações rápidas contextuais
+
+Monitorar:
+
+“Criar OS agora”
+
+“Criar proposta”
+
+“Ver agenda do dia”
+
+Do App do técnico (quando estiver 100% integrado): check-in/out alimentando automaticamente o status do OS e SLA.
+​
+
+Atalhos de navegação
+
+De qualquer lugar onde aparecer um número (ex.: “5 OS atrasadas” no Monitor), clique leva direto pra lista filtrada por “atrasadas”.
+
+Idem para “Leads hoje”, “Estoque crítico”, etc.
+
+
+---------------------------------------------------------
+
+Visão macro do fluxo (negócio)
+Ideal para o oleoduto:
+
+Aquisição
+
+Landing, WhatsApp, telefone, periodicidade viram Lead com origem, canal e interesse.
+​
+
+Leads serão convertidos em cliente + proposta ou em OS direto (clientes podem recorrentes).
+
+Pré-venda
+
+Lead atualizado → Proposta com itens do inventário, condições, validade.
+​
+
+Proposta aceita → cria SO já preenchido e opcionalmente agenda.
+
+Operação
+
+OS entra no Command Center / Agenda , com técnico, horário e prioridade.
+​
+
+Técnico executa via App Mobile (offline-first, check-in/out, fotos, assinatura).
+​
+
+Pós-venda e financeiro
+
+OS concluídos atualizam Inventário , histórico do Cliente e geram base para faturamento/relatórios (ainda que emissão fiscal esteja fora do escopo).
+​
+
+Monitor recebe KPIs de SLA, ticket médio, recorrência, cancelamentos.
+
+Fluxo entre áreas principais
+1. Leads
+O que deve existir/melhorar:
+
+Tela “Leads” com pipeline: Novo → Qualificado → Em proposta → Ganhou/Perdido.
+
+Ações em linha:
+
+“Conversor em cliente” (cria registro em Clientes).
+
+“Criar proposta” (pré-preenchimento com dados do lead).
+
+“Criar OS Direta” (para emergências ou clientes já conhecidos).
+
+O que pode ser evitado:
+
+Tela de lead que só mostra informações sem ação. Sempre terei CTA para o próximo passo.
+
+2. Clientes
+Função: eixo central de contexto.
+
+Tela de Cliente como “hub”:
+
+Abas: Resumo, OS, Propostas, Agenda, Financeiro, Ativos.
+​
+
+Acessível clicando no nome do cliente a partir de qualquer lugar (Lead, OS, Agenda, Inventário).
+
+Melhoria:
+
+Em vez de duplicar informações do cliente em várias telas, traga tudo pra esse hub e use gavetas nas listas.
+
+3. Propostas
+Manter/criar:
+
+Lista de Propostas com status: Rascunho, Enviada, Aceita, Recusada.
+
+Ações:
+
+“Converter em OS” (gera OS + opção de já agendar).
+
+“Duplicar” (para propostas recorrentes).
+
+Remover/simplificar:
+
+Qualquer fluxo onde você hoje precisa criar OS “do zero” depois de ter montado proposta. A conversão deve ser 1 clique.
+
+4. Ordens de Serviço (Serviços)
+Núcleo operacional.
+
+Lista de OS com estados claros:
+
+Aberta → Agendada → Em andamento → Concluída → Faturada/Arquivada.
+
+Ações rápidas na tabela: iniciar, reagendar, concluir, abrir no app técnico (quando pertinente).
+
+Gaveta de OS com: cliente, endereço, itens, fotos, notas, timeline.
+
+Melhorias de fluxo:
+
+De Lead ou Proposta → OS (sem recadastro).
+
+De OS → Agenda (só escolha slot e técnico).
+
+De OS → Inventário (baixa automática de itens usados).
+
+5. Agenda / Central de Comando
+Já é uma das características “de destaque”, então vale centralizar o fluxo aqui.
+​
+
+Entrada
+
+Crie o OS direto pela Agenda (clique em slot vazio).
+
+Agendar OS existente (vinda da lista).
+
+Execução
+
+Visual por dia/semana, por técnico, por unidade.
+
+Cores por status (confirmada, pendente, cancelada, em andamento).
+​
+
+Às vezes, isso acontece por si só.
+
+Ao concluir o OS no app técnico, o status atualizado na Agenda e na lista de OS.
+
+Reagendamento mantém histórico (não sobrescreve).
+
+Removedor:
+
+Páginas de agenda redundantes (ex.: “agenda listada” e “agenda calendário” separada). A visão principal deve ser o calendário; listas podem ser filtros na própria tela.
+
+6. Inventário / Ativos
+Já está classificado como “tabela de alta densidade com alertas visuais”.
+​
+
+Entradas
+
+Cadastro manual, importação, ou ajustes pontuais.
+
+Itens usados ​​no sistema operacional (de preferência escolhidos a partir do inventário).
+
+♥ / ♥
+
+Conclusão de OS com itens marcados → sugere baixa em estoque.
+
+Nível crítico dispara alerta no Monitor (cartão “Estoque crítico”).
+
+O que evitar:
+
+Fluxo onde o técnico precisa digitar item e SKU solto que não conversa com inventário, pois quebra automática.
+
+7. Aplicativo Móvel do Técnico
+Conectado via Supabase Realtime e offline-first.
+​
+
+":
+
+Agenda do técnico (recebidas da Agenda do painel).
+
+SO com detalhes.
+
+Envia:
+
+Status (check-in/out, em andamento, concluído).
+
+Fotos, elogios, assinaturas.
+​
+
+Melhorar:
+
+Garanta que tudo que o técnico faz reflita em OS, Agenda e Monitor sem etapas manuais extras.
+
+Evitar telas duplicadas no painel apenas para “acompanhar técnico”; o Centro de Comando deve cobrir isso.
+
+O que eu removeria/fundiria em termos de páginas
+Relatórios soltos → transformar em aba “Performance” no próprio Monitor, com filtros + export.
+
+Páginas “somente leitura” com pouca ação → excedentes por gavetas em listas (ex.: detalhes de cliente, detalhes de OS).
+
+Qualquer formulário gigante em página única → quebra em passos lógicos (dados básicos, agendamento, itens/financeiro).
+
+Fluxograma textual resumido
+Lead criado (Landing / WhatsApp / Telefone)
+→ Lead qualificado
+→ (a) Criar Proposta
+→ Proposta enviada
+→ Aceita
+→ Criar OS
+→ Agendar na Agenda
+→ Técnico executado (App Mobile)
+→ OS concluído
+→ Atualiza Inventário + Histórico do Cliente
+→ Entrada em Relatórios / Monitor.
+
+Ou:
+→ Lead/Cliente recorrente
+→ Criar OS direto
+→ Agendar
+→ Execução
+→ Conclusão → Inventário / Histórico / Relatórios.
+
+Se quiser, no próximo passo eu traduzirei isso para um fluxograma “em texto” no formato tipo:
+
+[Lead] -> [Proposta] -> [OS] -> [Agenda] -> [Execução] -> [Inventário/Financeiro] -> [Relatórios]
+
+Segue o fluxograma em texto, já bem granular para virar diagrama (Sereia, Caprichoso, etc.).
+​
+
+Fluxo 1 – Lead até OS agendada
+texto
+[Entrada Lead]
+  Origem: Landing / WhatsApp / Telefone / Indicação
+  Tela: Leads
+
+[Leads: Novo]
+  Ações:
+    - Editar dados do lead
+    - Qualificar (definir interesse, probabilidade)
+    - Converter em cliente
+    - Criar proposta
+    - Criar OS direta
+
+[Leads: Qualificado]
+  Ações:
+    - Criar proposta
+    - Criar OS direta
+    - Marcar como perdido
+
+[Criar Proposta]
+  Tela: Propostas (form)
+  Preenche:
+    - Cliente (a partir do lead ou novo)
+    - Serviços / Itens (puxando de Inventário)
+    - Condições comerciais
+    - Validade
+  Ação:
+    - Salvar rascunho
+    - Enviar proposta (e-mail / link)
+
+[Proposta: Enviada]
+  Ações:
+    - Marcar como aceita
+    - Marcar como recusada
+    - Duplicar
+    - Editar e reenviar
+
+[Proposta: Aceita]
+  Ações:
+    - Converter em OS
+      -> Tela: Criar OS a partir da proposta
+      -> Dados já trazidos:
+         - Cliente
+         - Endereço
+         - Itens
+         - Valores
+
+[Criar OS (de proposta ou direta)]
+  Tela: OS (form)
+  Passos:
+    - Dados básicos (cliente, endereço, tipo de serviço, prioridade)
+    - Itens (ligados ao Inventário)
+    - Opcional: selecionar janela de agendamento
+  Ações:
+    - Salvar OS em "A agendar"
+    - Salvar OS já com agendamento (vai para Agenda)
+
+[OS: A agendar]
+  Tela: Lista de OS
+  Ações:
+    - Agendar (abrir Agenda com sugestão de horário)
+    - Cancelar
+    - Editar
+Fluxo 2 – OS na Agenda até Execução
+texto
+[Agendar OS]
+  Origem:
+    - Lista de OS (A agendar)
+    - Conversão de Proposta
+  Tela: Agenda (Scheduler)
+  Ações:
+    - Escolher técnico
+    - Escolher data/hora (slot)
+    - Definir duração
+  Resultado:
+    - Evento criado na Agenda
+    - OS muda para status "Agendada"
+
+[Agenda: Visão dia/semana]
+  Tela: Agenda (Command Center)
+  Eventos:
+    - Cada evento = OS
+    - Cor por status (Pendente, Confirmada, Em andamento, Concluída, Cancelada)
+  Ações em evento:
+    - Ver detalhes da OS (drawer)
+    - Reagendar (drag-and-drop ou modal)
+    - Cancelar
+    - Iniciar execução (caso painel assuma início)
+
+[Envio para App Técnico]
+  Condição:
+    - OS Agendada + técnico atribuído
+  Sincronização:
+    - Evento e OS aparecem no App do Técnico
+Fluxo 3 – Execução pelo Técnico (App) e retorno
+texto
+[App Técnico: Lista do dia]
+  Tela: Agenda do técnico
+  Dados:
+    - OS de hoje
+    - Endereço
+    - Horário
+    - Tipo de serviço
+  Ações:
+    - Ver detalhes
+    - Iniciar OS (check-in)
+    - Navegar (maps)
+
+[App Técnico: Detalhes da OS]
+  Ações:
+    - Check-in (muda status para "Em andamento")
+    - Adicionar fotos
+    - Registrar material usado
+    - Registrar laudo / observações
+    - Coletar assinatura do cliente
+    - Check-out (muda status para "Concluída no campo")
+
+[Retorno ao painel]
+  Atualizações automáticas:
+    - OS status: Em andamento → Concluída
+    - Agenda: evento marcado como concluído
+    - Monitor: KPIs de OS concluídas, SLA, etc.
+
+[Baixa de Inventário]
+  Ao receber OS Concluída com itens:
+    - Sugere baixa de estoque:
+      -> Para cada item usado, decrementar quantidade
+    - Se algum item fica abaixo do mínimo, gerar alerta:
+      -> Card "Estoque crítico" no Monitor
+Fluxo 4 – Pós-venda, histórico e relatórios
+texto
+[OS Concluída]
+  Ações no painel:
+    - Revisar dados enviados pelo técnico
+    - Confirmar materiais usados
+    - Anexar documentos extras (se necessário)
+    - Marcar como "Faturada" ou "Encerrada"
+
+[Cliente: Hub 360º]
+  Tela: Detalhes do Cliente
+  Tabs:
+    - Resumo (últimas OS, principais indicadores)
+    - OS (todas as ordens históricas)
+    - Propostas (histórico comercial)
+    - Agenda (compromissos futuros)
+    - Financeiro (valor já faturado, em aberto)
+    - Ativos (portões/instalações vinculadas)
+  Ações:
+    - Criar nova OS
+    - Criar nova proposta
+    - Enviar relatório/resumo para o cliente
+
+[Relatórios / Performance]
+  Tela: Performance (aba do Monitor)
+  Indicadores:
+    - OS por status (abertas, em andamento, concluídas, atrasadas)
+    - SLA médio (por tipo, por técnico, por unidade)
+    - Ticket médio (por período, por cliente)
+    - Conversão de leads → propostas → OS
+    - Itens mais usados (Inventário)
+  Ações:
+    - Filtrar (período, unidade, técnico)
+    - Exportar (CSV / PDF)
+Fluxo 5 – Caminho rápido para clientes recorrentes
+texto
+[Cliente recorrente entra em contato]
+  Entrada:
+    - Telefone / WhatsApp / App
+  Ação no painel:
+    - Buscar cliente (search global na Topbar)
+    - Abrir Cliente: Hub 360º
+    - Botão "Criar OS rápida"
+
+[Criar OS rápida]
+  Tela: Form simplificado
+  Campos:
+    - Tipo de serviço
+    - Prioridade
+    - Endereço (já salvo)
+    - Janela preferencial
+  Ações:
+    - Enviar para "A agendar"
+    - Já agendar na Agenda
+Fluxo 6 – Estados e transições
+texto
+Leads:
+  Novo -> Qualificado -> Em proposta -> Ganhou -> (Cliente + Proposta/OS)
+                                           -> Perdido
+
+Propostas:
+  Rascunho -> Enviada -> (Aceita -> OS)
+                         (Recusada)
+
+OS:
+  A criar -> Aberta -> (A agendar -> Agendada -> Em andamento -> Concluída -> Faturada/Encerrada)
+                        (Cancelada)
+
+Agenda:
+  Slot livre -> Evento criado (OS agendada) -> Em execução -> Concluído/Cancelado
+Sugestão do que cortar/fundir em termos de fluxo
+Em vez de múltiplas telas de “relatório”, mantenha uma única aba de Performance no Monitor, com filtros fortes.
+​
+
+Em vez da página de “detalhe” para tudo, use gavetas em: Leads, Propostas, OS, Clientes (mantendo apenas o Hub do Cliente como página de detalhe mesmo).
+
+Evite criar fluxos paralelos para SO (ex.: um SO criado só na Agenda, outro só na lista, outro só via App). Tudo deve cair no mesmo modelo de SO e nos mesmos estados

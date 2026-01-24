@@ -11,9 +11,11 @@ interface LeadDetailModalProps {
     onUpdate: () => void
 }
 
+
+
 export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({ lead, isOpen, onClose, onUpdate }) => {
     const { updateLead, loading } = useLeadDetail()
-    const [status, setStatus] = useState<Lead['status']>('nova')
+    const [status, setStatus] = useState<Lead['status']>('novo')
     const [priority, setPriority] = useState<string>('media')
     const [notes, setNotes] = useState('')
 
@@ -39,67 +41,74 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({ lead, isOpen, 
         }
     }
 
-    const waLink = `https://wa.me/55${lead.client?.phone?.replace(/\D/g, '')}?text=Olá ${lead.client?.name}, sobre sua solicitação...`
+    const waLink = `https://wa.me/55${lead.phone?.replace(/\D/g, '') || ''}?text=Olá ${lead.name}, sobre sua solicitação...`
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white">
-                    <h2 className="text-xl font-bold text-gray-800">Detalhes da Solicitação <span className="text-gray-500 font-mono text-base">#{lead.protocol}</span></h2>
+                    <h2 className="text-xl font-bold text-gray-800">
+                        Detalhes do Lead <span className="text-gray-500 font-mono text-base">#{lead.id.substring(0, 8)}</span>
+                    </h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
                 </div>
 
                 <div className="p-6 grid gap-6">
-                    {/* Client Info */}
+                    {/* Client/Lead Info */}
                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                        <h3 className="text-sm uppercase tracking-wide text-gray-500 font-semibold mb-3">Cliente</h3>
+                        <h3 className="text-sm uppercase tracking-wide text-gray-500 font-semibold mb-3">Dados do Contato</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs text-gray-400 block">Nome</label>
-                                <p className="font-medium">{lead.client?.name}</p>
+                                <p className="font-medium">{lead.name}</p>
                             </div>
                             <div>
                                 <label className="text-xs text-gray-400 block">Telefone</label>
-                                <p className="font-medium">{lead.client?.phone}</p>
+                                <p className="font-medium">{lead.phone || '-'}</p>
                             </div>
-                            <div className="md:col-span-2">
-                                <label className="text-xs text-gray-400 block">Endereço</label>
-                                <p className="font-medium">{lead.client?.address}, {lead.client?.neighborhood} - {lead.client?.city}/{lead.client?.uf}</p>
+                            <div>
+                                <label className="text-xs text-gray-400 block">Email</label>
+                                <p className="font-medium">{lead.email || '-'}</p>
+                            </div>
+                            <div>
+                                <label className="text-xs text-gray-400 block">Origem</label>
+                                <p className="font-medium capitalize">{lead.origin}</p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Timeline / Dates */}
+                    {/* Context Info */}
                     <div>
-                        <h3 className="text-sm uppercase tracking-wide text-gray-500 font-semibold mb-2">Linha do Tempo</h3>
-                        <div className="text-sm text-gray-600">
-                            <p>Criado em: {new Date(lead.created_at).toLocaleString()}</p>
+                        <h3 className="text-sm uppercase tracking-wide text-gray-500 font-semibold mb-2">Interesse</h3>
+                        <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded border border-blue-100">
+                            <p className="font-bold text-blue-800">{lead.service_interest}</p>
+                            <p className="mt-1">Valor Esperado: {lead.expected_value ? `R$ ${lead.expected_value}` : '-'}</p>
+                            <p className="mt-2 text-xs text-gray-400">Criado em: {new Date(lead.created_at).toLocaleString()}</p>
                         </div>
                     </div>
 
                     {/* Editable Fields */}
                     <div className="border-t pt-4">
-                        <h3 className="text-sm uppercase tracking-wide text-gray-500 font-semibold mb-4">Ações e Edição</h3>
+                        <h3 className="text-sm uppercase tracking-wide text-gray-500 font-semibold mb-4">Gerenciar Lead</h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                                 <select
-                                    className="w-full border rounded p-2"
+                                    className="w-full border rounded p-2 bg-white"
                                     value={status}
                                     onChange={(e) => setStatus(e.target.value as any)}
                                 >
-                                    <option value="nova">Nova</option>
-                                    <option value="agendada">Agendada</option>
-                                    <option value="em_andamento">Em Andamento</option>
-                                    <option value="concluida">Concluída</option>
-                                    <option value="cancelada">Cancelada</option>
+                                    <option value="novo">Novo</option>
+                                    <option value="qualificado">Qualificado</option>
+                                    <option value="convertido">Convertido</option>
+                                    <option value="perdido">Perdido</option>
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
                                 <select
-                                    className="w-full border rounded p-2"
+                                    className="w-full border rounded p-2 bg-white"
                                     value={priority}
                                     onChange={(e) => setPriority(e.target.value)}
                                 >
@@ -152,3 +161,4 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({ lead, isOpen, 
         </div>
     )
 }
+

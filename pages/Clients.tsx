@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // Feature: Client Fantasy Name & Auto-CNPJ (v2)
 import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
@@ -24,8 +24,13 @@ import {
   FileText,
   Building2,
   MoreHorizontal,
-  ExternalLink
+  ExternalLink,
+  ClipboardList,
+  Calendar,
+  DollarSign,
+  PieChart
 } from 'lucide-react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 
 const Clients: React.FC = () => {
   const { clients, contracts, addClient, updateClient, deleteClient } = useApp();
@@ -38,7 +43,13 @@ const Clients: React.FC = () => {
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  /* New Client Hub State */
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'quotes' | 'agenda' | 'financial'>('overview');
   const [showMobileDetails, setShowMobileDetails] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const filteredClients = React.useMemo(() => {
     const query = (searchQuery || '').toLowerCase().trim();
@@ -51,15 +62,31 @@ const Clients: React.FC = () => {
     });
   }, [clients, searchQuery]);
 
-  React.useEffect(() => {
+  /* Enhanced Selection Logic with Deep Linking */
+  useEffect(() => {
+    const clientIdFromUrl = searchParams.get('id');
+    const clientIdFromState = (location.state as any)?.clientId;
+    const targetId = clientIdFromUrl || clientIdFromState;
+
     if (clients.length > 0) {
-      if (!selectedClient) {
-        setSelectedClient(clients[0]);
-      } else if (!clients.find(c => c.id === selectedClient.id)) {
+      if (targetId) {
+        const found = clients.find(c => c.id === targetId);
+        if (found) {
+          setSelectedClient(found);
+          // If on mobile, show details
+          if (window.innerWidth < 1024) setShowMobileDetails(true);
+        }
+      } else if (!selectedClient) {
         setSelectedClient(clients[0]);
       }
     }
-  }, [clients, selectedClient]);
+  }, [clients, searchParams, location.state]);
+
+  const handleSelectClient = (client: Client) => {
+    setSelectedClient(client);
+    setSearchParams({ id: client.id });
+    if (window.innerWidth < 1024) setShowMobileDetails(true);
+  };
 
   const [formData, setFormData] = useState({
     name: '',
@@ -276,10 +303,7 @@ const Clients: React.FC = () => {
             {filteredClients.map((client) => (
               <div
                 key={client.id}
-                onClick={() => {
-                  setSelectedClient(client);
-                  if (window.innerWidth < 1024) setShowMobileDetails(true);
-                }}
+                onClick={() => handleSelectClient(client)}
                 className={`group p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden
                   ${selectedClient?.id === client.id
                     ? 'bg-slate-50 dark:bg-white/5 border-primary shadow-lg ring-1 ring-primary/20 translate-x-1'
@@ -337,8 +361,8 @@ const Clients: React.FC = () => {
               </div>
 
               {/* Panel Header */}
-              <div className="p-10 border-b border-gray-50 dark:border-gray-800/50 relative z-10">
-                <div className="flex items-center justify-between mb-8 lg:hidden">
+              <div className="p-10 border-b border-gray-50 dark:border-gray-800/50 relative z-10 flex flex-col gap-6">
+                <div className="flex items-center justify-between lg:hidden">
                   <button onClick={() => setShowMobileDetails(false)} className="h-12 px-6 bg-[#1e293b] text-white rounded-2xl flex items-center gap-3 font-black text-[10px] uppercase tracking-widest">
                     <ArrowLeft className="w-4 h-4" />
                     <span>Voltar ao Fluxo</span>
@@ -370,104 +394,185 @@ const Clients: React.FC = () => {
                     </button>
                   </div>
                 </div>
+
+                {/* Tab Navigation */}
+                <div className="flex items-center gap-2 p-1.5 bg-gray-100 dark:bg-white/5 rounded-2xl w-full overflow-x-auto no-scrollbar">
+                  {[
+                    { id: 'overview', label: 'Resumo', icon: <User className="w-4 h-4" /> },
+                    { id: 'orders', label: 'Ordens', icon: <ClipboardList className="w-4 h-4" /> },
+                    { id: 'quotes', label: 'Propostas', icon: <FileText className="w-4 h-4" /> },
+                    { id: 'agenda', label: 'Agenda', icon: <Calendar className="w-4 h-4" /> },
+                    { id: 'financial', label: 'Financeiro', icon: <DollarSign className="w-4 h-4" /> }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap
+                                ${activeTab === tab.id
+                          ? 'bg-white dark:bg-[#101622] text-[#1e293b] dark:text-white shadow-md'
+                          : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                    >
+                      {tab.icon}
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Panel Content */}
+              {/* Panel Content Based on Tab */}
               <div className="flex-1 overflow-y-auto p-10 space-y-12 no-scrollbar relative z-10">
-                {/* Information Grid */}
-                <section>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-6 ml-2">Matriz de Dados</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-[1.8rem] flex items-center gap-5 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 transition-all">
-                      <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl text-[#1e293b] dark:text-[#F97316] flex items-center justify-center shadow-sm"><Mail className="w-5 h-5" /></div>
-                      <div>
-                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">E-mail Principal</p>
-                        <p className="text-xs font-bold text-gray-700 dark:text-gray-300 lowercase">{selectedClient.email}</p>
-                      </div>
-                    </div>
-                    <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-[1.8rem] flex items-center gap-5 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 transition-all">
-                      <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl text-emerald-500 flex items-center justify-center shadow-sm"><Phone className="w-5 h-5" /></div>
-                      <div>
-                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Linha Segura</p>
-                        <p className="text-xs font-bold text-gray-700 dark:text-gray-300">{selectedClient.phone}</p>
-                      </div>
-                    </div>
-                    <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-[1.8rem] flex items-center gap-5 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 transition-all">
-                      <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl text-amber-500 flex items-center justify-center shadow-sm"><BadgeCheck className="w-5 h-5" /></div>
-                      <div>
-                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{selectedClient.type === 'pf' ? 'CPF' : 'CNPJ'}</p>
-                        <p className="text-xs font-bold text-gray-700 dark:text-gray-300">{selectedClient.cpfCnpj}</p>
-                      </div>
-                    </div>
-                    <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-[1.8rem] flex items-start gap-5 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 transition-all">
-                      <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl text-rose-500 flex items-center justify-center shadow-sm"><MapPin className="w-5 h-5" /></div>
-                      <div>
-                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Localização</p>
-                        <p className="text-xs font-bold text-gray-700 dark:text-gray-300 leading-relaxed">{selectedClient.address}</p>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                {/* Intelligent Feed Section */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                  <section>
-                    <div className="flex items-center justify-between mb-6 ml-2">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Linha do Tempo</h4>
-                      <History className="w-4 h-4 text-gray-200" />
-                    </div>
-                    {selectedClient.serviceHistory && selectedClient.serviceHistory.length > 0 ? (
-                      <div className="space-y-4">
-                        {selectedClient.serviceHistory.map((h, i) => (
-                          <div key={i} className="group flex gap-5 relative">
-                            {i !== selectedClient.serviceHistory!.length - 1 && <div className="absolute left-[9px] top-6 bottom-[-16px] w-[2px] bg-gray-100 dark:bg-gray-800" />}
-                            <div className="w-5 h-5 rounded-full bg-white dark:bg-[#1e293b] border-4 border-emerald-500 z-10 mt-1 shadow-sm group-hover:scale-125 transition-transform" />
-                            <div className="flex-1 pb-4">
-                              <p className="text-xs font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-0.5">{h.description}</p>
-                              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{h.date}</p>
-                            </div>
+                {activeTab === 'overview' && (
+                  <>
+                    {/* Information Grid */}
+                    <section>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-6 ml-2">Matriz de Dados</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-[1.8rem] flex items-center gap-5 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 transition-all">
+                          <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl text-[#1e293b] dark:text-[#F97316] flex items-center justify-center shadow-sm"><Mail className="w-5 h-5" /></div>
+                          <div>
+                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">E-mail Principal</p>
+                            <p className="text-xs font-bold text-gray-700 dark:text-gray-300 lowercase">{selectedClient.email}</p>
                           </div>
-                        ))}
+                        </div>
+                        <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-[1.8rem] flex items-center gap-5 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 transition-all">
+                          <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl text-emerald-500 flex items-center justify-center shadow-sm"><Phone className="w-5 h-5" /></div>
+                          <div>
+                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Linha Segura</p>
+                            <p className="text-xs font-bold text-gray-700 dark:text-gray-300">{selectedClient.phone}</p>
+                          </div>
+                        </div>
+                        <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-[1.8rem] flex items-center gap-5 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 transition-all">
+                          <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl text-amber-500 flex items-center justify-center shadow-sm"><BadgeCheck className="w-5 h-5" /></div>
+                          <div>
+                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{selectedClient.type === 'pf' ? 'CPF' : 'CNPJ'}</p>
+                            <p className="text-xs font-bold text-gray-700 dark:text-gray-300">{selectedClient.cpfCnpj}</p>
+                          </div>
+                        </div>
+                        <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-[1.8rem] flex items-start gap-5 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 transition-all">
+                          <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl text-rose-500 flex items-center justify-center shadow-sm"><MapPin className="w-5 h-5" /></div>
+                          <div>
+                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Localização</p>
+                            <p className="text-xs font-bold text-gray-700 dark:text-gray-300 leading-relaxed">{selectedClient.address}</p>
+                          </div>
+                        </div>
                       </div>
-                    ) : (
-                      <div className="h-32 flex flex-col items-center justify-center bg-gray-50 dark:bg-white/5 rounded-[2rem] border-2 border-dashed border-gray-100 dark:border-gray-800">
-                        <History className="w-8 h-8 text-gray-200 mb-2" />
-                        <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Sem eventos registrados</p>
-                      </div>
-                    )}
-                  </section>
+                    </section>
 
-                  <section>
-                    <div className="flex items-center justify-between mb-6 ml-2">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Contratos Ativos</h4>
-                      <FileText className="w-4 h-4 text-gray-200" />
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                      <section>
+                        <div className="flex items-center justify-between mb-6 ml-2">
+                          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Linha do Tempo</h4>
+                          <History className="w-4 h-4 text-gray-200" />
+                        </div>
+                        {selectedClient.serviceHistory && selectedClient.serviceHistory.length > 0 ? (
+                          <div className="space-y-4">
+                            {selectedClient.serviceHistory.map((h, i) => (
+                              <div key={i} className="group flex gap-5 relative">
+                                {i !== selectedClient.serviceHistory!.length - 1 && <div className="absolute left-[9px] top-6 bottom-[-16px] w-[2px] bg-gray-100 dark:bg-gray-800" />}
+                                <div className="w-5 h-5 rounded-full bg-white dark:bg-[#1e293b] border-4 border-emerald-500 z-10 mt-1 shadow-sm group-hover:scale-125 transition-transform" />
+                                <div className="flex-1 pb-4">
+                                  <p className="text-xs font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-0.5">{h.description}</p>
+                                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{h.date}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="h-32 flex flex-col items-center justify-center bg-gray-50 dark:bg-white/5 rounded-[2rem] border-2 border-dashed border-gray-100 dark:border-gray-800">
+                            <History className="w-8 h-8 text-gray-200 mb-2" />
+                            <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Sem eventos registrados</p>
+                          </div>
+                        )}
+                      </section>
+                      <section>
+                        <div className="flex items-center justify-between mb-6 ml-2">
+                          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Contratos Ativos</h4>
+                          <FileText className="w-4 h-4 text-gray-200" />
+                        </div>
+                        {clientContracts.length > 0 ? (
+                          <div className="space-y-3">
+                            {clientContracts.map(c => (
+                              <Link key={c.id} to="/contracts" className="block p-5 bg-gray-50 dark:bg-white/5 rounded-[2rem] hover:bg-[#1e293b] hover:text-white transition-all group overflow-hidden relative">
+                                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-10 transition-opacity"><FileText className="w-12 h-12" /></div>
+                                <div className="flex justify-between items-center mb-3">
+                                  <span className="text-xs font-black uppercase italic tracking-tighter">{c.contractType || 'Master Agreement'}</span>
+                                  <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><ExternalLink className="w-3 h-3" /></div>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <p className="text-[10px] font-black text-gray-400 group-hover:text-white/50 uppercase tracking-[0.2em]">R$ {c.value.toLocaleString('pt-BR')}</p>
+                                  <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-lg text-[8px] font-black uppercase tracking-widest group-hover:bg-emerald-500 group-hover:text-white transition-colors">{c.status}</span>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="h-32 flex flex-col items-center justify-center bg-gray-50 dark:bg-white/5 rounded-[2rem] border-2 border-dashed border-gray-100 dark:border-gray-800">
+                            <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-4">Portfólio em Branco</p>
+                            <button className="h-10 px-6 bg-[#1e293b] text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[#F97316] transition-all shadow-lg active:scale-95">
+                              + Vender Contrato
+                            </button>
+                          </div>
+                        )}
+                      </section>
                     </div>
-                    {clientContracts.length > 0 ? (
-                      <div className="space-y-3">
-                        {clientContracts.map(c => (
-                          <Link key={c.id} to="/contracts" className="block p-5 bg-gray-50 dark:bg-white/5 rounded-[2rem] hover:bg-[#1e293b] hover:text-white transition-all group overflow-hidden relative">
-                            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-10 transition-opacity"><FileText className="w-12 h-12" /></div>
-                            <div className="flex justify-between items-center mb-3">
-                              <span className="text-xs font-black uppercase italic tracking-tighter">{c.contractType || 'Master Agreement'}</span>
-                              <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><ExternalLink className="w-3 h-3" /></div>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <p className="text-[10px] font-black text-gray-400 group-hover:text-white/50 uppercase tracking-[0.2em]">R$ {c.value.toLocaleString('pt-BR')}</p>
-                              <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-lg text-[8px] font-black uppercase tracking-widest group-hover:bg-emerald-500 group-hover:text-white transition-colors">{c.status}</span>
-                            </div>
-                          </Link>
-                        ))}
+                  </>
+                )}
+
+                {activeTab === 'orders' && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Ordens de Serviço ({useApp().orders.filter(o => o.clientId === selectedClient.id).length})</h4>
+                      <button onClick={() => navigate('/orders/new', { state: { lead: selectedClient } })} className="text-xs bg-primary text-white px-4 py-2 rounded-lg font-bold hover:opacity-90">+ Nova OS</button>
+                    </div>
+                    {useApp().orders.filter(o => o.clientId === selectedClient.id).map(order => (
+                      <div key={order.id} onClick={() => navigate(`/orders/${order.id}`)} className="p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-transparent hover:border-primary/30 cursor-pointer flex justify-between items-center">
+                        <div>
+                          <p className="font-bold text-gray-800 dark:text-gray-100">#{order.id.substring(0, 8)} - {order.serviceType}</p>
+                          <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <span className="text-xs px-2 py-1 rounded bg-gray-200 dark:bg-gray-700">{order.status}</span>
                       </div>
-                    ) : (
-                      <div className="h-32 flex flex-col items-center justify-center bg-gray-50 dark:bg-white/5 rounded-[2rem] border-2 border-dashed border-gray-100 dark:border-gray-800">
-                        <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-4">Portfólio em Branco</p>
-                        <button className="h-10 px-6 bg-[#1e293b] text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[#F97316] transition-all shadow-lg active:scale-95">
-                          + Vender Contrato
-                        </button>
+                    ))}
+                  </div>
+                )}
+
+                {activeTab === 'quotes' && (
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Propostas ({useApp().quotes.filter(q => q.clientId === selectedClient.id).length})</h4>
+                    {useApp().quotes.filter(q => q.clientId === selectedClient.id).map(quote => (
+                      <div key={quote.id} onClick={() => navigate(`/quotes/${quote.id}`)} className="p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-transparent hover:border-primary/30 cursor-pointer flex justify-between items-center">
+                        <div>
+                          <p className="font-bold text-gray-800 dark:text-gray-100">Orçamento #{quote.id.substring(0, 8)}</p>
+                          <p className="text-xs text-gray-500">Validade: {new Date(quote.validityDate).toLocaleDateString()}</p>
+                        </div>
+                        <span className="text-xs font-bold text-primary">R$ {quote.total.toLocaleString('pt-BR')}</span>
                       </div>
-                    )}
-                  </section>
-                </div>
+                    ))}
+                  </div>
+                )}
+
+                {activeTab === 'agenda' && (
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Agendamentos</h4>
+                    {useApp().appointments.filter(a => a.clientId === selectedClient.id).map(appt => (
+                      <div key={appt.id} className="p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-transparent flex justify-between items-center">
+                        <div>
+                          <p className="font-bold text-gray-800 dark:text-gray-100">{appt.title}</p>
+                          <p className="text-xs text-gray-500">{new Date(appt.startTime).toLocaleString()}</p>
+                        </div>
+                        <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">{appt.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Financial Tab could be invoices or contracts history */}
+                {activeTab === 'financial' && (
+                  <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                    <PieChart className="w-12 h-12 mb-4 opacity-50" />
+                    <p className="text-sm font-medium">Módulo Financeiro em desenvolvimento.</p>
+                  </div>
+                )}
               </div>
             </>
           ) : (

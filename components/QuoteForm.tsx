@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { Quote, QuoteItem, CreateQuoteData, QuoteAttachment } from '../types/quote';
 import { useToast } from '../contexts/ToastContext';
@@ -27,8 +27,13 @@ interface QuoteFormProps {
 
 const QuoteForm: React.FC<QuoteFormProps> = ({ initialData, isEditing = false }) => {
     const navigate = useNavigate();
+    const location = useLocation(); // uses existing import if available or I need to add it
     const { clients, addQuote, updateQuote, uploadFile, inventory, products } = useApp();
     const { showToast } = useToast();
+
+    // Pre-fill from navigation state (lead)
+    const navState = location.state as { lead?: any } | null;
+    const leadData = navState?.lead;
 
     const [clientId, setClientId] = useState(initialData?.clientId || '');
     const [validityDate, setValidityDate] = useState(
@@ -37,6 +42,25 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ initialData, isEditing = false })
     const [issueDate, setIssueDate] = useState(
         initialData?.createdAt ? new Date(initialData.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     );
+
+    // Initial effect to handle lead data if present and matching client exists
+    useEffect(() => {
+        if (leadData && !initialData) {
+            // Try to match client
+            // If lead has client_id, use it. Else try name match.
+            if (leadData.client_id) {
+                setClientId(leadData.client_id);
+            } else if (leadData.name) {
+                const matched = clients.find(c => c.name.toLowerCase() === leadData.name.toLowerCase());
+                if (matched) setClientId(matched.id);
+            }
+
+            // Pre-fill notes
+            if (leadData.description) {
+                setNotes(prev => leadData.description + (prev ? `\n\n${prev}` : ''));
+            }
+        }
+    }, [leadData, initialData, clients]);
 
     // Convert initial QuoteItems to OrderLineItems for the selector
     const [items, setItems] = useState<OrderLineItem[]>(

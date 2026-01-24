@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useToast } from '../contexts/ToastContext';
 
 const CreateOrder: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const initialProjectId = searchParams.get('projectId');
   const { clients, technicians, addOrder, projects } = useApp();
   const { showToast } = useToast();
@@ -27,7 +28,33 @@ const CreateOrder: React.FC = () => {
     projectName: ''
   });
 
-  React.useEffect(() => {
+  // Handle Lead state from navigation
+  useEffect(() => {
+    const leadState = location.state?.lead;
+    if (leadState) {
+      // Try to match client if linked
+      let potentialClientId = leadState.client_id || '';
+
+      // If no client_id, we can't pre-select client easily unless we search by Name/Phone match
+      // For now, if linked, use it.
+      if (!potentialClientId && leadState.name) {
+        const matched = clients.find(c => c.name.toLowerCase() === leadState.name.toLowerCase());
+        if (matched) potentialClientId = matched.id;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        clientId: potentialClientId,
+        description: leadState.description || prev.description,
+        serviceType: leadState.service_interest || prev.serviceType,
+        priority: (['baixa', 'media', 'alta', 'urgente'].includes(leadState.priority) ? leadState.priority : 'media') as any,
+        // Append lead info to observations if not a full match
+        observations: leadState.name && !potentialClientId ? `Lead Origem: ${leadState.name} (${leadState.phone || 'Sem fone'}).\n${prev.observations}` : prev.observations
+      }));
+    }
+  }, [location.state, clients]);
+
+  useEffect(() => {
     if (initialProjectId && projects.length > 0) {
       const proj = projects.find(p => p.id === initialProjectId);
       if (proj) {

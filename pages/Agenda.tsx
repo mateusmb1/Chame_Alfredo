@@ -57,10 +57,13 @@ const Agenda: React.FC = () => {
   };
 
   const statusColors = {
-    agendado: 'bg-blue-500/10 text-blue-500 border-blue-500/10',
-    confirmado: 'bg-amber-500/10 text-amber-500 border-amber-500/10',
+    aberta: 'bg-blue-500/10 text-blue-500 border-blue-500/10',
+    agendada: 'bg-purple-500/10 text-purple-500 border-purple-500/10',
+    em_andamento: 'bg-amber-500/10 text-amber-500 border-amber-500/10',
     concluido: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10',
-    cancelado: 'bg-rose-500/10 text-rose-500 border-rose-500/10',
+    concluida: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10', // Map both just in case
+    faturada: 'bg-green-500/10 text-green-500 border-green-500/10',
+    cancelada: 'bg-rose-500/10 text-rose-500 border-rose-500/10',
   };
 
   const handlePrevMonth = () => setCurrentDate(new Date(currentYear, currentMonth - 1, 1));

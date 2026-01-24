@@ -11,7 +11,8 @@ import {
     Trash2,
     FileText,
     FolderPlus,
-    Search
+    Search,
+    ClipboardList
 } from 'lucide-react';
 import CurrencyInput from '../components/CurrencyInput';
 
@@ -263,14 +264,22 @@ const QuoteDetail: React.FC = () => {
                         >
                             <Printer className="w-4 h-4" /> Imprimir
                         </button>
-                        {!quote.projectId && (
-                            <button
-                                onClick={handleConvertToProject}
-                                disabled={isConverting}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-sm font-semibold hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
-                            >
-                                <FolderPlus className="w-4 h-4" /> {isConverting ? 'Convertendo...' : 'Criar Projeto'}
-                            </button>
+                        {!quote.projectId && !quote.sourceOrderId && (
+                            <>
+                                <button
+                                    onClick={() => navigate('/orders/new', { state: { quote } })}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl text-sm font-semibold hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
+                                >
+                                    <ClipboardList className="w-4 h-4" /> Converter em OS
+                                </button>
+                                <button
+                                    onClick={handleConvertToProject}
+                                    disabled={isConverting}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-sm font-semibold hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                                >
+                                    <FolderPlus className="w-4 h-4" /> {isConverting ? 'Convertendo...' : 'Criar Projeto'}
+                                </button>
+                            </>
                         )}
                         {quote.projectId && (
                             <button

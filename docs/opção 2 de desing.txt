@@ -1,0 +1,771 @@
+Beleza, dá pra deixar esse painel bem mais moderno, denso e com visão global sem virar “scroll infinito”.
+
+Direção geral de design
+A ideia da nova opção de design pode seguir uma linha de centro de comando mais minimalista, com menos cromado e mais foco em sinalização visual clara (cor, posição, ícones).
+​
+
+Sugiro: barra lateral fixa compacta, topo com filtros globais, cartões-resumo densos, e uma área central estilo “mosaico” configurável de widgets.
+​
+
+Layout macro para novo tema
+Pensa em algo assim:
+
+Barra lateral
+
+Ícones compactos (dica + rótulo ao passar o mouse), núcleos neutros, sem texto gigante.
+​
+
+A ordem atual de navegação é boa (Monitor, Serviços, Propostas etc.), só precisa ficar mais abrangente e consistente.
+
+Barra superior
+
+Campo de busca global (SO, clientes, contratos) sempre visível.
+​
+
+Filtros rápidos: período (Hoje / 7d / 30d), status (Pendente, Em curso, Atrasado), e seleção de unidade/filial.
+​
+
+Área central (grade de widgets)
+
+2 ou 3 colunas responsivas, com widgets rearrastáveis ​​(arrastar e soltar futuro) e colapsáveis.
+
+Cartões mais baixos, com microtipos para reduzir altura e evitar rolagem, mantendo a visão global.
+​
+
+Organização da visão “Monitor”
+Hoje o Overview tem vários cartões soltos (Produtividade, Em espera, Caminho Crítico, Leads, Status, Atividades Recentes) mas a classificação não está clara.
+​
+
+Sugestão de blocos:
+
+Bloco 1 – Cabeçalho operacional
+
+KPI principal em linha:
+
+Ordens ativas (pendente + em curso)
+
+Atrasadas (> X dias)
+
+Leads hoje / semana
+
+SLA médio (quando tiver)
+
+Tudo em cartões estreita lado a lado, com códigos de cor: verde, amarelo, vermelho.
+​
+
+Bloco 2 – Cronograma operacional
+
+“Tendência semanal” em linha, mas ocupando menos altura (mini chart).
+​
+
+Um botão “Ver detalhamento” que leva para Desempenho/Relatórios.
+
+Bloco 3 – Funil de OS
+
+Um cartão só com barras horizontais: Pendente, Em curso, Concluído, Atrasado.
+​
+
+Percentual + quantidade no mesmo cartão, nada de 4 cartões separados.
+
+Bloco 4 – Base de clientes
+
+Em vez do texto “Market share PJ/PF = 0”, use duas fichas com contagem e porcentagem.
+​
+
+O botão “Ver carteira completa” continua, mas o cartão fica bem compacto.
+
+Bloco 5 – Atividades recentes
+
+Transformar em um feed denso com: ícone (tipo de evento), título curto, cliente, responsável, horário relativo (“há 5 min”).
+​
+
+Limite de altura com scroll interno no cartão (não na página) pra não alongar o painel.
+
+Fluxos e funcionalidades que dão pra melhorar
+posto rápida de OS
+
+O botão “Criar OS+” pode abrir um modal lateral (gaveta) com o fluxo mínimo: cliente, tipo de serviço, prioridade, agendamento inicial.
+​
+
+Depois o usuário cai na tela completa se quiser detalhar (anexos, orçamento, etc.).
+
+Filtros salvas / visualizações
+
+Permitir salvar “visões”: ex. “Hoje – emergências”, “Semana – preventivas”, “Atrasadas por técnico”.
+
+Isso fica bem com um menu suspenso na barra superior, sem poluir o layout.
+
+Painel multitabs
+
+Ao jogar o usuário em telas completamente diferentes, você pode ter guias internas no Monitor:
+
+“Resumo” (visão que descrevi)
+
+“Operações do dia” (lista densa de OS de hoje com ações inline)
+
+“Alertas” (atrasos, vencimento de contratos, estoque crítico).
+​
+
+Como transformar isso em design system
+Pra mudar uma segunda opção de tema no seu DS:
+
+Fichas
+
+uma paleta “Command Center”: fundo quase branco ou cinza muito claro, cartões brancos, acentos em um cor principal e um cor de alerta.
+
+Espaçamento menor (8/12 px em vez de 16 em tudo), aumentando a densidade sem comprometer a legibilidade.
+
+Componentes
+
+Cartões-KPI: pequeno, médio, largo, todos com a mesma estrutura (ícone, rótulo, valor, delta).
+
+Widget-container: título + ações (filtrar, expandir, colapsar) + corpo com scroll interno opcional.
+
+Layout do dashboard: grid em 12 colunas gerenciado via CSS grid / Tailwind (você já está no Tailwind).
+
+Variantes de página
+
+“Tema 1” (atual) e “Tema 2 – Central de Comando”.
+
+Basta trocar wrapper + tokens (cores, shadows, radius, espessura da tipografia) sem mexer na lógica do React.
+
+
+Segue a configuração tela a tela + sugestões de componentes/adereços e o toggle de tema.
+
+Princípios para todas as telas
+Base de layout
+
+<DashboardShell>com três slots: sidebar, topbar, content.
+​
+
+Tema 1 (atual) e Tema 2 (centro de comando) controlados por contexto/tokens.
+
+Componentes principais
+
+SidebarNav, Topbar, DashboardGrid, KpiCard, WidgetCard, , .DataTable​ActivityFeedFilterChips
+​
+
+Tudo em cima de um useDashboardTheme().
+
+Monitor (Visão Geral Operacional)
+Objetivo: visão geral do dia/semana, zero scroll ou mínimo.
+
+Estrutura JSX (conceitual)
+
+tsx
+<DashboardShell>
+  <SidebarNav />
+  <Topbar
+    searchPlaceholder="Buscar clientes, OS, contratos…"
+    filters={[/* período, status, unidade */]}
+  />
+  <DashboardGrid columns={3} density="compact">
+    <KpiRow />
+    <WidgetCard title="Tendência semanal" id="trend-week" />
+    <WidgetCard title="Funil de Ordens de Serviço" id="os-funnel" />
+    <WidgetCard title="Base de Clientes" id="clients-base" />
+    <WidgetCard title="Leads Recentes" id="recent-leads" />
+    <WidgetCard title="Atividades Recentes" id="recent-activity" scroll />
+  </DashboardGrid>
+</DashboardShell>
+Componentes
+
+DashboardShell
+
+Adereços:
+
+children
+
+layout?: "fixed" | "fluid"
+
+SidebarNav
+
+Adereços:
+
+items: Array<{ icon: IconType; label: string; href: string; active?: boolean }>
+
+collapsed?: boolean
+
+Topbar
+
+Adereços:
+
+onSearch: (q: string) => void
+
+filters: FilterConfig[](ex.: período, status, unidade)
+
+actions?: ReactNode(botão “Criar OS+”, notificações, avatar)
+
+DashboardGrid
+
+Adereços:
+
+columns?: 2 | 3 | 4
+
+density?: "compact" | "comfortable"
+
+Internacionalmente usa grid-cols-12e mapa para colSpan.
+
+KpiCard
+
+Adereços:
+
+label: string
+
+value: number | string
+
+delta?: { value: number; direction: "up" | "down" }
+
+tone?: "default" | "success" | "warning" | "danger"
+
+icon?: IconType
+
+WidgetCard
+
+Adereços:
+
+id: string
+
+title: string
+
+subtitle?: string
+
+actions?: ReactNode(filtro interno, botão “ver tudo”)
+
+scroll?: boolean(aplica max-h+ overflow-y-auto)
+
+span?: 4 | 6 | 12(colunas sem grade)
+
+ActivityFeed
+
+Adereços:
+
+items: Array<{ id: string; type: "os" | "lead" | "contrato"; title: string; meta: string; timeAgo: string }>
+
+maxItems?: number
+
+Serviços (Lista de OS)
+Objetivo: visão densa tipo “tabela de operação”, com ações inline.
+
+Estrutura
+
+tsx
+<PageShell title="Ordens de Serviço" breadcrumb={["Monitor", "Serviços"]}>
+  <Toolbar
+    primaryAction={{ label: "Criar OS", variant: "primary" }}
+    filters={[/* status, tipo, técnico, período */]}
+    views={[/* Hoje, Semana, Atrasadas */]}
+  />
+  <DataTable
+    columns={serviceOrderColumns}
+    data={serviceOrders}
+    density="compact"
+    onRowClick={handleOpenOsDrawer}
+  />
+</PageShell>
+Componentes
+
+PageShell
+
+Adereços:
+
+title: string
+
+breadcrumb?: string[]
+
+actions?: ReactNode
+
+Toolbar
+
+Adereços:
+
+primaryAction?: { label: string; onClick?: () => void; variant?: "primary" | "outline" }
+
+secondaryActions?: ActionButton[]
+
+filters: FilterConfig[]
+
+views?: Array<{ id: string; label: string; active?: boolean }>
+
+DataTable<T>
+
+Adereços:
+
+columns: ColumnDef<T>[]
+
+data: T[]
+
+density?: "compact" | "comfortable"
+
+onRowClick?: (row: T) => void
+
+rowActions?: (row: T) => ReactNode
+
+Paginação embutida ( pageSize, onPageChange).
+
+ServiceOrderDrawer
+
+Adereços:
+
+open: boolean
+
+onClose: () => void
+
+orderId?: string
+
+Internamente usa componentes de formulário compartilhados.
+
+Agenda (Centro de comando operacional)
+Objetivo: agenda densa, visão por dia/semana, com técnicos/recursos.
+
+Estrutura
+
+tsx
+<PageShell title="Agenda Operacional" breadcrumb={["Monitor", "Agenda"]}>
+  <Toolbar
+    filters={[/* período, tipo de serviço, técnico, recurso */]}
+    views={[
+      { id: "day", label: "Dia" },
+      { id: "week", label: "Semana" },
+    ]}
+  />
+  <Scheduler
+    view={view}
+    resources={technicians}
+    events={serviceEvents}
+    onEventClick={handleEventClick}
+  />
+</PageShell>
+Componentes
+
+Scheduler
+
+Adereços:
+
+view: "day" | "week"
+
+resources: Array<{ id: string; name: string; color?: string }>
+
+events: Array<{ id: string; title: string; resourceId: string; start: Date; end: Date; status: string }>
+
+onEventClick?: (id: string) => void
+
+onSlotClick?: (slotInfo: SlotInfo) => void
+
+Legend
+
+Adereços:
+
+items: Array<{ label: string; tone: "success" | "warning" | "danger" | "info" }>
+
+Outras telas (Propostas, Clientes, Inventário)
+Todas podem reaproveitar o mesmo padrão:
+
+PageShell+ Toolbar+ DataTable+ SideDrawerde/edição.
+​
+
+Para inventário, use DataTablecom density="compact", statusBadge(nível crítico, ok, em falta).
+
+Alternar tema (Ajustes Gerais)
+Crie um contexto de tema de painel:
+
+tsx
+type DashboardTheme = "classic" | "commandCenter";
+
+type DashboardThemeContextValue = {
+  theme: DashboardTheme;
+  setTheme: (theme: DashboardTheme) => void;
+};
+
+const DashboardThemeContext = createContext<DashboardThemeContextValue | null>(null);
+
+export const useDashboardTheme = () => {
+  const ctx = useContext(DashboardThemeContext);
+  if (!ctx) throw new Error("useDashboardTheme must be inside provider");
+  return ctx;
+};
+DashboardThemeProvider
+
+Lê do Supabase/LocalStorage a preferência do usuário.
+
+Aplica classe na raiz: data-dashboard-theme="classic"ou "command-center".
+
+Em Tailwind, usar variantes:
+
+CSS
+[data-dashboard-theme="classic"] .kpi-card { /* tokens clássicos */ }
+[data-dashboard-theme="command-center"] .kpi-card { /* tokens densos, cores novas */ }
+Tela de Ajustes Gerais
+
+tsx
+<PageShell title="Ajustes Gerais">
+  <Section title="Tema do Painel">
+    <ThemeSwitcher
+      options={[
+        { id: "classic", label: "Tema Clássico" },
+        { id: "commandCenter", label: "Command Center" },
+      ]}
+      value={theme}
+      onChange={setTheme}
+    />
+  </Section>
+</PageShell>
+ThemeSwitcheré apenas um alternador de cartões com visualização ou botões de opção.
+
+Se quiser, no próximo passo posso te mandar um “mapa de componentes” em forma de árvore por rotação (ex.: /dashboard, /dashboard/services, /dashboard/schedule) com nomes exatos de arquivos/paths components/seguindo o padrão do seu repo.
+​
+
+sim por favor
+Segue o mapa de componentes por rota, já pensado pra encaixar no padrão do repo.
+​
+
+Visão geral das rotas
+/dashboard→ Monitor (Visão geral)
+
+/dashboard/services→ Ordens de Serviço
+
+/dashboard/schedule→ Agenda
+
+/dashboard/clients→ Clientes
+
+/dashboard/inventory→ Inventário
+
+/dashboard/settings→ Ajustes Gerais (inclui alternância de tema)
+
+Estrutura de pastas sugerida
+texto
+src/
+  components/
+    layout/
+      DashboardShell.tsx
+      SidebarNav.tsx
+      Topbar.tsx
+      PageShell.tsx
+    dashboard/
+      KpiCard.tsx
+      WidgetCard.tsx
+      ActivityFeed.tsx
+      DashboardGrid.tsx
+    tables/
+      DataTable.tsx
+    schedule/
+      Scheduler.tsx
+      Legend.tsx
+    settings/
+      ThemeSwitcher.tsx
+  contexts/
+    DashboardThemeContext.tsx
+/dashboard(Monitor)
+Composição de tarefa:
+
+tsx
+// pages/dashboard/index.tsx (ou equivalente no teu router)
+import { DashboardShell } from "@/components/layout/DashboardShell";
+import { SidebarNav } from "@/components/layout/SidebarNav";
+import { Topbar } from "@/components/layout/Topbar";
+import { DashboardGrid } from "@/components/dashboard/DashboardGrid";
+import { KpiCard } from "@/components/dashboard/KpiCard";
+import { WidgetCard } from "@/components/dashboard/WidgetCard";
+import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
+
+export function DashboardPage() {
+  return (
+    <DashboardShell>
+      <SidebarNav />
+      <div className="flex flex-col flex-1">
+        <Topbar />
+        <DashboardGrid columns={3} density="compact">
+          {/* Linha de KPIs */}
+          <div className="col-span-12 grid grid-cols-4 gap-3">
+            <KpiCard label="OS ativas" value={24} tone="warning" />
+            <KpiCard label="Atrasadas" value={5} tone="danger" />
+            <KpiCard label="Leads hoje" value={7} tone="default" />
+            <KpiCard label="SLA médio" value="2h 15m" tone="success" />
+          </div>
+
+          <WidgetCard id="trend-week" title="Tendência semanal" span={6}>
+            {/* gráfico compacto */}
+          </WidgetCard>
+
+          <WidgetCard id="os-funnel" title="Funil de OS" span={6}>
+            {/* barras horizontais */}
+          </WidgetCard>
+
+          <WidgetCard id="clients-base" title="Base de clientes" span={4}>
+            {/* chips PF/PJ */}
+          </WidgetCard>
+
+          <WidgetCard id="recent-leads" title="Leads recentes" span={4}>
+            {/* lista compacta */}
+          </WidgetCard>
+
+          <WidgetCard
+            id="recent-activity"
+            title="Atividades recentes"
+            span={4}
+            scroll
+          >
+            <ActivityFeed items={[]} />
+          </WidgetCard>
+        </DashboardGrid>
+      </div>
+    </DashboardShell>
+  );
+}
+Componentes e adereços essenciais:
+
+DashboardShell
+
+children: ReactNode
+
+SidebarNav
+
+items?: NavItem[](pode ficar interno se já tiver)
+
+Topbar
+
+onSearch?(q: string), filters?: FilterConfig[],actions?: ReactNode
+
+DashboardGrid
+
+columns?: 2 | 3 | 4,density?: "compact" | "comfortable"
+
+KpiCard
+
+label, value, delta?, tone?,icon?
+
+WidgetCard
+
+id, title, subtitle?, actions?, scroll?,span?
+
+ActivityFeed
+
+items: ActivityItem[],maxItems?
+
+​
+
+/dashboard/services(Serviços / OS)
+tsx
+// pages/dashboard/services.tsx
+import { PageShell } from "@/components/layout/PageShell";
+import { Toolbar } from "@/components/layout/Toolbar";
+import { DataTable } from "@/components/tables/DataTable";
+import { ServiceOrderDrawer } from "@/components/dashboard/ServiceOrderDrawer";
+
+export function ServicesPage() {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  return (
+    <PageShell title="Ordens de Serviço" breadcrumb={["Monitor", "Serviços"]}>
+      <Toolbar
+        primaryAction={{ label: "Criar OS", variant: "primary", onClick: () => setSelectedId("new") }}
+        filters={[
+          { id: "status", label: "Status", type: "select" },
+          { id: "tipo", label: "Tipo", type: "select" },
+        ]}
+        views={[
+          { id: "today", label: "Hoje", active: true },
+          { id: "week", label: "Semana" },
+          { id: "late", label: "Atrasadas" },
+        ]}
+      />
+      <DataTable
+        columns={serviceOrderColumns}
+        data={serviceOrders}
+        density="compact"
+        onRowClick={(row) => setSelectedId(row.id)}
+      />
+      <ServiceOrderDrawer
+        open={!!selectedId}
+        orderId={selectedId === "new" ? undefined : selectedId ?? undefined}
+        onClose={() => setSelectedId(null)}
+      />
+    </PageShell>
+  );
+}
+Componentes/props novos:
+
+PageShell
+
+title, breadcrumb?, actions?,children
+
+Toolbar
+
+primaryAction?, secondaryActions?, filters,views?
+
+DataTable<T>
+
+columns, data, density?, onRowClick?,rowActions?
+
+ServiceOrderDrawer
+
+open, orderId?,onClose
+
+​
+
+/dashboard/schedule(Agenda)
+tsx
+// pages/dashboard/schedule.tsx
+import { PageShell } from "@/components/layout/PageShell";
+import { Toolbar } from "@/components/layout/Toolbar";
+import { Scheduler } from "@/components/schedule/Scheduler";
+import { Legend } from "@/components/schedule/Legend";
+
+export function SchedulePage() {
+  const [view, setView] = useState<"day" | "week">("day");
+
+  return (
+    <PageShell title="Agenda Operacional" breadcrumb={["Monitor", "Agenda"]}>
+      <Toolbar
+        filters={[
+          { id: "unidade", label: "Unidade", type: "select" },
+          { id: "tecnico", label: "Técnico", type: "select" },
+        ]}
+        views={[
+          { id: "day", label: "Dia", active: view === "day", onClick: () => setView("day") },
+          { id: "week", label: "Semana", active: view === "week", onClick: () => setView("week") },
+        ]}
+      />
+      <div className="flex gap-4">
+        <div className="flex-1">
+          <Scheduler
+            view={view}
+            resources={technicians}
+            events={serviceEvents}
+            onEventClick={(id) => {}}
+            onSlotClick={(slot) => {}}
+          />
+        </div>
+        <div className="w-56">
+          <Legend
+            items={[
+              { label: "Confirmada", tone: "success" },
+              { label: "Pendente", tone: "warning" },
+              { label: "Cancelada", tone: "danger" },
+            ]}
+          />
+        </div>
+    </div>
+    </PageShell>
+  );
+}
+Componentes/props:
+
+Scheduler
+
+view, resources, events, onEventClick?,onSlotClick?
+
+Legend
+
+items: { label; tone }[]
+
+​
+
+/dashboard/clients(Clientes) e /dashboard/inventory(Inventário)
+Ambas seguem o mesmo padrão de PageShell + Toolbar + DataTable + Drawer.
+
+Clientes
+tsx
+export function ClientsPage() {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  return (
+    <PageShell title="Clientes" breadcrumb={["Monitor", "Clientes"]}>
+      <Toolbar
+        primaryAction={{ label: "Novo cliente", variant: "primary" }}
+        filters={[
+          { id: "tipo", label: "Tipo", type: "select" }, // PF / PJ
+        ]}
+      />
+      <DataTable
+        columns={clientColumns}
+        data={clients}
+        density="compact"
+        onRowClick={(row) => setSelectedId(row.id)}
+      />
+      <ClientDrawer
+        open={!!selectedId}
+        clientId={selectedId ?? undefined}
+        onClose={() => setSelectedId(null)}
+      />
+    </PageShell>
+  );
+}
+Inventário
+tsx
+export function InventoryPage() {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  return (
+    <PageShell title="Inventário" breadcrumb={["Monitor", "Inventário"]}>
+      <Toolbar
+        primaryAction={{ label: "Novo item", variant: "primary" }}
+        filters={[
+          { id: "categoria", label: "Categoria", type: "select" },
+          { id: "nivel", label: "Nível de estoque", type: "select" },
+        ]}
+      />
+      <DataTable
+        columns={inventoryColumns}
+        data={inventoryItems}
+        density="compact"
+        onRowClick={(row) => setSelectedId(row.id)}
+      />
+      <InventoryItemDrawer
+        open={!!selectedId}
+        itemId={selectedId ?? undefined}
+        onClose={() => setSelectedId(null)}
+      />
+    </PageShell>
+  );
+}
+/dashboard/settings(Ajustes Gerais + tema)
+tsx
+// contexts/DashboardThemeContext.tsx
+export type DashboardTheme = "classic" | "commandCenter";
+
+export function DashboardThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState<DashboardTheme>("commandCenter");
+
+  useEffect(() => {
+    document.documentElement.dataset.dashboardTheme = theme;
+  }, [theme]);
+
+  return (
+    <DashboardThemeContext.Provider value={{ theme, setTheme }}>
+      {children}
+    </DashboardThemeContext.Provider>
+  );
+}
+tsx
+// pages/dashboard/settings.tsx
+import { PageShell } from "@/components/layout/PageShell";
+import { ThemeSwitcher } from "@/components/settings/ThemeSwitcher";
+import { useDashboardTheme } from "@/contexts/DashboardThemeContext";
+
+export function SettingsPage() {
+  const { theme, setTheme } = useDashboardTheme();
+
+  return (
+    <PageShell title="Ajustes Gerais" breadcrumb={["Monitor", "Ajustes"]}>
+      <section className="max-w-xl space-y-4">
+        <h2 className="text-sm font-medium text-muted-foreground">
+          Tema do painel
+        </h2>
+        <ThemeSwitcher
+          options={[
+            { id: "classic", label: "Tema clássico", description: "Layout atual, mais espaçado." },
+            { id: "commandCenter", label: "Command Center", description: "Visão densa e minimalista." },
+          ]}
+          value={theme}
+          onChange={(value) => setTheme(value as DashboardTheme)}
+        />
+      </section>
+    </PageShell>
+  );
+}
+ThemeSwitcher:
+
+Adereços: options, value, onChange.
+
+Pode ser um grupo de cartas com rádio.

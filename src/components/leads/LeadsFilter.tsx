@@ -33,11 +33,10 @@ export const LeadsFilter: React.FC<LeadsFilterProps> = ({ filters, onChange }) =
                     onChange={(e) => handleChange('status', e.target.value)}
                 >
                     <option value="">Todos</option>
-                    <option value="nova">Nova</option>
-                    <option value="agendada">Agendada</option>
-                    <option value="em_andamento">Em Andamento</option>
-                    <option value="concluida">Concluída</option>
-                    <option value="cancelada">Cancelada</option>
+                    <option value="novo">Novo</option>
+                    <option value="qualificado">Qualificado</option>
+                    <option value="convertido">Convertido</option>
+                    <option value="perdido">Perdido</option>
                 </select>
             </div>
 
@@ -78,9 +77,10 @@ export const LeadsFilter: React.FC<LeadsFilterProps> = ({ filters, onChange }) =
                     onChange={(e) => handleChange('origin', e.target.value)}
                 >
                     <option value="">Todas</option>
-                    <option value="landing_form">Site</option>
-                    <option value="admin_manual">Manual</option>
-                    <option value="phone">Telefone</option>
+                    <option value="landing_page">Site</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="manual">Manual</option>
+                    <option value="referral">Indicação</option>
                 </select>
             </div>
 

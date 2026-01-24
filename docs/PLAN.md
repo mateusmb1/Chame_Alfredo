@@ -1,38 +1,70 @@
-# Plano de Implementação: Redesign Premium e Correção da Agenda (Planejamento)
+# 🏗️ Plano de Implementação: Melhoria de Fluxo (System Flow)
 
-Este plano visa elevar a estética da página de Planejamento (Agenda) e corrigir as funcionalidades de alocação de recursos e interação com o calendário.
+## 🎯 Objetivo
+Implementar um fluxo unificado e contínuo de **Lead → Proposta → OS → Agenda**, eliminando "ilhas" de navegação e garantindo que o ciclo de vida do cliente seja tratado sem retrabalho.
 
-## 🎨 DESIGN COMMITMENT: "Precision Scheduler"
+## 🛠️ Agentes Necessários
+- **`database-architect`**: Para ajustes em tabelas, estados (enums) e integridade de dados.
+- **`backend-specialist`**: Para APIs e regras de negócio de transição de estados.
+- **`frontend-specialist`**: Para UX, telas de Leads, Propostas, OS e Hub do Cliente.
+- **`test-engineer`**: Para garantir que os fluxos não quebrem funcionalidades existentes.
 
-- **Topological Choice:** Utilizaremos um layout de grade técnica com foco em profundidade. O calendário deixará de ser uma tabela simples para se tornar um "painel de monitoramento", com efeitos de vidro (glassmorphism) sutis e áreas de foco dinâmicas.
-- **Risk Factor:** Bordas extremamente nítidas (2px) para os slots de tempo, evocando precisão militar/industrial. Uso de animações de "Spring Physics" para a transição entre meses.
-- **Readability Conflict:** IDs técnicos e metadados serão exibidos em micro-tipografia, permitindo uma densidade de informação maior sem sacrificar o visual "clean".
-- **Cliché Liquidation:** Removeremos os botões de controle padrão do navegador em favor de uma barra de ferramentas customizada integrada ao cabeçalho premium.
+---
 
-## 📋 Fases de Implementação
+## 📅 Fase 1: Fundação e Dados (Database)
+**Foco:** Garantir que o banco de dados suporte os novos fluxos e estados.
 
-### Fase 1: Arquitetura de Dados (AppContext)
-- Adicionar `addAppointment`, `updateAppointment` e `deleteAppointment` à interface `AppContextType`.
-- Implementar estas funções no `AppProvider` com integração ao Supabase.
-- Adicionar mappers (mapAppointmentFromDB, mapAppointmentToDB).
+### mudancas_db
+- [ ] **Mapeamento de Estados (Enums/Types)**:
+    - `leads`: 'novo', 'qualificado', 'perdido'.
+    - `quotes`: 'rascunho', 'enviada', 'aceita', 'recusada'.
+    - `orders`: 'aberta', 'agendada', 'em_andamento', 'concluida', 'faturada', 'cancelada'.
+    - `agenda_events`: Criar vínculo forte com `order_id`.
+- [ ] **Integração de Inventário**:
+    - Garantir tabela de relacionamento `order_items` que aponte para `inventory_items` com `quantity` e decrementar estoque.
 
-### Fase 2: Redesign da Interface (Agenda.tsx)
-- Refatorar o cabeçalho para seguir o padrão "Command Center".
-- Implementar o novo design dos cards de dia (slots).
-- Adicionar animações de entrada e transição.
-- Criar o `AppointmentModal` para adição e edição de compromissos.
+## 🚀 Fase 2: Conversão e Fluxo Core (Frontend + Backend)
+**Foco:** Conectar as pontas soltas (Leads -> Proposta -> OS).
 
-### Fase 3: Correção de Funcionalidades
-- Ligar o botão "Alocar Recurso" ao modal de criação.
-- Ligar os cliques nos dias do calendário para abrir o modal com a data pré-selecionada.
-- Adicionar handlers de clique nos eventos existentes para edição/deleção.
+### leads_flow
+- [ ] **Tela de Leads (`LeadsDashboard.tsx`)**:
+    - Adicionar botões de ação rápida na tabela/cards:
+        - "Criar Proposta" (leva p/ `QuoteCreate` com dados do lead).
+        - "Criar OS" (leva p/ `OrderCreate` com dados do lead).
+        - "Converter em Cliente" (se ainda não for).
 
-### Fase 4: Verificação e Auditoria
-- Validar conformidade com as regras do `frontend-specialist`.
-- Rodar `lint_runner.py` e `npx tsc --noEmit`.
+### quotes_flow
+- [ ] **Tela de Propostas (`Quotes.tsx` / `QuoteCreate.tsx`)**:
+    - Fluxo de "Converter em OS":
+        - Ao clicar em "Aceitar/Converter", abrir modal ou redirecionar para criação de OS.
+        - **Pré-preencher** todos os dados da proposta (itens, valores, cliente).
+        - Opcional: Já abrir gaveta de agendamento.
 
-## 👥 Agentes Envolvidos
-1. **project-planner**: Orquestração e Planejamento de Tarefas.
-2. **backend-specialist**: Implementação das operações de dados no Contexto.
-3. **frontend-specialist**: Redesign UI/UX e implementação do Modal.
-4. **test-engineer**: Verificação de bugs e lints.
+## 🗓️ Fase 3: Agenda e Operação
+**Foco:** O coração da operação. Tudo converge para a agenda.
+
+### agenda_integration
+- [ ] **Agenda (`Agenda.tsx` / `MobileAgenda.tsx`)**:
+    - Permitir criar OS clicando em slot vazio.
+    - Exibir status da OS pela cor do evento.
+    - Drag-and-drop atualizando horário da OS.
+
+### worker_app_sync
+- [ ] **Sincronização**:
+    - Garantir que ações no "App Técnico" (Check-in/Check-out) atualizem o status da OS e da Agenda em tempo real (Supabase Realtime).
+
+## 👤 Fase 4: Visão 360º do Cliente
+**Foco:** Centralizar informações.
+
+### client_hub
+- [ ] **Página de Detalhes do Cliente (`Clients.tsx` / `ClientDashboard.tsx`)**:
+    - Criar abas: Resumo, OS, Propostas, Agenda, Financeiro.
+    - Navegação: Clicar no cliente em QUALQUER lugar (Lead, OS, Agenda) deve abrir este Hub (ou drawer).
+
+---
+
+## ✅ Critérios de Verificação
+1.  **Lead to OS**: Criar um lead, converter em proposta, aprovar proposta e verificar se a OS foi criada com os itens corretos.
+2.  **Scheduling**: Agendar essa OS e verificar se apareceu na Agenda.
+3.  **Inventory**: Concluir a OS e verificar se o estoque foi debitado (se aplicável).
+4.  **Client View**: Acessar o cliente e ver essa OS e Proposta no histórico.
