@@ -3,6 +3,7 @@ import { Project } from '../types/project';
 import { Client } from '../types/client';
 import { Technician } from '../types/technician';
 import { Order } from '../types/order';
+import CurrencyInput from './CurrencyInput';
 
 interface ProjectFormProps {
   project?: Project;
@@ -222,13 +223,11 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, clients, technicians
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Orçamento (R$)
               </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
+              <CurrencyInput
                 value={formData.budget}
-                onChange={(e) => handleInputChange('budget', parseFloat(e.target.value) || 0)}
+                onChange={(value) => handleInputChange('budget', value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="R$ 0,00"
               />
             </div>
           </div>
@@ -244,7 +243,14 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, clients, technicians
                 min="0"
                 max="100"
                 value={formData.progress}
-                onChange={(e) => handleInputChange('progress', parseInt(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '') {
+                    handleInputChange('progress', 0); // Or handle as string if context allows, but 0 is safer for now if type is strict number
+                  } else {
+                    handleInputChange('progress', parseInt(val) || 0);
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
