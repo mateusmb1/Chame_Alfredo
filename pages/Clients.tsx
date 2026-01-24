@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// Feature: Client Fantasy Name & Auto-CNPJ (v2)
 import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
