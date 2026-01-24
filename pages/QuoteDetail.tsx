@@ -177,12 +177,19 @@ const QuoteDetail: React.FC = () => {
                 documents: [],
                 notes: []
             };
-            const newProject = addProject(projectData);
-            if (updateQuote) {
-                updateQuote(quote.id, { ...quote, projectId: (newProject as any)?.id, status: 'approved' });
+
+            // await the result from addProject which now returns the created project object
+            const newProject = await addProject(projectData);
+
+            if (newProject && newProject.id && updateQuote) {
+                updateQuote(quote.id, { ...quote, projectId: newProject.id, status: 'approved' });
+                showToast('success', 'Projeto criado com sucesso!');
+                // Optional: Link quote to project via an activity or separate link
+                navigate(`/projects`);
+            } else {
+                throw new Error("Falha ao criar projeto: Sem ID retornado.");
             }
-            showToast('success', 'Projeto criado com sucesso!');
-            navigate(`/projects`);
+
         } catch (err: any) {
             showToast('error', `Erro ao converter: ${err.message}`);
         } finally {

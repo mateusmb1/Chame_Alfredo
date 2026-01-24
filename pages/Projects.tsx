@@ -297,6 +297,7 @@ const Projects: React.FC = () => {
           project={isEditMode && editingProjectId ? projects.find(p => p.id === editingProjectId) : undefined}
           clients={clients}
           technicians={technicians}
+          orders={useApp().orders}
           onSave={(projectData) => {
             if (isEditMode && editingProjectId) {
               updateProject(editingProjectId, projectData);

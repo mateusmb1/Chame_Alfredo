@@ -68,7 +68,7 @@ interface AppContextType {
     deleteInventoryItem: (id: string) => void;
 
     // Quote operations
-    addQuote: (quote: Omit<Quote, 'id' | 'createdAt'>) => void;
+    addQuote: (quote: Omit<Quote, 'id' | 'createdAt'>) => Promise<Quote | null | undefined>;
     updateQuote: (id: string, updates: Partial<Quote>) => void;
     deleteQuote: (id: string) => void;
     saveQuoteSignature: (id: string, signature: string) => Promise<void>;
@@ -88,7 +88,7 @@ interface AppContextType {
     checkUsernameAvailability: (username: string, excludeId?: string) => Promise<boolean>;
 
     // Project operations
-    addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => void;
+    addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Project | null | undefined>;
     updateProject: (id: string, updates: Partial<Project>) => void;
     archiveProject: (id: string) => void;
     unarchiveProject: (id: string) => void;
@@ -728,9 +728,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Quote operations
     const addQuote = React.useCallback(async (quote: Omit<Quote, 'id' | 'createdAt'>) => {
         const dbQuote = mapQuoteToDB(quote);
-        const { error } = await supabase.from('quotes').insert([{ ...dbQuote, status: 'draft' }]); // Default status
-        if (error) console.error('Error adding quote:', error);
-    }, [mapQuoteToDB, supabase]);
+        const { data, error } = await supabase.from('quotes').insert([{ ...dbQuote, status: 'draft' }]).select().single(); // Default status
+        if (error) {
+            console.error('Error adding quote:', error);
+            return null;
+        }
+        return mapQuoteFromDB(data);
+    }, [mapQuoteToDB, supabase, mapQuoteFromDB]);
 
     // Moved convertQuoteToInvoice UP before updateQuote to solve dependency order issue
     const convertQuoteToInvoice = React.useCallback(async (quoteId: string) => {
@@ -912,15 +916,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Project operations
     const addProject = React.useCallback(async (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => {
         const dbProject = mapProjectToDB(project);
-        const { data, error } = await supabase.from('projects').insert([dbProject]).select().single();
+        // FIX: Project Visibility Bug - Select joined relations so local state has names immediately
+        const { data, error } = await supabase
+            .from('projects')
+            .insert([dbProject])
+            .select('*, client:clients(name), responsible:technicians(name)')
+            .single();
+
         if (error) {
             console.error('Error adding project:', error);
-            return;
+            return null;
         }
 
         // Add creation activity
         if (data) {
-            setProjects(prev => [...prev, mapProjectFromDB(data)]);
+            const newProject = mapProjectFromDB(data);
+            setProjects(prev => [...prev, newProject]);
+
             addProjectActivity({
                 projectId: data.id,
                 type: 'criacao',
@@ -930,7 +942,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 timestamp: new Date().toISOString()
             });
 
+            return newProject;
         }
+        return null;
     }, [mapProjectToDB, supabase, addProjectActivity, mapProjectFromDB]);
 
     const updateProject = React.useCallback(async (id: string, updates: Partial<Project>) => {
@@ -1301,7 +1315,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         authenticateTechnician, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
         addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder, setOnNewMessage,
         sendMessage, getOrCreateConversation, uploadChatFile, uploadFile, generateMonthlyInvoices,
-        companyProfile, updateCompanyProfile, addAppointment, updateAppointment, deleteAppointment
+        companyProfile, updateCompanyProfile, addAppointment, updateAppointment, deleteAppointment, mapQuoteFromDB
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

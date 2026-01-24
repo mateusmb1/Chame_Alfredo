@@ -2,16 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Project } from '../types/project';
 import { Client } from '../types/client';
 import { Technician } from '../types/technician';
+import { Order } from '../types/order';
 
 interface ProjectFormProps {
   project?: Project;
   clients: Client[];
   technicians: Technician[];
+  orders: Order[];
   onSave: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onCancel: () => void;
 }
 
-const ProjectForm: React.FC<ProjectFormProps> = ({ project, clients, technicians, onSave, onCancel }) => {
+const ProjectForm: React.FC<ProjectFormProps> = ({ project, clients, technicians, orders, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     title: project?.title || '',
     description: project?.description || '',
@@ -76,8 +78,8 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, clients, technicians
   };
 
   const toggleTeamMember = (technicianId: string) => {
-    setSelectedTeam(prev => 
-      prev.includes(technicianId) 
+    setSelectedTeam(prev =>
+      prev.includes(technicianId)
         ? prev.filter(id => id !== technicianId)
         : [...prev, technicianId]
     );
@@ -289,6 +291,50 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, clients, technicians
                   </label>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Ordens de Serviço */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Vincular Ordens de Serviço (OS)
+            </label>
+            <div className="border border-gray-300 rounded-md p-4 max-h-48 overflow-y-auto">
+              {orders.filter(o => !selectedClient || o.clientId === selectedClient).length === 0 ? (
+                <p className="text-sm text-gray-500 italic p-2">Nenhuma OS disponível para este cliente.</p>
+              ) : (
+                orders
+                  .filter(o => !selectedClient || o.clientId === selectedClient)
+                  .map(order => (
+                    <div key={order.id} className="flex items-center mb-2 border-b border-gray-100 last:border-0 pb-2 last:pb-0">
+                      <input
+                        type="checkbox"
+                        id={`os-${order.id}`}
+                        checked={formData.relatedOrders?.includes(order.id)}
+                        onChange={(e) => {
+                          const current = formData.relatedOrders || [];
+                          if (e.target.checked) {
+                            handleInputChange('relatedOrders', [...current, order.id]);
+                          } else {
+                            handleInputChange('relatedOrders', current.filter(id => id !== order.id));
+                          }
+                        }}
+                        className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor={`os-${order.id}`} className="flex-1 cursor-pointer flex justify-between items-center sm:pr-4">
+                        <div>
+                          <div className="font-medium text-gray-900 text-sm">#{order.id.slice(0, 8)} - {order.serviceType}</div>
+                          <div className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleDateString('pt-BR')}</div>
+                        </div>
+                        <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${order.status === 'concluida' ? 'bg-green-100 text-green-700' :
+                          order.status === 'cancelada' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                          }`}>
+                          {order.status}
+                        </div>
+                      </label>
+                    </div>
+                  ))
+              )}
             </div>
           </div>
 
