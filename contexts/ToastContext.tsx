@@ -56,7 +56,7 @@ export const useToast = () => {
 // Toast Container Component
 const ToastContainer: React.FC<{ toasts: Toast[]; removeToast: (id: string) => void }> = ({ toasts, removeToast }) => {
     return (
-        <div class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
+        <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
             {toasts.map(toast => (
                 <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
             ))}
@@ -98,16 +98,16 @@ const ToastItem: React.FC<{ toast: Toast; onClose: () => void }> = ({ toast, onC
 
     return (
         <div
-            class={`flex items-center gap-3 min-w-[300px] max-w-md rounded-lg px-4 py-3 shadow-lg pointer-events-auto animate-slide-in ${getToastStyles()}`}
+            className={`flex items-center gap-3 min-w-[300px] max-w-md rounded-lg px-4 py-3 shadow-lg pointer-events-auto animate-slide-in ${getToastStyles()}`}
             style={{ animation: 'slideIn 0.3s ease-out' }}
         >
-            <span class="material-symbols-outlined text-2xl">{getIcon()}</span>
-            <p class="flex-1 text-sm font-medium">{toast.message}</p>
+            <span className="material-symbols-outlined text-2xl">{getIcon()}</span>
+            <p className="flex-1 text-sm font-medium">{toast.message}</p>
             <button
                 onClick={onClose}
-                class="flex items-center justify-center hover:opacity-80 transition-opacity"
+                className="flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-                <span class="material-symbols-outlined text-xl">close</span>
+                <span className="material-symbols-outlined text-xl">close</span>
             </button>
         </div>
     );

@@ -176,26 +176,26 @@ const MobileNotifications: React.FC = () => {
     const unreadCount = notifications.filter(n => !n.read).length;
 
     return (
-        <div class="min-h-screen bg-gray-50 pb-20">
+        <div className="min-h-screen bg-gray-50 pb-20">
             {/* Header */}
-            <div class="bg-gradient-to-r from-primary to-blue-600 text-white p-4 sticky top-0 z-10 shadow-lg">
-                <div class="flex items-center gap-3 mb-4">
+            <div className="bg-gradient-to-r from-primary to-blue-600 text-white p-4 sticky top-0 z-10 shadow-lg">
+                <div className="flex items-center gap-3 mb-4">
                     <button
                         onClick={() => navigate('/mobile/dashboard')}
-                        class="p-2 rounded-full hover:bg-white/20 transition-colors"
+                        className="p-2 rounded-full hover:bg-white/20 transition-colors"
                     >
-                        <span class="material-symbols-outlined">arrow_back</span>
+                        <span className="material-symbols-outlined">arrow_back</span>
                     </button>
-                    <div class="flex-1">
-                        <h1 class="text-lg font-bold">Notificações</h1>
+                    <div className="flex-1">
+                        <h1 className="text-lg font-bold">Notificações</h1>
                         {unreadCount > 0 && (
-                            <p class="text-sm text-white/80">{unreadCount} não lida{unreadCount > 1 ? 's' : ''}</p>
+                            <p className="text-sm text-white/80">{unreadCount} não lida{unreadCount > 1 ? 's' : ''}</p>
                         )}
                     </div>
                     {unreadCount > 0 && (
                         <button
                             onClick={markAllAsRead}
-                            class="text-sm font-semibold bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition-colors"
+                            className="text-sm font-semibold bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition-colors"
                         >
                             Marcar todas
                         </button>
@@ -203,10 +203,10 @@ const MobileNotifications: React.FC = () => {
                 </div>
 
                 {/* Filter Tabs */}
-                <div class="flex gap-2">
+                <div className="flex gap-2">
                     <button
                         onClick={() => setFilter('all')}
-                        class={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${filter === 'all'
+                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${filter === 'all'
                             ? 'bg-white text-primary'
                             : 'bg-white/20 text-white hover:bg-white/30'
                             }`}
@@ -215,7 +215,7 @@ const MobileNotifications: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setFilter('unread')}
-                        class={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${filter === 'unread'
+                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${filter === 'unread'
                             ? 'bg-white text-primary'
                             : 'bg-white/20 text-white hover:bg-white/30'
                             }`}
@@ -226,43 +226,43 @@ const MobileNotifications: React.FC = () => {
             </div>
 
             {/* Notifications List */}
-            <div class="p-4 space-y-3">
+            <div className="p-4 space-y-3">
                 {filteredNotifications.length === 0 ? (
-                    <div class="bg-white rounded-xl p-8 text-center">
-                        <span class="material-symbols-outlined text-6xl text-gray-300 mb-3">notifications_off</span>
-                        <p class="text-gray-500">Nenhuma notificação</p>
+                    <div className="bg-white rounded-xl p-8 text-center">
+                        <span className="material-symbols-outlined text-6xl text-gray-300 mb-3">notifications_off</span>
+                        <p className="text-gray-500">Nenhuma notificação</p>
                     </div>
                 ) : (
                     filteredNotifications.map(notification => (
                         <div
                             key={notification.id}
                             onClick={() => handleNotificationClick(notification)}
-                            class={`bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all hover:shadow-lg ${!notification.read ? 'border-l-4 border-primary' : ''
+                            className={`bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all hover:shadow-lg ${!notification.read ? 'border-l-4 border-primary' : ''
                                 }`}
                         >
-                            <div class="flex gap-3">
+                            <div className="flex gap-3">
                                 {/* Icon */}
-                                <div class={`w-10 h-10 rounded-full ${getNotificationColor(notification.type)} flex items-center justify-center flex-shrink-0`}>
-                                    <span class="material-symbols-outlined text-white text-xl">
+                                <div className={`w-10 h-10 rounded-full ${getNotificationColor(notification.type)} flex items-center justify-center flex-shrink-0`}>
+                                    <span className="material-symbols-outlined text-white text-xl">
                                         {getNotificationIcon(notification.type)}
                                     </span>
                                 </div>
 
                                 {/* Content */}
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-start justify-between gap-2 mb-1">
-                                        <h3 class={`font-semibold ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                        <h3 className={`font-semibold ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
                                             {notification.title}
                                         </h3>
-                                        <span class="text-xs text-gray-500 whitespace-nowrap">
+                                        <span className="text-xs text-gray-500 whitespace-nowrap">
                                             {formatTimestamp(notification.timestamp)}
                                         </span>
                                     </div>
-                                    <p class="text-sm text-gray-600 line-clamp-2">{notification.message}</p>
+                                    <p className="text-sm text-gray-600 line-clamp-2">{notification.message}</p>
                                     {!notification.read && (
-                                        <div class="mt-2">
-                                            <span class="inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                                                <span class="w-2 h-2 rounded-full bg-primary"></span>
+                                        <div className="mt-2">
+                                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                                                <span className="w-2 h-2 rounded-full bg-primary"></span>
                                                 Nova
                                             </span>
                                         </div>
@@ -275,9 +275,9 @@ const MobileNotifications: React.FC = () => {
                                         e.stopPropagation();
                                         deleteNotification(notification.id);
                                     }}
-                                    class="p-2 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
+                                    className="p-2 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
                                 >
-                                    <span class="material-symbols-outlined text-gray-400 text-lg">delete</span>
+                                    <span className="material-symbols-outlined text-gray-400 text-lg">delete</span>
                                 </button>
                             </div>
                         </div>
@@ -286,37 +286,37 @@ const MobileNotifications: React.FC = () => {
             </div>
 
             {/* Bottom Navigation */}
-            <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-                <div class="flex justify-around items-center h-16 px-4">
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+                <div className="flex justify-around items-center h-16 px-4">
                     <button
                         onClick={() => navigate('/mobile/dashboard')}
-                        class="flex flex-col items-center gap-1 text-gray-400"
+                        className="flex flex-col items-center gap-1 text-gray-400"
                     >
-                        <span class="material-symbols-outlined text-2xl">home</span>
-                        <span class="text-xs font-medium">Início</span>
+                        <span className="material-symbols-outlined text-2xl">home</span>
+                        <span className="text-xs font-medium">Início</span>
                     </button>
                     <button
                         onClick={() => navigate('/mobile/agenda')}
-                        class="flex flex-col items-center gap-1 text-gray-400"
+                        className="flex flex-col items-center gap-1 text-gray-400"
                     >
-                        <span class="material-symbols-outlined text-2xl">calendar_month</span>
-                        <span class="text-xs font-medium">Agenda</span>
+                        <span className="material-symbols-outlined text-2xl">calendar_month</span>
+                        <span className="text-xs font-medium">Agenda</span>
                     </button>
-                    <button class="flex flex-col items-center gap-1 text-primary relative">
-                        <span class="material-symbols-outlined text-2xl">notifications</span>
-                        <span class="text-xs font-medium">Avisos</span>
+                    <button className="flex flex-col items-center gap-1 text-primary relative">
+                        <span className="material-symbols-outlined text-2xl">notifications</span>
+                        <span className="text-xs font-medium">Avisos</span>
                         {unreadCount > 0 && (
-                            <span class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                            <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                                 {unreadCount}
                             </span>
                         )}
                     </button>
                     <button
                         onClick={() => navigate('/mobile/profile')}
-                        class="flex flex-col items-center gap-1 text-gray-400"
+                        className="flex flex-col items-center gap-1 text-gray-400"
                     >
-                        <span class="material-symbols-outlined text-2xl">person</span>
-                        <span class="text-xs font-medium">Perfil</span>
+                        <span className="material-symbols-outlined text-2xl">person</span>
+                        <span className="text-xs font-medium">Perfil</span>
                     </button>
                 </div>
             </div>

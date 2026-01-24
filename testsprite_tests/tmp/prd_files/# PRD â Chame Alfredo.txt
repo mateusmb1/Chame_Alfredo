@@ -1,0 +1,154 @@
+# PRD – Chame Alfredo
+
+## 1. Visão geral
+
+O **Chame Alfredo** é uma plataforma full‑stack para orquestração de serviços, gestão de ativos e operações de campo, voltada para empresas de assistência técnica e manutenção. [page:1]  
+O objetivo é centralizar agenda, ordens de serviço, inventário e atendimento em um único ambiente web + app mobile, integrando dados em tempo real via Supabase. [page:1]
+
+## 2. Público-alvo
+
+- Empresas de assistência técnica (eletrodomésticos, climatização, TI, etc.).
+- Empresas de manutenção predial, industrial e facilities.
+- Pequenas e médias operações com equipes de campo (3–100 técnicos).
+- Coordenadores de operações, despachantes, equipe de backoffice e técnicos em campo.
+
+## 3. Objetivos de negócio
+
+- Reduzir o tempo de agendamento e alocação de técnicos.
+- Diminuir erros operacionais (endereços, horários, itens de estoque).
+- Aumentar a taxa de conclusão de ordens de serviço no prazo.
+- Melhorar visibilidade em tempo real da operação (agenda, status, estoque).
+- Criar base para oferta SaaS multi‑tenant com billing futuro.
+
+## 4. Escopo do Produto (MVP atual)
+
+### 4.1. Painel Web – Command Center Operacional
+
+**História:**  
+Como coordenador de operações, quero visualizar e gerenciar a agenda de técnicos em formato de calendário, para distribuir ordens de serviço e evitar conflitos. [page:1]
+
+**Requisitos:**
+
+- Visualização de agenda em calendário (dia/semana/mês simplificado, conforme implementado). [page:1]
+- Listagem de ordens de serviço com status (pendente, em rota, em execução, concluída, cancelada).
+- Interface de alocação de OS para técnicos (atribuição/reatribuição).
+- Atualização em tempo quase real via Supabase Realtime. [page:1]
+- Filtros por:
+  - Técnico
+  - Status da OS
+  - Tipo de serviço
+  - Período
+- Acesso via `/` (dashboard principal). [page:1]
+
+### 4.2. Gestão de Ativos / Inventário
+
+**História:**  
+Como responsável de estoque, quero ver todos os itens com alertas de nível crítico para repor materiais a tempo. [page:1]
+
+**Requisitos:**
+
+- Tabela de alta densidade de dados com:
+  - Nome do item
+  - Código interno / SKU
+  - Quantidade atual
+  - Quantidade mínima
+  - Localização (almoxarifado/veículo etc.)
+- Alertas visuais quando a quantidade estiver em estado crítico (abaixo do mínimo). [page:1]
+- Opção de busca e filtro por categoria, nome e código.
+- Integração futura com consumo em OS (baixa automática de estoque).
+
+### 4.3. App Mobile (Web Simulado) Offline‑First
+
+**História:**  
+Como técnico, quero acessar minha agenda e detalhes das ordens de serviço mesmo com conexão instável, para executar o trabalho em campo. [page:1]
+
+**Requisitos:**
+
+- Acesso ao app em `/mobile` (simulado via web). [page:1]
+- Lista de ordens de serviço do técnico logado, com:
+  - Cliente
+  - Endereço
+  - Janela de horário
+  - Descrição do problema
+- Fluxo de atualização de status (recebida → em rota → em execução → concluída).
+- Captura de assinatura digital do cliente. [page:1]
+- Armazenamento local temporário (offline‑first) com sincronização em momento oportuno via Supabase. [page:1]
+
+### 4.4. Automação Inteligente
+
+**História:**  
+Como atendente, quero que dados da empresa sejam preenchidos automaticamente a partir do CNPJ, para reduzir erros e agilizar cadastros. [page:1]
+
+**Requisitos:**
+
+- Preenchimento automático de dados via CNPJ (ex.: razão social, endereço) usando integração externa (já prevista na camada de utils/scripts). [page:1]
+- Cálculo automático de orçamento com base em:
+  - Tempo estimado
+  - Materiais selecionados
+  - Tabelas de preço configuráveis
+- Sincronização em tempo real via Supabase para que alterações no painel sejam refletidas nos dispositivos conectados. [page:1]
+
+## 5. Funcionalidades futuras (fora do MVP imediato)
+
+- Multi‑tenant completo com isolamento por empresa.
+- Módulo financeiro (faturamento, boletos, NF‑e via integrações).
+- Chat interno entre técnico e central.
+- SLA e relatórios avançados (tempo médio de atendimento, taxa de retrabalho).
+- App mobile nativo (React Native/Expo) a partir do protótipo web atual.
+
+## 6. Requisitos Não Funcionais
+
+- **Performance:**  
+  - Dashboard deve carregar em até 3–4 segundos para contas com volume médio de dados.  
+- **Disponibilidade:**  
+  - Preparado para deployment contínuo em Vercel (já configurado). [page:1]
+- **Segurança:**  
+  - Autenticação e autorização via Supabase Auth, uso de RLS para isolar dados por organização/usuário. [page:1]
+- **Escalabilidade:**  
+  - Arquitetura baseada em React + Supabase focada em multi‑projeto e extensibilidade (ver `docs/ARCHITECTURE.md`). [page:1]
+- **Usabilidade:**  
+  - UI com Tailwind + ícones Lucide, focada em uso intenso (tabelas densas, atalhos visuais). [page:1]
+
+## 7. Tech Stack (resumo para alinhamento de produto)
+
+- Frontend: React 18, TypeScript, Vite. [page:1]
+- UI/UX: Tailwind CSS (padrões v4), Lucide Icons. [page:1]
+- Backend/BaaS: Supabase (PostgreSQL, Auth, Realtime, Storage, Migrations). [page:1]
+- Estado: React Context API para orquestração de dados de sessão e domínio. [page:1]
+- Deploy: Vercel. [page:1]
+
+## 8. Métricas de sucesso (MVP)
+
+- % de ordens de serviço criadas e finalizadas inteiramente dentro da plataforma.
+- Redução de ligações/mensagens manuais para checar status de atendimento.
+- Tempo médio entre criação da OS e atribuição a um técnico.
+- Adoção do app mobile pelos técnicos ativos.
+
+## 9. Fluxos principais (alto nível)
+
+1. **Criação de OS**
+   - Usuário backoffice cadastra cliente + dados do chamado (com CNPJ auto‑preenchido quando aplicável). [page:1]
+   - Sistema calcula orçamento preliminar.
+   - OS entra com status "Pendente" na fila da agenda.
+
+2. **Alocação e Agenda**
+   - Coordenador abre Command Center.
+   - Filtra por data e tipo de serviço.
+   - Atribui OS a um técnico específico.
+
+3. **Execução em Campo**
+   - Técnico acessa `/mobile` e vê sua agenda. [page:1]
+   - Inicia a OS, atualiza status, registra materiais usados.
+   - Coleta assinatura digital do cliente e conclui a OS.
+
+4. **Fechamento**
+   - Status final atualizado no painel.
+   - Dados ficam prontos para exportação/integração contábil futura.
+
+## 10. Documentação complementar
+
+- Guia do Usuário: `docs/USER_GUIDE.md`. [page:1]
+- Arquitetura do Sistema: `docs/ARCHITECTURE.md`. [page:1]
+- Modelo de Dados: `docs/DATA_MODEL.md`. [page:1]
+- Guia de Instalação: `docs/SETUP.md`. [page:1]
+

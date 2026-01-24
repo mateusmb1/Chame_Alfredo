@@ -42,6 +42,7 @@ const Orders: React.FC = () => {
   const filteredOrders = useMemo(() => {
     return orders.filter(o => {
       const matchesSearch = o.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        o.technicianName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         o.id.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesTab = activeTab === 'todas'
         ? true

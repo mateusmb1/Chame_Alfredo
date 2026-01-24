@@ -1,0 +1,384 @@
+[
+  {
+    "id": "TC001",
+    "title": "Dashboard Load Performance under Average Data Load",
+    "description": "Verify that the Operational Command Center dashboard loads within 3-4 seconds when populated with average data volumes.",
+    "category": "performance",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the Operational Command Center Dashboard with average amount of service orders, technician schedules, and inventory data loaded"
+      },
+      {
+        "type": "assertion",
+        "description": "Measure and confirm that the dashboard loading time is within 3-4 seconds"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Real-time Synchronization of Service Orders and Inventory",
+    "description": "Verify that changes in service orders and inventory data are updated in real-time across all clients using Supabase Realtime.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Update service order status on one client instance"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the updated status is reflected immediately on other clients' dashboards"
+      },
+      {
+        "type": "action",
+        "description": "Update inventory quantities on one client instance"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that critical stock alerts and inventory tables on other clients update instantly"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Role-Based Access Control and Authorization",
+    "description": "Verify that authentication enforces multi-role (Admin, Technician, Client) access with correct permissions and data isolation using Supabase RLS.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as Admin user"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access to all features including dashboard, service order creation, assignment, and inventory management"
+      },
+      {
+        "type": "action",
+        "description": "Login as Technician user"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access limited to mobile web app with assigned orders and updates; no access to admin features"
+      },
+      {
+        "type": "action",
+        "description": "Login as Client user"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access limited to viewing own service orders and status"
+      },
+      {
+        "type": "action",
+        "description": "Attempt unauthorized access to restricted data or pages with each role"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is denied and properly handled"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Critical Stock Alert Functionality",
+    "description": "Verify that the inventory system accurately displays critical stock alerts when inventory quantities drop below predefined minimum levels.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Reduce stock of an inventory item below its critical threshold"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm that a critical stock alert is shown clearly in the inventory management table"
+      },
+      {
+        "type": "action",
+        "description": "Increase stock back above the critical threshold"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm that the critical stock alert is removed"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Offline-First Access and Synchronization in Mobile Web App for Technicians",
+    "description": "Verify that technicians can access schedules and service details offline and that updates are synchronized when connectivity is restored.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate offline mode on technician mobile web app"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that service orders and schedules previously loaded remain accessible"
+      },
+      {
+        "type": "action",
+        "description": "Update service order status and record material usage in offline mode"
+      },
+      {
+        "type": "action",
+        "description": "Restore network connectivity"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that updates made offline are synchronized correctly to the backend and reflected in the dashboard"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Automatic Company Data Filling via CNPJ Integration",
+    "description": "Verify that when creating a client using CNPJ, company details are fetched and auto-filled correctly.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create a new client in backoffice and input a valid CNPJ number"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that company name, address, and other relevant fields are automatically filled with accurate data"
+      },
+      {
+        "type": "action",
+        "description": "Input an invalid or non-existent CNPJ number"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that auto-fill does not occur and appropriate error or validation messages are shown"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Automatic Budget Calculation Accuracy",
+    "description": "Verify that automatic budget calculation correctly factors estimated time, selected materials, and configurable price tables when creating service orders.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create a service order with specific estimated time and select multiple materials with known prices"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the calculated budget matches the expected sum of time cost and material costs according to pricing tables"
+      },
+      {
+        "type": "action",
+        "description": "Update estimated time or selected materials"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the budget updates automatically and correctly reflecting changes"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Service Order Creation and Initial Status",
+    "description": "Verify that backoffice users can create service orders that are assigned 'Pending' status by default with correct client data.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create a client and service order with valid details via backoffice"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm the new service order appears in the service order listing with status 'Pending' and correct client information"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Service Order Assignment and Reassignment to Technicians",
+    "description": "Verify that operations coordinators can assign and reassign service orders to technicians using the Command Center dashboard including filtering and calendar views.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Use the dashboard filters to locate a pending service order"
+      },
+      {
+        "type": "action",
+        "description": "Assign the service order to a technician via the assignment interface"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the order status updates and the technician sees the order in their mobile web app"
+      },
+      {
+        "type": "action",
+        "description": "Reassign the order to a different technician"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the reassignment is correctly reflected in all clients and the mobile app"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Filtering Options on Dashboard",
+    "description": "Verify that the dashboard filtering functionality returns accurate results when filtering service orders by technician, order status, service type, and period.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Apply filter by a specific technician"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm all displayed orders belong to the selected technician"
+      },
+      {
+        "type": "action",
+        "description": "Filter orders by status (e.g., 'pending', 'executing')"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm only orders with the selected status are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Filter by service type"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify only orders matching the service type criteria are shown"
+      },
+      {
+        "type": "action",
+        "description": "Filter by date period (day/week/month)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that displayed orders fall within the selected time range"
+      },
+      {
+        "type": "action",
+        "description": "Apply multiple filters in combination"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the results correctly match all applied criteria"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Service Order Status Progression and Digital Signature Capture in Mobile App",
+    "description": "Verify that technicians can update service order status through workflow steps and capture client digital signatures securely.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Technician navigates to assigned service order on mobile web app"
+      },
+      {
+        "type": "action",
+        "description": "Update order status sequentially through 'en route', 'executing', to 'completed'"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify each status update is saved and reflected immediately in the dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Capture client digital signature via mobile app interface"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify digital signature is securely stored and associated with the service order"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "High-Density Inventory Table Usability and Data Presentation",
+    "description": "Verify the inventory management table efficiently supports high-density data presentation with search, filtering, and scroll functionality.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open the inventory management view with a large set of inventory items"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify smooth scrolling and correct rendering of all rows and columns"
+      },
+      {
+        "type": "action",
+        "description": "Use search and filter inputs to find specific inventory items"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the inventory table updates to show correct filtered results accurately and quickly"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "User Interface Compliance with Tailwind CSS and Accessibility Standards",
+    "description": "Verify that all user interface components throughout the system follow Tailwind CSS design patterns and provide clear visual feedback, supporting usability and accessibility.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate through key UI components including login, dashboards, mobile app views, forms, and tables"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify consistent styling adhering to Tailwind CSS design system and appropriate use of colors, spacing, fonts"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify UI elements meet basic accessibility guidelines, e.g. keyboard navigability and screen reader labels"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Error Handling on Service Order Creation with Invalid Inputs",
+    "description": "Verify that the system prevents creation of service orders with invalid or incomplete data and provides meaningful error messages.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt to create a service order missing required fields such as client or service type"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error messages are displayed and the order is not created"
+      },
+      {
+        "type": "action",
+        "description": "Enter invalid formats for fields like dates or numbers"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify validation messages appear and prevent submission"
+      }
+    ]
+  }
+]

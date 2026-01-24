@@ -1,0 +1,31 @@
+{
+    "tech_stack": [
+        "TypeScript",
+        "React 19",
+        "Vite",
+        "Tailwind CSS",
+        "Supabase (DB & Auth)",
+        "Lucide React",
+        "Framer Motion",
+        "Recharts"
+    ],
+    "features": [
+        {
+            "name": "Landing Page & Lead Capture",
+            "description": "Public entrance with promotional content and leads capture form.",
+            "files": [
+                "pages/Landing.tsx",
+                "pages/LeadConfirmation.tsx"
+            ]
+        },
+        {
+            "name": "Authentication System",
+            "description": "Multi-role login (Admin, Technician, Client) integrated with Supabase Auth.",
+            "files": [
+                "pages/Login.tsx",
+                "pages/TechnicianLogin.tsx",
+                "contexts/AuthContext.tsx"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3333",
+  "loginUser": "martes",
+  "loginPassword": "admin123",
+  "executionArgs": {
+    "projectName": "Chame_Alfredo",
+    "projectPath": "c:\\Users\\Mateus.B.Silva\\OneDrive - Mota-Engil\\Documentos\\Documentos\\Eu\\SaaS\\Chame_Alfredo\\Chame_Alfredo",
+    "testIds": [],
+    "additionalInstruction": "Use http://localhost:3333. Verify public elements on / and /login. do not attempt complex sessions. focus on audit and health.",
+    "envs": {
+      "API_KEY": "sk-user-XkYLcYNqHdomxWpGOasHaFNwxaemJwIYktO_WB_TroN4NH87XymGbIIWNH13WifnWAXsYhygyaKnwNY7XRJ-rAkBxcm1CWjKY9DPlrfJRlrSmdQu2fmh4MoTy_qvQSG2Beo"
+    }
+  },
+  "proxy": "http://e86fae0a-fc58-4a2b-8070-14fad8993bc3:RMzZgw8G7WvuHn9qNeQ1gj77vX8GhtyZ@tun.testsprite.com:8080"
+}

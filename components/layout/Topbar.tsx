@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, Plus, Menu } from 'lucide-react';
+import { Search, Bell, Plus, Menu, LogOut } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
 const Topbar: React.FC = () => {
@@ -69,18 +69,33 @@ const Topbar: React.FC = () => {
                 {/* User Info */}
                 <div className="h-8 w-[1px] bg-slate-200 dark:border-slate-700 mx-1" />
                 <div className="flex items-center gap-3">
-                    <div className="text-right hidden md:block" onClick={() => navigate('/settings')}>
-                        <p className="text-xs font-bold text-slate-900 dark:text-white leading-none mb-1 uppercase tracking-tight cursor-pointer hover:text-primary transition-colors">João Alfredo</p>
+                    <div className="text-right hidden md:block">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white leading-none mb-1 uppercase tracking-tight">João Alfredo</p>
                         <p className="text-[10px] text-primary font-black uppercase tracking-widest leading-none">Admin Alpha</p>
                     </div>
                     <div
                         onClick={() => navigate('/settings')}
                         className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 relative overflow-hidden group cursor-pointer hover:border-primary transition-colors"
+                        title="Configurações"
                     >
                         {/* Profile avatar placeholder */}
                         <div className="w-full h-full flex items-center justify-center font-bold text-slate-400">A</div>
                     </div>
                 </div>
+
+                {/* Logout Button */}
+                <div className="h-8 w-[1px] bg-slate-200 dark:border-slate-700 mx-1" />
+                <button
+                    onClick={() => {
+                        localStorage.removeItem('alfredo_user');
+                        localStorage.removeItem('technician');
+                        window.location.href = '/login';
+                    }}
+                    className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                    title="Sair do sistema"
+                >
+                    <LogOut size={20} />
+                </button>
             </div>
         </header>
     );
