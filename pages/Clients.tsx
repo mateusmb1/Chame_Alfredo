@@ -108,15 +108,13 @@ const Clients: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleCnpjBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    if (value.length === 14) {
-      if (formData.type !== 'pj') setFormData(prev => ({ ...prev, type: 'pj' }));
-    } else if (value.length === 11) {
-      if (formData.type !== 'pf') setFormData(prev => ({ ...prev, type: 'pf' }));
-      return;
-    } else return;
+  /* 
+   * Enhanced Input Handlers:
+   * Triggers API lookup immediately when input length matches required format (14 for CNPJ, 8 for CEP).
+   */
 
+  // CNPJ Lookup Logic
+  const fetchCnpjData = async (value: string) => {
     if (value.length !== 14) return;
     setIsLoadingCNPJ(true);
     try {
@@ -126,24 +124,75 @@ const Clients: React.FC = () => {
 
       setFormData(prev => ({
         ...prev,
+        // Prioritize Razão Social, keep fantasy name separate
         name: data.razao_social || prev.name,
         fantasyName: data.nome_fantasia || '',
-        phone: data.telefone_1 || prev.phone,
+        phone: data.telefone_1 || prev.telefone_2 || prev.phone, // Try primary then secondary
         email: data.email || prev.email,
+        // Map address fields
         street: data.logradouro || '',
-        number: data.numero || '',
+        number: data.numero || '', // Often empty in CNPJ, but good to try
         complement: data.complemento || '',
         neighborhood: data.bairro || '',
         city: data.municipio || '',
         state: data.uf || '',
-        zipCode: data.cep || '',
-        address: `${data.logradouro}, ${data.numero} - ${data.bairro}, ${data.municipio} - ${data.uf}`
+        zipCode: data.cep?.replace(/\D/g, '') || prev.zipCode,
+        // Format display address
+        address: `${data.logradouro}, ${data.numero || 'S/N'} - ${data.bairro}, ${data.municipio} - ${data.uf}`
       }));
-      showToast('success', 'Dados do CNPJ carregados!');
+      showToast('success', 'Dados da empresa encontrados!');
     } catch (error) {
-      showToast('error', 'Erro ao buscar dados do CNPJ.');
+      // Silent error or mild toast, don't block user
+      console.error(error);
+      // showToast('error', 'CNPJ não encontrado na base pública.'); // Optional
     } finally {
       setIsLoadingCNPJ(false);
+    }
+  };
+
+  const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const cleanValue = rawValue.replace(/\D/g, ''); // Remove non-digits
+
+    // Auto-switch types based on length
+    if (cleanValue.length > 11 && formData.type !== 'pj') {
+      setFormData(prev => ({ ...prev, type: 'pj' }));
+    } else if (cleanValue.length <= 11 && formData.type !== 'pf' && cleanValue.length > 0) {
+      // Only switch back if explicitly user action, or keep flexible
+    }
+
+    setFormData({ ...formData, cpfCnpj: cleanValue }); // Store clean or formatted? Let's store raw for now or format on blur
+
+    if (cleanValue.length === 14) {
+      fetchCnpjData(cleanValue);
+    }
+  };
+
+  // CEP Lookup Logic
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const cleanValue = rawValue.replace(/\D/g, '');
+
+    setFormData(prev => ({ ...prev, zipCode: cleanValue }));
+
+    if (cleanValue.length === 8) {
+      try {
+        const response = await fetch(`https://brasilapi.com.br/api/cep/v2/${cleanValue}`);
+        if (!response.ok) throw new Error('CEP não encontrado');
+        const data = await response.json();
+
+        setFormData(prev => ({
+          ...prev,
+          street: data.street || '',
+          neighborhood: data.neighborhood || '',
+          city: data.city || '',
+          state: data.state || '',
+          // Update full address string too for compatibility
+          address: `${data.street}, ${prev.number} - ${data.neighborhood}, ${data.city} - ${data.state}`
+        }));
+      } catch (error) {
+        console.log('Erro CEP', error);
+      }
     }
   };
 
@@ -494,11 +543,12 @@ const Clients: React.FC = () => {
                 <input
                   type="text"
                   value={formData.cpfCnpj || ''}
-                  onChange={(e) => setFormData({ ...formData, cpfCnpj: e.target.value })}
-                  onBlur={handleCnpjBlur}
+                  onChange={handleCnpjChange}
+                  // onBlur={handleCnpjBlur} // Removed strictly on blur, handling on change
                   className="w-full h-14 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold focus:ring-4 focus:ring-[#F97316]/5 focus:border-[#F97316]/50 dark:text-white px-5 transition-all"
                   placeholder={formData.type === 'pf' ? '000.000.000-00' : '00.000.000/0000-00'}
                   required
+                  maxLength={18} // Limit length
                 />
                 {isLoadingCNPJ && (
                   <div className="absolute right-4 top-1/2 -translate-y-1/2"><div className="w-5 h-5 border-4 border-[#F97316] border-t-transparent rounded-full animate-spin" /></div>
@@ -566,9 +616,10 @@ const Clients: React.FC = () => {
                 <input
                   type="text"
                   value={formData.zipCode}
-                  onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+                  onChange={handleCepChange}
                   className="w-full h-12 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-xs font-bold px-4 dark:text-white"
                   placeholder="00000-000"
+                  maxLength={9}
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
