@@ -25,5 +25,24 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "include": [
+    "*.tsx",
+    "*.ts",
+    "pages/**/*",
+    "components/**/*",
+    "contexts/**/*",
+    "hooks/**/*",
+    "types/**/*",
+    "utils/**/*",
+    "downloader/**/*",
+    "src/app/**/*",
+    "src/shared/lib/**/*",
+    "src/shared/types/hooks.ts",
+    "src/styles/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
