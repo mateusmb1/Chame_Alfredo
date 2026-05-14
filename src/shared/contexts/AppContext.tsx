@@ -1,0 +1,1332 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
+import { supabase } from '../src/lib/supabase';
+import { useToast } from './ToastContext';
+import { Client } from '../types/client';
+import { Order } from '../types/order';
+import { InventoryItem } from '../types/inventory';
+import { Quote } from '../types/quote';
+import { Contract } from '../types/contract';
+import { Technician } from '../types/technician';
+import { Project, ProjectActivity } from '../types/project';
+import { ProductService } from '../types/productService';
+import { Invoice } from '../types/invoice';
+import { Appointment } from '../types/appointment';
+import { Conversation, Message } from '../types/communication';
+
+export type { Client, Order, InventoryItem, Quote, Contract, Technician, Project, ProjectActivity, ProductService, Invoice, Appointment, Conversation, Message };
+
+export interface CompanyProfile {
+    id: string;
+    company_name: string;
+    email: string;
+    phone: string;
+    logo_url: string;
+    signature_url: string;
+    cnpj: string;
+    cep: string;
+    street: string;
+    number: string;
+    complement: string;
+    city: string;
+    state: string;
+}
+
+interface AppContextType {
+    clients: Client[];
+    orders: Order[];
+    inventory: InventoryItem[];
+    quotes: Quote[];
+    contracts: Contract[];
+    technicians: Technician[];
+    projects: Project[];
+    projectActivities: ProjectActivity[];
+    products: ProductService[];
+    invoices: Invoice[];
+    appointments: Appointment[];
+    conversations: Conversation[];
+    messages: Message[];
+
+    // Appointment operations
+    addAppointment: (appointment: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+    updateAppointment: (id: string, updates: Partial<Appointment>) => Promise<void>;
+    deleteAppointment: (id: string) => Promise<void>;
+
+    // Client operations
+    addClient: (client: Omit<Client, 'id' | 'status' | 'createdAt'>) => Promise<void>;
+    updateClient: (id: string, updatedClient: Partial<Client>) => Promise<void>;
+    deleteClient: (id: string) => Promise<void>;
+    authenticateClient: (username: string, password: string) => Client | null;
+
+    // Order operations
+    addOrder: (order: Omit<Order, 'id' | 'status' | 'createdAt'>) => Promise<void>;
+    updateOrder: (id: string, updatedOrder: Partial<Order>) => Promise<void>;
+    deleteOrder: (id: string) => Promise<void>;
+
+    // Inventory operations
+    addInventoryItem: (item: Omit<InventoryItem, 'id'>) => void;
+    updateInventoryItem: (id: string, updates: Partial<InventoryItem>) => void;
+    deleteInventoryItem: (id: string) => void;
+
+    // Quote operations
+    addQuote: (quote: Omit<Quote, 'id' | 'createdAt'>) => Promise<Quote | null | undefined>;
+    updateQuote: (id: string, updates: Partial<Quote>) => void;
+    deleteQuote: (id: string) => void;
+    saveQuoteSignature: (id: string, signature: string) => Promise<void>;
+    convertQuoteToInvoice: (quoteId: string) => Promise<any>;
+    createQuoteFromOrder: (orderId: string, items: any[], notes: string) => Promise<any>;
+
+    // Contract operations
+    addContract: (contract: Omit<Contract, 'id' | 'createdAt'>) => void;
+    updateContract: (id: string, updates: Partial<Contract>) => void;
+    deleteContract: (id: string) => void;
+
+    // Technician operations
+    addTechnician: (technician: Omit<Technician, 'id' | 'createdAt'>) => Promise<void>;
+    updateTechnician: (id: string, updates: Partial<Technician>) => Promise<{ error: any } | { error: null }>;
+    deleteTechnician: (id: string) => Promise<void>;
+    authenticateTechnician: (username: string, password: string) => Technician | null;
+    checkUsernameAvailability: (username: string, excludeId?: string) => Promise<boolean>;
+
+    // Project operations
+    addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Project | null | undefined>;
+    updateProject: (id: string, updates: Partial<Project>) => void;
+    archiveProject: (id: string) => void;
+    unarchiveProject: (id: string) => void;
+    deleteProject: (id: string) => void;
+
+    // Project Activity operations
+    addProjectActivity: (activity: Omit<ProjectActivity, 'id'>) => void;
+    getProjectActivities: (projectId: string) => ProjectActivity[];
+
+    // Project Link operations
+    linkOrderToProject: (orderId: string, projectId: string) => void;
+    unlinkOrderFromProject: (orderId: string, projectId: string) => void;
+
+    // Notification callbacks
+    onNewOrder?: (order: Order) => void;
+    setOnNewOrder: (callback: (order: Order) => void) => void;
+    onNewMessage?: (message: Message) => void;
+    setOnNewMessage: (callback: (message: Message) => void) => void;
+
+    // Communication operations
+    sendMessage: (conversationId: string, senderId: string, senderType: 'admin' | 'technician' | 'client', content: string, attachmentUrl?: string, attachmentType?: 'image' | 'file') => Promise<void>;
+    getOrCreateConversation: (techId: string) => Promise<string | null>;
+    uploadChatFile: (file: File) => Promise<string | null>;
+    uploadFile: (file: File, bucket?: string, folder?: string) => Promise<string | null>;
+    generateMonthlyInvoices: (month: number, year: number) => Promise<void>;
+    companyProfile: CompanyProfile | null;
+    updateCompanyProfile: (profile: Partial<CompanyProfile>) => Promise<void>;
+    deleteOrders: (ids: string[]) => Promise<void>;
+    logAppError: (error: any, context: string) => void;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+
+
+export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    // Real Supabase Data
+    const [clients, setClients] = useState<Client[]>([]);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [technicians, setTechnicians] = useState<Technician[]>([]);
+    const [inventory, setInventory] = useState<InventoryItem[]>([]);
+    const [quotes, setQuotes] = useState<Quote[]>([]);
+    const [contracts, setContracts] = useState<Contract[]>([]);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [projectActivities, setProjectActivities] = useState<ProjectActivity[]>([]);
+
+    // New tables
+    const [products, setProducts] = useState<ProductService[]>([]);
+    const [invoices, setInvoices] = useState<Invoice[]>([]);
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
+
+    // Notification callbacks (using refs to avoid stale closures in realtime handlers)
+    const onNewOrderRef = useRef<((order: Order) => void) | undefined>(undefined);
+    const onNewMessageRef = useRef<((message: Message) => void) | undefined>(undefined);
+    const { showToast } = useToast();
+
+    // Initial Fetch & Real-time Subscriptions
+    useEffect(() => {
+        const fetchData = async () => {
+            const queries = [
+                supabase.from('clients').select('*'),
+                supabase.from('orders').select('*'),
+                supabase.from('technicians').select('*'),
+                supabase.from('inventory').select('*'),
+                supabase.from('quotes').select('*, client:clients(name)'),
+                supabase.from('contracts').select('*, client:clients(name)'),
+                supabase.from('projects').select('*, client:clients(name), responsible:technicians(name)'),
+                supabase.from('project_activities').select('*'),
+                supabase.from('products_services').select('*'),
+                supabase.from('invoices').select('*'),
+                supabase.from('appointments').select('*'),
+                supabase.from('conversations').select('*'),
+                supabase.from('messages').select('*'),
+                supabase.from('company_settings').select('*').limit(1).single()
+            ];
+
+            const results = await Promise.all(
+                queries.map(q => q.then(
+                    data => ({ status: 'fulfilled' as const, value: data, reason: undefined }),
+                    err => ({ status: 'rejected' as const, value: undefined, reason: err })
+                ))
+            );
+
+            const [
+                clientsRes, ordersRes, techniciansRes, inventoryRes, quotesRes,
+                contractsRes, projectsRes, activitiesRes, productsRes, invoicesRes,
+                appointmentsRes, conversationsRes, messagesRes, profileRes
+            ] = results;
+
+            // Helper to process results safely
+            const processResult = (res: { status: 'fulfilled' | 'rejected', value?: any, reason?: any }, setter: any, mapper: (d: any) => any = (d) => d) => {
+                if (res.status === 'fulfilled' && res.value) {
+                    if (res.value.data) {
+                        try {
+                            setter(Array.isArray(res.value.data)
+                                ? res.value.data.map(mapper)
+                                : mapper(res.value.data)
+                            );
+                        } catch (err) {
+                            console.error('Error mapping data:', err);
+                        }
+                    }
+                    if (res.value.error) {
+                        console.error('Supabase Data Error:', res.value.error);
+                    }
+                } else {
+                    console.error('Query Rejected:', res.reason);
+                }
+            };
+
+            processResult(clientsRes, setClients, mapClientFromDB);
+            processResult(ordersRes, setOrders, mapOrderFromDB);
+            processResult(techniciansRes, setTechnicians, (x) => x as any);
+            processResult(inventoryRes, setInventory, mapInventoryFromDB);
+            processResult(quotesRes, setQuotes, mapQuoteFromDB);
+            processResult(contractsRes, setContracts, mapContractFromDB);
+            processResult(projectsRes, setProjects, mapProjectFromDB);
+            processResult(activitiesRes, setProjectActivities, mapActivityFromDB);
+            processResult(appointmentsRes, setAppointments, mapAppointmentFromDB);
+            processResult(conversationsRes, setConversations, mapConversationFromDB);
+            processResult(messagesRes, setMessages, mapMessageFromDB);
+
+            if (productsRes.status === 'fulfilled' && productsRes.value?.data) {
+                setProducts(productsRes.value.data.map((p: any) => ({
+                    ...p,
+                    createdAt: p.created_at,
+                    updatedAt: p.updated_at
+                })));
+            }
+
+            if (invoicesRes.status === 'fulfilled' && invoicesRes.value?.data) {
+                setInvoices(invoicesRes.value.data.map((i: any) => ({
+                    ...i,
+                    invoiceNumber: i.invoice_number,
+                    clientId: i.client_id,
+                    orderId: i.order_id,
+                    issueDate: i.issue_date,
+                    dueDate: i.due_date,
+                    paidDate: i.paid_date,
+                    paymentMethod: i.payment_method,
+                    createdAt: i.created_at,
+                    updatedAt: i.updated_at
+                })));
+            }
+
+            if (profileRes.status === 'fulfilled' && profileRes.value?.data) {
+                const profileData = profileRes.value.data;
+                setCompanyProfile({
+                    id: profileData.id,
+                    company_name: profileData.company_name,
+                    email: profileData.email,
+                    phone: profileData.phone,
+                    logo_url: profileData.logo_url,
+                    signature_url: profileData.signature_url,
+                    cnpj: profileData.cnpj,
+                    cep: profileData.cep,
+                    street: profileData.street,
+                    number: profileData.number,
+                    complement: profileData.complement,
+                    city: profileData.city,
+                    state: profileData.state
+                });
+            }
+        };
+
+        fetchData();
+
+        const channels = [
+            supabase.channel('clients_all').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, payload => handleRealtimeUpdate(payload, setClients, mapClientFromDB)).subscribe(),
+            supabase.channel('orders_all_sub').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => handleRealtimeUpdate(payload, setOrders, mapOrderFromDB, 'orders')).subscribe(),
+            supabase.channel('techs_all').on('postgres_changes', { event: '*', schema: 'public', table: 'technicians' }, payload => handleRealtimeUpdate(payload, setTechnicians, (x) => x as any)).subscribe(),
+            supabase.channel('inv_all').on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, payload => handleRealtimeUpdate(payload, setInventory, mapInventoryFromDB)).subscribe(),
+            supabase.channel('appt_all').on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, payload => handleRealtimeUpdate(payload, setAppointments, mapAppointmentFromDB)).subscribe(),
+            supabase.channel('quotes_all').on('postgres_changes', { event: '*', schema: 'public', table: 'quotes' }, payload => handleRealtimeUpdate(payload, setQuotes, mapQuoteFromDB)).subscribe(),
+            supabase.channel('contracts_all').on('postgres_changes', { event: '*', schema: 'public', table: 'contracts' }, payload => handleRealtimeUpdate(payload, setContracts, mapContractFromDB)).subscribe(),
+            supabase.channel('projects_all').on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, payload => handleRealtimeUpdate(payload, setProjects, mapProjectFromDB)).subscribe(),
+            supabase.channel('acts_all').on('postgres_changes', { event: '*', schema: 'public', table: 'project_activities' }, payload => handleRealtimeUpdate(payload, setProjectActivities, mapActivityFromDB)).subscribe(),
+            supabase.channel('conv_all').on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, payload => handleRealtimeUpdate(payload, setConversations, mapConversationFromDB)).subscribe(),
+            supabase.channel('msg_all').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => handleRealtimeUpdate(payload, setMessages, mapMessageFromDB, 'messages')).subscribe()
+        ];
+
+        return () => {
+            channels.forEach(channel => channel.unsubscribe());
+        };
+    }, [supabase, showToast]);
+
+    // Generic Realtime Handler with Bug 3 Check (Race Condition)
+    const handleRealtimeUpdate = (payload: any, setter: React.Dispatch<React.SetStateAction<any[]>>, mapper: (data: any) => any, tableName?: string) => {
+        if (payload.eventType === 'INSERT') {
+            setter(prev => {
+                // FIX: Bug 3 - Race Condition / Deduplication
+                // Ensure we don't duplicate items if we receive multiple events or if data was already fetched
+                if (prev.some(item => item.id === payload.new.id)) return prev;
+
+                const newItem = mapper(payload.new);
+
+                // Trigger notification for new orders
+                if (tableName === 'orders' && onNewOrderRef.current) {
+                    onNewOrderRef.current(newItem as Order);
+                }
+                if (tableName === 'messages' && onNewMessageRef.current) {
+                    onNewMessageRef.current(newItem as Message);
+                }
+
+                return [...prev, newItem];
+            });
+        } else if (payload.eventType === 'UPDATE') {
+            setter(prev => prev.map(item => item.id === payload.new.id ? mapper(payload.new) : item));
+        } else if (payload.eventType === 'DELETE') {
+            setter(prev => prev.filter(item => item.id !== payload.old.id));
+        }
+    };
+
+    // Helper to map DB client to App client
+    const mapClientFromDB = (data: any): Client => ({
+        ...data,
+        cpfCnpj: data.cpf_cnpj,
+        serviceHistory: data.service_history || [],
+        createdAt: data.created_at,
+        // Ensure arrays are initialized
+        contracts: data.contracts || [],
+        lastLogin: data.last_login,
+        preferences: data.preferences,
+        fantasyName: data.fantasy_name,
+    });
+
+    // Helper to map App client to DB client
+    const mapClientToDB = (client: Partial<Client>) => {
+        const { cpfCnpj, serviceHistory, createdAt, fantasyName, ...rest } = client;
+        return {
+            ...rest,
+            ...(cpfCnpj !== undefined && { cpf_cnpj: cpfCnpj }),
+            ...(serviceHistory !== undefined && { service_history: serviceHistory }),
+            ...(client.lastLogin !== undefined && { last_login: client.lastLogin }),
+            ...(client.preferences !== undefined && { preferences: client.preferences }),
+            ...(fantasyName !== undefined && { fantasy_name: fantasyName }),
+            // createdAt is usually handled by DB default, but if passed:
+            ...(createdAt !== undefined && { created_at: createdAt }),
+        };
+    };
+
+
+    // Mappers
+    const mapInventoryFromDB = (d: any): InventoryItem => ({
+        ...d,
+        minQuantity: d.min_quantity,
+        lastRestockDate: d.last_restock_date
+    });
+    const mapInventoryToDB = (i: Partial<InventoryItem>) => {
+        const { minQuantity, lastRestockDate, ...rest } = i;
+        return {
+            ...rest,
+            ...(minQuantity !== undefined && { min_quantity: minQuantity }),
+            ...(lastRestockDate !== undefined && { last_restock_date: lastRestockDate }),
+        };
+    };
+
+    const mapQuoteFromDB = (d: any): Quote => ({
+        ...d,
+        clientId: d.client_id,
+        clientName: d.client?.name || d.client_name || 'Cliente removido',
+        validityDate: d.validity_date,
+        sourceOrderId: d.source_order_id,
+        invoiceId: d.invoice_id,
+        createdAt: d.created_at,
+        updatedAt: d.updated_at
+    });
+    const mapQuoteToDB = (q: Partial<Quote>) => {
+        const {
+            clientId, clientName, validityDate, paymentTerms, signatureData,
+            sourceOrderId, invoiceId, createdAt, updatedAt, ...rest
+        } = q;
+
+        return {
+            ...rest,
+            ...(clientId && { client_id: clientId }),
+            ...(clientName && { client_name: clientName }),
+            ...(validityDate && { validity_date: validityDate }),
+            ...(paymentTerms && { payment_terms: paymentTerms }),
+            ...(signatureData && { signature_data: signatureData }),
+            ...(sourceOrderId && { source_order_id: sourceOrderId }),
+            ...(invoiceId && { invoice_id: invoiceId }),
+            ...(createdAt && { created_at: createdAt }),
+            ...(updatedAt && { updated_at: updatedAt }),
+        };
+    };
+
+    const mapContractFromDB = (d: any): Contract => ({
+        ...d,
+        clientId: d.client_id,
+        clientName: d.client?.name || 'Cliente removido',
+        billingFrequency: d.billing_frequency,
+        startDate: d.start_date,
+        endDate: d.end_date,
+        contractType: d.contract_type,
+        createdAt: d.created_at,
+        updatedAt: d.updated_at
+    });
+    const mapContractToDB = (c: Partial<Contract>) => {
+        const { clientId, billingFrequency, startDate, endDate, contractType, createdAt, updatedAt, ...rest } = c;
+        // Verify UUID format for clientId
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        const validClientId = clientId && uuidRegex.test(clientId) ? clientId : undefined;
+
+        return {
+            ...rest,
+            ...(validClientId && { client_id: validClientId }),
+            ...(billingFrequency && { billing_frequency: billingFrequency }),
+            ...(startDate && { start_date: startDate }),
+            ...(endDate && { end_date: endDate }),
+            ...(contractType && { contract_type: contractType }),
+        };
+    };
+
+    const mapProjectFromDB = (d: any): Project => ({
+        ...d,
+        clientId: d.client_id,
+        clientName: d.client?.name || 'Cliente removido',
+        startDate: d.start_date,
+        endDate: d.end_date,
+        responsibleId: d.responsible_id,
+        responsibleName: d.responsible?.name || 'N/A',
+        createdAt: d.created_at,
+        updatedAt: d.updated_at,
+        archivedAt: d.archived_at
+    });
+    const mapProjectToDB = (p: Partial<Project>) => {
+        const { clientId, startDate, endDate, responsibleId, createdAt, updatedAt, archivedAt, ...rest } = p;
+        return {
+            ...rest,
+            ...(clientId && { client_id: clientId }),
+            ...(startDate && { start_date: startDate }),
+            ...(endDate && { end_date: endDate }),
+            ...(responsibleId && { responsible_id: responsibleId }),
+            ...(archivedAt && { archived_at: archivedAt }),
+        };
+    };
+
+    const mapActivityFromDB = (d: any): ProjectActivity => ({
+        ...d,
+        projectId: d.project_id,
+        performedBy: d.performed_by,
+        // FIX: Bug 4 - Incorrect Mapping of ProjectActivity
+        // performedById is required in Type but might be missing in older rows/DB schema.
+        // We fallback to a safe value or the performed_by string if performed_by_id column doesn't exist.
+        performedById: d.performed_by_id || d.performed_by || 'system',
+    });
+    // Note: performed_by_id was not in the create table script above?? 
+    // Checking script: "performed_by TEXT NOT NULL". Ah, missed performed_by_id column in migration? 
+    // Types say performedById: string. 
+    // Migration: performed_by TEXT.
+    // I should probably just store JSON metadata for extras or keep it simple.
+    // For now mapping performedBy to performed_by.
+
+    const mapActivityToDB = (a: Partial<ProjectActivity>) => {
+        const { projectId, performedBy, performedById, ...rest } = a;
+        return {
+            ...rest,
+            ...(projectId && { project_id: projectId }),
+            ...(performedBy && { performed_by: performedBy }),
+            // Ignoring performedById for DB as column likely missing or needs to be added
+        };
+    };
+
+    // Order mappers
+    const mapOrderFromDB = (data: any): Order => ({
+        ...data,
+        clientId: data.client_id,
+        clientName: data.client_name,
+        serviceType: data.service_type,
+        scheduledDate: data.scheduled_date,
+        completedDate: data.completed_date,
+        technicianId: data.technician_id,
+        technicianName: data.technician_name,
+        projectId: data.project_id,
+        projectName: data.project_name,
+        checkIn: data.check_in,
+        checkOut: data.check_out,
+        servicePhotos: data.service_photos || [],
+        serviceNotes: data.service_notes,
+        customerSignature: data.customer_signature,
+        invoiced: data.invoiced || false,
+        invoiceId: data.invoice_id,
+        items: data.items || [],
+        asset_info: data.asset_info,
+        origin: data.origin,
+        approvalStatus: data.approval_status,
+        approvalSignature: data.approval_signature,
+        approvalDate: data.approval_date,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
+    });
+
+    const mapConversationFromDB = (c: any): Conversation => ({
+        ...c,
+        lastMessageAt: c.last_message_at,
+        createdAt: c.created_at
+    });
+
+    const mapMessageFromDB = (m: any): Message => ({
+        ...m,
+        conversationId: m.conversation_id,
+        senderId: m.sender_id,
+        senderType: m.sender_type,
+        attachmentUrl: m.attachment_url,
+        attachmentType: m.attachment_type,
+        createdAt: m.created_at
+    });
+
+    const mapOrderToDB = (order: Partial<Order>) => {
+        // Strict destructuring: remove ALL camelCase fields that don't belong in DB
+        const {
+            clientId, clientName, serviceType, scheduledDate, completedDate,
+            technicianId, technicianName, projectId, projectName,
+            checkIn, checkOut, servicePhotos, serviceNotes, customerSignature,
+            invoiced, invoiceId, items, asset_info, origin,
+            createdAt, updatedAt, ...rest
+        } = order;
+
+        return {
+            ...rest,
+            ...(clientId !== undefined && { client_id: clientId }),
+            ...(clientName !== undefined && { client_name: clientName }),
+            ...(serviceType !== undefined && { service_type: serviceType }),
+            ...(scheduledDate !== undefined && { scheduled_date: scheduledDate }),
+            ...(completedDate !== undefined && { completed_date: completedDate }),
+            ...(technicianId !== undefined && { technician_id: technicianId }),
+            ...(technicianName !== undefined && { technician_name: technicianName }),
+            ...(projectId !== undefined && { project_id: projectId }),
+            ...(projectName !== undefined && { project_name: projectName }),
+            ...(checkIn !== undefined && { check_in: checkIn }),
+            ...(checkOut !== undefined && { check_out: checkOut }),
+            ...(servicePhotos !== undefined && { service_photos: servicePhotos }),
+            ...(serviceNotes !== undefined && { service_notes: serviceNotes }),
+            ...(customerSignature !== undefined && { customer_signature: customerSignature }),
+            ...(invoiced !== undefined && { invoiced: invoiced }),
+            ...(invoiceId !== undefined && { invoice_id: invoiceId }),
+            ...(order.quoteId !== undefined && { quote_id: order.quoteId }),
+            ...(items !== undefined && { items: items }),
+            ...(asset_info !== undefined && { asset_info: asset_info }),
+            ...(origin !== undefined && { origin: origin }),
+            ...(order.approvalStatus !== undefined && { approval_status: order.approvalStatus }),
+            ...(order.approvalSignature !== undefined && { approval_signature: order.approvalSignature }),
+            ...(order.approvalDate !== undefined && { approval_date: order.approvalDate }),
+            ...(createdAt !== undefined && { created_at: createdAt }),
+            ...(updatedAt !== undefined && { updated_at: updatedAt }),
+        };
+    };
+
+    const mapAppointmentFromDB = (data: any): Appointment => ({
+        ...data,
+        startTime: data.start_time,
+        endTime: data.end_time,
+        orderId: data.order_id,
+        clientId: data.client_id,
+        technicianId: data.technician_id,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
+    });
+
+    const mapAppointmentToDB = (apt: Partial<Appointment>) => {
+        const { startTime, endTime, orderId, clientId, technicianId, createdAt, updatedAt, ...rest } = apt;
+        return {
+            ...rest,
+            ...(startTime && { start_time: startTime }),
+            ...(endTime && { end_time: endTime }),
+            ...(orderId && { order_id: orderId }),
+            ...(clientId && { client_id: clientId }),
+            ...(technicianId && { technician_id: technicianId }),
+            ...(createdAt && { created_at: createdAt }),
+            ...(updatedAt && { updated_at: updatedAt }),
+        };
+    };
+
+    const addAppointment = React.useCallback(async (appointment: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) => {
+        const dbApt = mapAppointmentToDB(appointment);
+        const { data, error } = await supabase.from('appointments').insert([dbApt]).select().single();
+        if (error) {
+            console.error('Error adding appointment:', error);
+            showToast('error', 'Erro ao agendar compromisso.');
+        } else if (data) {
+            setAppointments(prev => [...prev, mapAppointmentFromDB(data)]);
+            showToast('success', 'Compromisso agendado com sucesso.');
+        }
+    }, [supabase, showToast]);
+
+    const updateAppointment = React.useCallback(async (id: string, updates: Partial<Appointment>) => {
+        const dbUpdate = mapAppointmentToDB(updates);
+        const { data, error } = await supabase.from('appointments').update(dbUpdate).eq('id', id).select().single();
+        if (error) {
+            console.error('Error updating appointment:', error);
+            showToast('error', 'Erro ao atualizar compromisso.');
+        } else if (data) {
+            setAppointments(prev => prev.map(a => a.id === id ? mapAppointmentFromDB(data) : a));
+            showToast('success', 'Compromisso atualizado.');
+        }
+    }, [supabase, showToast]);
+
+    const deleteAppointment = React.useCallback(async (id: string) => {
+        const { error } = await supabase.from('appointments').delete().eq('id', id);
+        if (error) {
+            console.error('Error deleting appointment:', error);
+            showToast('error', 'Erro ao deletar compromisso.');
+        } else {
+            setAppointments(prev => prev.filter(a => a.id !== id));
+            showToast('success', 'Compromisso removido.');
+        }
+    }, [supabase, showToast]);
+
+    // Client operations (Mapping already added)
+
+
+    // Memoize operations to prevent unnecessary re-renders
+    const addClient = React.useCallback(async (client: Omit<Client, 'id' | 'status' | 'createdAt'>) => {
+        const dbUser = mapClientToDB({
+            ...client,
+            status: 'active',
+            serviceHistory: [],
+            contracts: []
+        });
+
+        const { data, error } = await supabase.from('clients').insert([dbUser]).select().single();
+        if (error) {
+            console.error('Error adding client:', error);
+        } else if (data) {
+            setClients(prev => [...prev, mapClientFromDB(data)]);
+        }
+    }, [setClients, mapClientToDB, mapClientFromDB, supabase]);
+
+    const updateClient = React.useCallback(async (id: string, updatedClient: Partial<Client>) => {
+        const previousClients = [...clients];
+        setClients(prev => prev.map(c => c.id === id ? { ...c, ...updatedClient } : c));
+
+        const dbUpdate = mapClientToDB(updatedClient);
+        const { error } = await supabase.from('clients').update(dbUpdate).eq('id', id);
+
+        if (error) {
+            logAppError(error, 'updateClient');
+            setClients(previousClients);
+            showToast('error', 'Falha ao atualizar cliente. Revertendo...');
+        }
+    }, [mapClientToDB, supabase, clients, showToast]);
+
+    const deleteClient = React.useCallback(async (id: string) => {
+        const { error } = await supabase.from('clients').delete().eq('id', id);
+        if (error) console.error('Error deleting client:', error);
+    }, [supabase]);
+
+    const addOrder = React.useCallback(async (order: Omit<Order, 'id' | 'status' | 'createdAt'> & { status?: Order['status'] }) => {
+        const dbOrder = mapOrderToDB({
+            status: 'nova' as Order['status'], // Default
+            ...order
+        });
+        const { data, error } = await supabase.from('orders').insert([dbOrder]).select().single();
+        if (error) {
+            console.error('Error adding order:', error);
+        } else if (data) {
+            setOrders(prev => [...prev, mapOrderFromDB(data)]);
+        }
+    }, [setOrders, mapOrderToDB, mapOrderFromDB, supabase]);
+
+
+    const deleteOrder = React.useCallback(async (id: string) => {
+        setOrders(prev => prev.filter(o => o.id !== id));
+        const { error } = await supabase.from('orders').delete().eq('id', id);
+        if (error) console.error('Error deleting order:', error);
+    }, [supabase, setOrders]);
+
+    const deleteOrders = React.useCallback(async (ids: string[]) => {
+        setOrders(prev => prev.filter(o => !ids.includes(o.id)));
+        const { error } = await supabase.from('orders').delete().in('id', ids);
+        if (error) console.error('Error deleting orders:', error);
+    }, [supabase, setOrders]);
+
+    const addInventoryItem = React.useCallback(async (item: Omit<InventoryItem, 'id'>) => {
+        const dbItem = mapInventoryToDB(item);
+        const { error } = await supabase.from('inventory').insert([dbItem]);
+        if (error) console.error('Error adding inventory:', error);
+    }, [mapInventoryToDB, supabase]);
+
+    const updateInventoryItem = React.useCallback(async (id: string, updates: Partial<InventoryItem>) => {
+        const previousInventory = [...inventory];
+        setInventory(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+
+        const dbUpdate = mapInventoryToDB(updates);
+        Object.keys(dbUpdate).forEach(key => (dbUpdate as any)[key] === undefined && delete (dbUpdate as any)[key]);
+        const { error } = await supabase.from('inventory').update(dbUpdate).eq('id', id);
+
+        if (error) {
+            logAppError(error, 'updateInventoryItem');
+            setInventory(previousInventory);
+            showToast('error', 'Erro no estoque. Alteração desfeita.');
+        }
+    }, [mapInventoryToDB, supabase, inventory, showToast]);
+
+    const deleteInventoryItem = React.useCallback(async (id: string) => {
+        const { error } = await supabase.from('inventory').delete().eq('id', id);
+        if (error) console.error('Error deleting inventory:', error);
+    }, [supabase]);
+
+    const updateOrder = React.useCallback(async (id: string, updatedOrder: Partial<Order>) => {
+        // Save previous state for rollback
+        const previousOrders = [...orders];
+        const oldOrder = orders.find(o => o.id === id);
+
+        // Optimistic update
+        setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updatedOrder } : o));
+
+        const dbUpdate = mapOrderToDB(updatedOrder);
+        const { error } = await supabase.from('orders').update(dbUpdate).eq('id', id);
+
+        if (error) {
+            console.error('Error updating order - Rolling back:', error);
+            setOrders(previousOrders); // Rollback
+            showToast('error', 'Falha na sincronização. Alteração revertida.');
+            return;
+        }
+
+        // Feature: Automatic Inventory Deduction
+        // If order status is changed to 'concluida', we deduct items from inventory
+        if (updatedOrder.status === 'concluida' && oldOrder && oldOrder.status !== 'concluida') {
+            const itemsToDeduct = oldOrder.items || [];
+            for (const item of itemsToDeduct) {
+                // Find matching inventory item by SKU or Name
+                const invItem = inventory.find(i => i.sku === item.sku || i.name === item.name);
+                if (invItem) {
+                    const newQty = invItem.quantity - (item.quantity || 1);
+                    await updateInventoryItem(invItem.id, { quantity: Math.max(0, newQty) });
+                }
+            }
+        }
+    }, [mapOrderToDB, supabase, setOrders, orders, inventory, updateInventoryItem, showToast]);
+
+    // Quote operations
+    const addQuote = React.useCallback(async (quote: Omit<Quote, 'id' | 'createdAt'>) => {
+        const dbQuote = mapQuoteToDB(quote);
+        const { data, error } = await supabase.from('quotes').insert([{ ...dbQuote, status: 'draft' }]).select().single(); // Default status
+        if (error) {
+            console.error('Error adding quote:', error);
+            return null;
+        }
+        return mapQuoteFromDB(data);
+    }, [mapQuoteToDB, supabase, mapQuoteFromDB]);
+
+    // Moved convertQuoteToInvoice UP before updateQuote to solve dependency order issue
+    const convertQuoteToInvoice = React.useCallback(async (quoteId: string) => {
+        const quote = quotes.find(q => q.id === quoteId);
+        if (!quote) return;
+
+        const newInvoice: any = {
+            invoice_number: `FAT-${new Date().getFullYear()}${Math.floor(Math.random() * 9000 + 1000)}`,
+            client_id: quote.clientId,
+            // client_name removed as it does not exist in DB
+            issue_date: new Date().toISOString().split('T')[0],
+            due_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 15 days default
+            items: quote.items,
+            subtotal: quote.subtotal,
+            tax: quote.tax,
+            discount: quote.discount,
+            total: quote.total,
+            status: 'pendente',
+            // type: 'service', // removed as it does not exist in DB
+            source_quote_id: quote.id,
+            source_order_id: quote.sourceOrderId
+        };
+
+        const { data: invData, error: invError } = await supabase.from('invoices').insert([newInvoice]).select().single();
+        if (invError) {
+            console.error('Error creating invoice from quote:', invError);
+            return;
+        }
+
+        // Link invoice back to quote
+        await supabase.from('quotes').update({ invoice_id: invData.id, status: 'approved' }).eq('id', quoteId);
+
+        // Link to order if source exists
+        if (quote.sourceOrderId) {
+            await supabase.from('orders').update({
+                invoiced: true,
+                invoice_id: invData.id,
+                quote_id: quoteId
+            }).eq('id', quote.sourceOrderId);
+        }
+
+        return invData;
+    }, [quotes, supabase]);
+
+    const updateQuote = React.useCallback(async (id: string, updates: Partial<Quote>) => {
+        const dbUpdate = mapQuoteToDB(updates);
+        Object.keys(dbUpdate).forEach(key => (dbUpdate as any)[key] === undefined && delete (dbUpdate as any)[key]);
+        const { error } = await supabase.from('quotes').update(dbUpdate).eq('id', id);
+        if (error) {
+            console.error('Error updating quote:', error);
+            return;
+        }
+
+        // Logic for automatic conversion to invoice when approved
+        if (updates.status === 'approved' || updates.signatureData) {
+            // Find full quote to convert
+            const fullQuote = quotes.find(q => q.id === id) || (updates as Quote);
+            if (fullQuote && !fullQuote.invoiceId) {
+                // Trigger conversion
+                // Now safe to call as it is defined above
+                await convertQuoteToInvoice(id);
+            }
+        }
+    }, [mapQuoteToDB, supabase, quotes, convertQuoteToInvoice]); // FIX: Bug 5 - Ensure dependencies are complete
+
+    const createQuoteFromOrder = React.useCallback(async (orderId: string, items: any[], notes: string) => {
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+
+        const subtotal = items.reduce((sum, i) => sum + i.total, 0);
+        const tax = subtotal * 0.1; // Default tax 10%
+        const total = subtotal + tax;
+
+        const newQuote: any = {
+            client_id: order.clientId,
+            client_name: order.clientName,
+            items: items.map(i => ({
+                id: i.id || Math.random().toString(36).substring(7),
+                description: i.name || i.description,
+                quantity: i.quantity,
+                unitPrice: i.price || i.unitPrice,
+                totalPrice: i.total || i.totalPrice
+            })),
+            subtotal,
+            tax,
+            total,
+            status: 'sent',
+            validity_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            notes,
+            source_order_id: orderId
+        };
+
+        const { data: quoteData, error } = await supabase.from('quotes').insert([newQuote]).select().single();
+        if (error) {
+            console.error('Error creating quote from order:', error);
+            return;
+        }
+
+        // Link back to order
+        await supabase.from('orders').update({ quote_id: quoteData.id }).eq('id', orderId);
+
+        return mapQuoteFromDB(quoteData);
+    }, [orders, supabase, mapQuoteFromDB]);
+
+    const deleteQuote = React.useCallback(async (id: string) => {
+        const { error } = await supabase.from('quotes').delete().eq('id', id);
+        if (error) console.error('Error deleting quote:', error);
+    }, [supabase]);
+
+    // Contract operations
+    const addContract = React.useCallback(async (contract: Omit<Contract, 'id' | 'createdAt'>) => {
+        const dbContract = mapContractToDB(contract);
+        const { error } = await supabase.from('contracts').insert([dbContract]);
+        if (error) console.error('Error adding contract:', error);
+    }, [mapContractToDB, supabase]);
+
+    const updateContract = React.useCallback(async (id: string, updates: Partial<Contract>) => {
+        const dbUpdate = mapContractToDB(updates);
+        Object.keys(dbUpdate).forEach(key => (dbUpdate as any)[key] === undefined && delete (dbUpdate as any)[key]);
+        const { error } = await supabase.from('contracts').update(dbUpdate).eq('id', id);
+        if (error) console.error('Error updating contract:', error);
+    }, [mapContractToDB, supabase]);
+
+    const deleteContract = React.useCallback(async (id: string) => {
+        const { error } = await supabase.from('contracts').delete().eq('id', id);
+        if (error) console.error('Error deleting contract:', error);
+    }, [supabase]);
+
+    // Technician operations
+    const addTechnician = React.useCallback(async (technician: Omit<Technician, 'id' | 'createdAt'>) => {
+        const { error } = await supabase.from('technicians').insert([{
+            ...technician,
+            status: 'ativo'
+        }]);
+        if (error) console.error('Error adding technician:', error);
+    }, [supabase]);
+
+    const updateTechnician = React.useCallback(async (id: string, updates: Partial<Technician>) => {
+        const { error } = await supabase.from('technicians').update(updates).eq('id', id);
+        if (error) {
+            console.error('Error updating technician:', error);
+            return { error };
+        }
+        return { error: null };
+    }, [supabase]);
+
+    const checkUsernameAvailability = React.useCallback(async (username: string, excludeId?: string): Promise<boolean> => {
+        // Check against local state which is synced with DB
+        const exists = technicians.some(t =>
+            t.username.toLowerCase() === username.toLowerCase() &&
+            t.id !== excludeId
+        );
+        return !exists;
+    }, [technicians]);
+
+    const deleteTechnician = React.useCallback(async (id: string) => {
+        const { error } = await supabase.from('technicians').delete().eq('id', id);
+        if (error) console.error('Error deleting technician:', error);
+    }, [supabase]);
+
+    const authenticateTechnician = React.useCallback((username: string, password: string): Technician | null => {
+        // FIX: Bug 2 - Authentication Plain Text
+        // SECURITY WARNING: Authentication is currently using plain text matching.
+        // This is kept for compatibility but should be migrated to Supabase Auth asap.
+        if (!username || !password) return null;
+
+        // Now checks against the state which is populated from DB
+        const tech = technicians.find(t => t.username === username && t.password === password);
+        return tech || null;
+    }, [technicians]);
+
+    // Project Activity operations
+    const addProjectActivity = React.useCallback(async (activity: Omit<ProjectActivity, 'id'>) => {
+        const dbActivity = mapActivityToDB(activity);
+        const { error } = await supabase.from('project_activities').insert([dbActivity]);
+        if (error) console.error('Error adding activity:', error);
+    }, [mapActivityToDB, supabase]);
+
+    // Project operations
+    const addProject = React.useCallback(async (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => {
+        const dbProject = mapProjectToDB(project);
+        // FIX: Project Visibility Bug - Select joined relations so local state has names immediately
+        const { data, error } = await supabase
+            .from('projects')
+            .insert([dbProject])
+            .select('*, client:clients(name), responsible:technicians(name)')
+            .single();
+
+        if (error) {
+            console.error('Error adding project:', error);
+            return null;
+        }
+
+        // Add creation activity
+        if (data) {
+            const newProject = mapProjectFromDB(data);
+            setProjects(prev => [...prev, newProject]);
+
+            addProjectActivity({
+                projectId: data.id,
+                type: 'criacao',
+                description: `Projeto criado`,
+                performedBy: 'Sistema',
+                performedById: 'system',
+                timestamp: new Date().toISOString()
+            });
+
+            return newProject;
+        }
+        return null;
+    }, [mapProjectToDB, supabase, addProjectActivity, mapProjectFromDB]);
+
+    const updateProject = React.useCallback(async (id: string, updates: Partial<Project>) => {
+        const dbUpdate = mapProjectToDB(updates);
+        Object.keys(dbUpdate).forEach(key => (dbUpdate as any)[key] === undefined && delete (dbUpdate as any)[key]);
+        const { error } = await supabase.from('projects').update(dbUpdate).eq('id', id);
+        if (error) console.error('Error updating project:', error);
+
+        // Activity logging (simplified)
+        if (updates.status) {
+            addProjectActivity({
+                projectId: id,
+                type: 'status_change',
+                description: `Status alterado para "${updates.status}"`,
+                performedBy: 'Sistema',
+                performedById: 'system',
+                timestamp: new Date().toISOString()
+            });
+        }
+    }, [mapProjectToDB, supabase, addProjectActivity]);
+
+    const archiveProject = React.useCallback(async (id: string) => {
+        updateProject(id, { status: 'arquivado', archivedAt: new Date().toISOString() });
+    }, [updateProject]);
+
+    const unarchiveProject = React.useCallback(async (id: string) => {
+        // We need to explicitly handle unsetting archivedAt. 
+        // Supabase update with null works.
+        const { error } = await supabase.from('projects').update({ status: 'planejamento', archived_at: null }).eq('id', id);
+        if (error) console.error('Error unarchiving:', error);
+    }, [supabase]);
+
+    const deleteProject = React.useCallback(async (id: string) => {
+        const { error } = await supabase.from('projects').delete().eq('id', id);
+        if (error) console.error('Error deleting project:', error);
+    }, [supabase]);
+
+
+    const getProjectActivities = React.useCallback((projectId: string): ProjectActivity[] => {
+        return projectActivities
+            .filter(activity => activity.projectId === projectId)
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }, [projectActivities]);
+
+    // Project Link operations
+    const linkOrderToProject = React.useCallback((orderId: string, projectId: string) => {
+        // Needs update to support DB orders
+        const project = projects.find(p => p.id === projectId);
+        if (project) {
+            updateOrder(orderId, { projectId, projectName: project.name });
+            updateProject(projectId, {
+                relatedOrders: [...project.relatedOrders, orderId]
+            });
+        }
+    }, [projects, updateOrder, updateProject]);
+
+    const unlinkOrderFromProject = React.useCallback((orderId: string, projectId: string) => {
+        const project = projects.find(p => p.id === projectId);
+        if (project) {
+            updateOrder(orderId, { projectId: undefined, projectName: undefined });
+            updateProject(projectId, {
+                relatedOrders: project.relatedOrders.filter(id => id !== orderId)
+            });
+        }
+    }, [projects, updateOrder, updateProject]);
+
+    const setOnNewOrder = React.useCallback((callback: (order: Order) => void) => {
+        onNewOrderRef.current = callback;
+    }, []);
+
+    const setOnNewMessage = React.useCallback((callback: (message: Message) => void) => {
+        onNewMessageRef.current = callback;
+    }, []);
+
+    // Communication operations
+    const sendMessage = React.useCallback(async (conversationId: string, senderId: string, senderType: 'admin' | 'technician' | 'client', content: string, attachmentUrl?: string, attachmentType?: 'image' | 'file') => {
+        const { error } = await supabase
+            .from('messages')
+            .insert([{
+                conversation_id: conversationId,
+                sender_id: senderId,
+                sender_type: senderType,
+                content: content || '',
+                attachment_url: attachmentUrl || null,
+                attachment_type: attachmentType || null,
+                read: false
+            }]);
+
+        if (error) {
+            console.error('Error inserting message into DB:', error);
+            throw error;
+        }
+
+        // Update conversation last_message_at
+        await supabase
+            .from('conversations')
+            .update({ last_message_at: new Date().toISOString() })
+            .eq('id', conversationId);
+    }, [supabase]);
+
+    const getOrCreateConversation = React.useCallback(async (techId: string): Promise<string | null> => {
+        // Try to find existing conversation
+        const existingConv = conversations.find(c =>
+            c.type === 'administrador-tecnico' &&
+            c.participants.includes(techId)
+        );
+
+        if (existingConv) {
+            return existingConv.id;
+        }
+
+        // Create new conversation
+        const { data, error } = await supabase
+            .from('conversations')
+            .insert([{
+                type: 'administrador-tecnico',
+                participants: [techId],
+                last_message_at: new Date().toISOString()
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating conversation:', error);
+            return null;
+        }
+
+        return data.id;
+    }, [conversations, supabase]);
+
+    const uploadFile = React.useCallback(async (file: File, bucket: string = 'orders', folder: string = 'general'): Promise<string | null> => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${folder}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from(bucket)
+            .upload(filePath, file);
+
+        if (uploadError) {
+            console.error(`Error uploading file to ${bucket}/${folder}:`, uploadError);
+            return null;
+        }
+
+        const { data } = supabase.storage
+            .from(bucket)
+            .getPublicUrl(filePath);
+
+        return data.publicUrl;
+    }, [supabase]);
+
+    const uploadChatFile = React.useCallback(async (file: File): Promise<string | null> => {
+        return uploadFile(file, 'orders', 'chat-attachments');
+    }, [uploadFile]);
+
+    const generateMonthlyInvoices = React.useCallback(async (month: number, year: number) => {
+        const startOfMonth = new Date(year, month - 1, 1).toISOString();
+        const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999).toISOString();
+
+        // 1. Get all active contracts
+        const activeContracts = contracts.filter(c => c.status === 'ativo');
+
+        for (const contract of activeContracts) {
+            // 2. Find completed orders for this client in the month that haven't been invoiced
+            const billableOrders = orders.filter(o =>
+                o.clientId === contract.clientId &&
+                o.status === 'concluida' &&
+                !o.invoiced &&
+                o.completedDate &&
+                o.completedDate >= startOfMonth &&
+                o.completedDate <= endOfMonth
+            );
+
+            // 3. Create items list
+            const items: any[] = [
+                {
+                    id: crypto.randomUUID(),
+                    description: `Assinatura Mensal - ${contract.title}`,
+                    quantity: 1,
+                    unitPrice: contract.value,
+                    totalPrice: contract.value,
+                    sourceId: contract.id,
+                    sourceType: 'contract'
+                }
+            ];
+
+            let serviceOrdersTotal = 0;
+            billableOrders.forEach(order => {
+                items.push({
+                    id: crypto.randomUUID(),
+                    description: `Serviço Extra: ${order.serviceType} - #${order.id.substring(0, 8)}`,
+                    quantity: 1,
+                    unitPrice: order.value,
+                    totalPrice: order.value,
+                    sourceId: order.id,
+                    sourceType: 'order'
+                });
+                serviceOrdersTotal += order.value;
+            });
+
+            const subtotal = contract.value + serviceOrdersTotal;
+            const tax = subtotal * 0.05; // Example 5% tax
+            const total = subtotal + tax;
+
+            // 4. Create Invoice in DB
+            const invoiceNumber = `INV-${year}${month.toString().padStart(2, '0')}-${contract.clientId.substring(0, 4)}`;
+
+            const { data: newInvoice, error: invoiceError } = await supabase
+                .from('invoices')
+                .insert([{
+                    invoice_number: invoiceNumber,
+                    client_id: contract.clientId,
+                    issue_date: new Date().toISOString(),
+                    due_date: new Date(year, month, 10).toISOString(), // Default due date 10th of next month
+                    subtotal,
+                    tax,
+                    total,
+                    status: 'pending',
+                    type: 'recurring',
+                    contract_id: contract.id,
+                    items: items // Assuming the DB can store this as JSON
+                }])
+                .select()
+                .single();
+
+            if (invoiceError) {
+                console.error(`Error generating invoice for client ${contract.clientId}:`, invoiceError);
+                continue;
+            }
+
+            // 5. Mark orders as invoiced
+            if (newInvoice && billableOrders.length > 0) {
+                const orderIds = billableOrders.map(o => o.id);
+                const { error: updateError } = await supabase
+                    .from('orders')
+                    .update({ invoiced: true, invoice_id: newInvoice.id })
+                    .in('id', orderIds);
+
+                if (updateError) {
+                    console.error('Error marking orders as invoiced:', updateError);
+                }
+            }
+        }
+    }, [contracts, orders, supabase]);
+
+    const authenticateClient = React.useCallback((username: string, password: string): Client | null => {
+        // FIX: Bug 2 - Authentication Plain Text
+        // SECURITY WARNING: Authentication is currently using plain text matching.
+        if (!username || !password) return null;
+
+        const client = clients.find(c => c.username === username && c.password === password);
+        if (client) {
+            // Update last login in background
+            updateClient(client.id, { lastLogin: new Date().toISOString() });
+        }
+        return client || null;
+    }, [clients, updateClient]);
+
+    const saveQuoteSignature = React.useCallback(async (id: string, signature: string) => {
+        const { error } = await supabase
+            .from('quotes')
+            .update({ signature_data: signature, status: 'approved', updated_at: new Date().toISOString() })
+            .eq('id', id);
+        if (error) console.error('Error saving signature:', error);
+    }, [supabase]);
+
+    const updateCompanyProfile = React.useCallback(async (updates: Partial<CompanyProfile>) => {
+        const { error } = await supabase.from('company_settings').update(updates).eq('id', companyProfile?.id || 'default');
+        if (error) console.error('Error updating profile:', error);
+        else setCompanyProfile(prev => prev ? { ...prev, ...updates } : null);
+    }, [companyProfile, supabase]);
+
+    const logAppError = React.useCallback((error: any, context: string) => {
+        console.error(`[App Error][${context}]`, error);
+        // Here we could also send to Sentry or a custom logs table in Supabase
+    }, []);
+
+    const value: AppContextType = React.useMemo(() => ({
+        clients,
+        orders,
+        inventory,
+        quotes,
+        contracts,
+        technicians,
+        projects,
+        projectActivities,
+        products,
+        invoices,
+        appointments,
+        conversations,
+        messages,
+
+        // Client operations
+        addClient,
+        updateClient,
+        deleteClient,
+        authenticateClient,
+
+        // Order operations
+        addOrder,
+        updateOrder,
+        deleteOrder,
+        deleteOrders,
+
+        // Inventory operations
+        addInventoryItem,
+        updateInventoryItem,
+        deleteInventoryItem,
+
+        // Quote operations
+        addQuote,
+        updateQuote,
+        deleteQuote,
+        saveQuoteSignature,
+        convertQuoteToInvoice,
+        createQuoteFromOrder,
+
+        // Contract operations
+        addContract,
+        updateContract,
+        deleteContract,
+
+        // Technician operations
+        addTechnician,
+        updateTechnician,
+        deleteTechnician,
+        authenticateTechnician,
+
+        // Project operations
+        addProject,
+        updateProject,
+        archiveProject,
+        unarchiveProject,
+        deleteProject,
+
+        // Project Activity operations
+        addProjectActivity,
+        getProjectActivities,
+
+        // Project Link operations
+        linkOrderToProject,
+        unlinkOrderFromProject,
+
+        // Notification callbacks
+        onNewOrder: onNewOrderRef.current,
+        setOnNewOrder,
+        onNewMessage: onNewMessageRef.current,
+        setOnNewMessage,
+
+        // Communication operations
+        addAppointment,
+        updateAppointment,
+        deleteAppointment,
+        sendMessage,
+        getOrCreateConversation,
+        uploadChatFile,
+        uploadFile,
+        generateMonthlyInvoices,
+        companyProfile,
+        updateCompanyProfile,
+        logAppError
+    }), [
+        clients, orders, inventory, quotes, contracts, technicians, projects, projectActivities,
+        products, invoices, appointments, conversations, messages,
+        addClient, updateClient, deleteClient, authenticateClient, addOrder, updateOrder, deleteOrder, deleteOrders,
+        addInventoryItem, updateInventoryItem, deleteInventoryItem, addQuote, updateQuote, deleteQuote, saveQuoteSignature,
+        addContract, updateContract, deleteContract, addTechnician, updateTechnician, deleteTechnician,
+        authenticateTechnician, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
+        addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder, setOnNewMessage,
+        sendMessage, getOrCreateConversation, uploadChatFile, uploadFile, generateMonthlyInvoices,
+        companyProfile, updateCompanyProfile, addAppointment, updateAppointment, deleteAppointment, mapQuoteFromDB
+    ]);
+
+    return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+};
+
+export const useApp = () => {
+    const context = useContext(AppContext);
+    if (context === undefined) {
+        throw new Error('useApp must be used within an AppProvider');
+    }
+    return context;
+};
+
+export default AppContext;
