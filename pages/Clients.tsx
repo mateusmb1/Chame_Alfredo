@@ -110,7 +110,7 @@ const Clients: React.FC = () => {
   const handleOpenNewClientModal = () => {
     setIsEditMode(false);
     setEditingClientId(null);
-    setFormData({ name: '', type: 'pf', cpfCnpj: '', email: '', phone: '', address: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', zipCode: '' });
+    setFormData({ name: '', fantasyName: '', type: 'pf', cpfCnpj: '', email: '', phone: '', address: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', zipCode: '' });
     setIsModalOpen(true);
   };
 
@@ -155,7 +155,7 @@ const Clients: React.FC = () => {
         // Prioritize Razão Social, keep fantasy name separate
         name: data.razao_social || prev.name,
         fantasyName: data.nome_fantasia || '',
-        phone: data.telefone_1 || prev.telefone_2 || prev.phone, // Try primary then secondary
+        phone: data.telefone_1 || data.telefone_2 || prev.phone, // Try primary then secondary
         email: data.email || prev.email,
         // Map address fields
         street: data.logradouro || '',

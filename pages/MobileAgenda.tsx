@@ -20,7 +20,7 @@ const MobileAgenda: React.FC = () => {
         const tech: Technician = JSON.parse(storedTech);
         setTechnician(tech);
 
-        const techOrders = orders.filter(order => order.technician === tech.name);
+        const techOrders = orders.filter(order => order.technicianId === tech.id);
         setMyOrders(techOrders);
     }, [orders, navigate]);
 

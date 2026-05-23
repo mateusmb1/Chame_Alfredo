@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import { useApp } from '../contexts/AppContext';
+import { QuoteAttachment } from '../types/quote';
 import { Plus, Trash2, Save, ShoppingCart, Search, FileText, ArrowLeft, Calendar, User, DollarSign } from 'lucide-react';
 import CurrencyInput from '../components/CurrencyInput';
 
@@ -110,19 +111,22 @@ const CreateQuote: React.FC = () => {
         clientId,
         clientName: selectedClient?.name || 'Cliente',
         items: items.map(i => ({
-          description: i.description,
+          id: crypto.randomUUID(),
+          description: i.description || '',
           quantity: i.quantity,
           unitPrice: i.unitPrice,
-          total: i.total
+          totalPrice: i.total
         })),
         subtotal,
         discount,
         tax: taxAmount,
         total,
         status: 'draft' as const,
-        validityDate: validityDate ? new Date(validityDate).toISOString() : undefined,
+        validityDate: validityDate ? new Date(validityDate).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         paymentTerms,
-        notes
+        notes: notes || '',
+        attachments: [] as QuoteAttachment[],
+        updatedAt: new Date().toISOString()
       };
 
       const newQuote = await addQuote(quoteData);

@@ -18,7 +18,7 @@ interface MobileLayoutProps {
 }
 
 const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
-    const { setOnNewMessage, user } = useApp();
+    const { setOnNewMessage } = useApp();
     const location = useLocation();
     const navigate = useNavigate();
     const { isMobile, isTablet, isDesktop } = useResponsive();
@@ -72,7 +72,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
             <div className="flex justify-around items-center h-16">
                 {navItems.map((item) => (
                     <Link
-                        key={item.path}
+                         key={item.path}
                         to={item.path}
                         className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive(item.path)
                             ? 'text-primary'
@@ -80,7 +80,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
                             }`}
                     >
                         <div className={`p-1 rounded-lg ${isActive(item.path) ? 'bg-primary/10' : ''}`}>
-                            {React.cloneElement(item.icon as React.ReactElement, {
+                            {React.cloneElement(item.icon as React.ReactElement<any>, {
                                 size: 24,
                                 strokeWidth: isActive(item.path) ? 2.5 : 2
                             })}

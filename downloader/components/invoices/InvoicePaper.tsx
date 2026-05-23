@@ -63,7 +63,7 @@ export default function InvoicePaper({
                   <img src={companyProfile.logo_url} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
                   <div className="h-full w-full bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xl uppercase">
-                    {companyProfile?.name ? companyProfile.name.charAt(0) : 'A'}
+                    {companyProfile?.company_name ? companyProfile.company_name.charAt(0) : 'A'}
                   </div>
                 )}
               </div>

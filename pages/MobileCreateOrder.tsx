@@ -57,7 +57,8 @@ const MobileCreateOrder: React.FC = () => {
                 observations: formData.observations,
                 projectId: '',
                 projectName: '',
-                status: 'nova' as const
+                status: 'nova' as const,
+                updatedAt: new Date().toISOString()
             };
 
             await addOrder(newOrder);

@@ -96,7 +96,8 @@ const CreateOrder: React.FC = () => {
         value: 0,
         observations: formData.observations,
         projectId: formData.projectId,
-        projectName: formData.projectName || (projects.find(p => p.id === formData.projectId)?.name || '')
+        projectName: formData.projectName || (projects.find(p => p.id === formData.projectId)?.name || ''),
+        updatedAt: new Date().toISOString()
       };
 
       // Assuming addOrder handles the DB insert and returns or triggers sync

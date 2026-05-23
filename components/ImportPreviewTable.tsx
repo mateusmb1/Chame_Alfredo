@@ -10,7 +10,7 @@ interface ImportPreviewTableProps<T> {
     allSelected: boolean;
 }
 
-export function ImportPreviewTable<T extends Record<string, unknown>>({
+export function ImportPreviewTable<T>({
     data,
     columns,
     onToggleSelect,

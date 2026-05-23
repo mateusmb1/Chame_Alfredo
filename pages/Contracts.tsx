@@ -92,7 +92,10 @@ const Contracts: React.FC = () => {
             clientName: selectedClient.name,
             clientType: selectedClient.type,
             value: Number(formData.value),
-            paymentDay: Number(formData.paymentDay)
+            paymentDay: Number(formData.paymentDay),
+            title: `Contrato - ${formData.contractType || 'Serviço'}`,
+            services: [] as string[],
+            updatedAt: new Date().toISOString()
         };
 
         if (isEditMode && editingContractId) {

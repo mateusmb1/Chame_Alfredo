@@ -103,13 +103,13 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ initialData, isEditing = false })
                             type: file.type
                         }
                     ]);
-                    showToast('Arquivo anexado com sucesso!', 'success');
+                    showToast('success', 'Arquivo anexado com sucesso!');
                 } else {
-                    showToast('Erro ao fazer upload do arquivo.', 'error');
+                    showToast('error', 'Erro ao fazer upload do arquivo.');
                 }
             } catch (error) {
                 console.error('Upload error:', error);
-                showToast('Erro ao fazer upload do arquivo.', 'error');
+                showToast('error', 'Erro ao fazer upload do arquivo.');
             } finally {
                 setIsUploading(false);
             }
@@ -124,7 +124,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ initialData, isEditing = false })
 
     const handleSubmit = async (status: 'draft' | 'sent') => {
         if (!clientId) {
-            showToast('Selecione um cliente.', 'error');
+            showToast('error', 'Selecione um cliente.');
             return;
         }
 
@@ -154,7 +154,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ initialData, isEditing = false })
         try {
             if (isEditing && initialData) {
                 await updateQuote(initialData.id, quoteData);
-                showToast('Orçamento atualizado com sucesso!', 'success');
+                showToast('success', 'Orçamento atualizado com sucesso!');
             } else {
                 await addQuote({
                     ...quoteData,
@@ -163,12 +163,12 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ initialData, isEditing = false })
                     total,
                     updatedAt: new Date().toISOString(),
                 });
-                showToast('Orçamento criado com sucesso!', 'success');
+                showToast('success', 'Orçamento criado com sucesso!');
             }
             navigate('/quotes');
         } catch (error) {
             console.error('Save error:', error);
-            showToast('Erro ao salvar orçamento.', 'error');
+            showToast('error', 'Erro ao salvar orçamento.');
         }
     };
 

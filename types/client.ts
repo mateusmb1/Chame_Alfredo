@@ -15,8 +15,8 @@ export interface Client {
   cpfCnpj: string;
   status: 'active' | 'inactive';
   createdAt: string;
-  serviceHistory: string[];
-  contracts: string[];
+  serviceHistory?: any[];
+  contracts?: string[];
   notes?: string;
   type?: 'pf' | 'pj';
   password?: string;

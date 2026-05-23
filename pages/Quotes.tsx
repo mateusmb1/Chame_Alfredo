@@ -50,7 +50,8 @@ const Quotes: React.FC = () => {
       value: o.items.reduce((sum: number, i: any) => sum + i.total, 0),
       status: o.customerSignature ? 'Aprovado' : 'Enviado',
       color: o.customerSignature ? 'emerald' : 'blue',
-      isFieldOrder: true
+      isFieldOrder: true,
+      sourceOrderId: undefined
     }))
   ];
 

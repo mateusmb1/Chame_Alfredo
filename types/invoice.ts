@@ -11,6 +11,7 @@ export interface InvoiceItem {
 export interface Invoice {
   id: string;
   number: string;
+  invoiceNumber?: string;
   clientId: string;
   clientName: string;
   issueDate: string;
@@ -23,6 +24,7 @@ export interface Invoice {
   status: 'pending' | 'paid' | 'overdue' | 'cancelled';
   type: 'service' | 'recurring';
   paymentDate?: string;
+  paidDate?: string;
   paymentMethod?: string;
   observations?: string;
   contractId?: string;

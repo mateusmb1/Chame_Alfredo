@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface ProjectStatusBadgeProps {
-  status: 'planejamento' | 'em_andamento' | 'em_pausa' | 'concluido' | 'cancelado' | 'arquivado';
+  status: 'planejamento' | 'em_andamento' | 'em_pausa' | 'pendente' | 'concluido' | 'cancelado' | 'arquivado';
   size?: 'sm' | 'md' | 'lg';
 }
 
@@ -13,6 +13,12 @@ const ProjectStatusBadge: React.FC<ProjectStatusBadgeProps> = ({ status, size = 
           label: 'Planejamento',
           className: 'bg-blue-100 text-blue-700 border-blue-200',
           dotClassName: 'bg-blue-500'
+        };
+      case 'pendente':
+        return {
+          label: 'Pendente',
+          className: 'bg-orange-100 text-orange-700 border-orange-200',
+          dotClassName: 'bg-orange-500'
         };
       case 'em_andamento':
         return {

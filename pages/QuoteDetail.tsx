@@ -86,7 +86,7 @@ const QuoteDetail: React.FC = () => {
 
         setClientName(q.clientName || client?.name || '');
         if (client) {
-            const addr = [client.street, client.number, client.city, client.state, client.cep].filter(Boolean).join(', ');
+            const addr = [client.street, client.number, client.city, client.state, client.zip_code].filter(Boolean).join(', ');
             setClientAddress(addr);
             setClientPhone(client.phone || '');
             setClientEmail(client.email || '');

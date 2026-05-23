@@ -118,6 +118,7 @@ interface AppContextType {
     updateCompanyProfile: (profile: Partial<CompanyProfile>) => Promise<void>;
     deleteOrders: (ids: string[]) => Promise<void>;
     logAppError: (error: any, context: string) => void;
+    addInvoice: (invoiceData: any) => Promise<any>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -779,6 +780,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return invData;
     }, [quotes, supabase]);
 
+    const addInvoice = React.useCallback(async (invoiceData: any) => {
+        const newInvoice: any = {
+            invoice_number: `FAT-${new Date().getFullYear()}${Math.floor(Math.random() * 9000 + 1000)}`,
+            client_id: invoiceData.clientId,
+            issue_date: invoiceData.issueDate.split('T')[0],
+            due_date: invoiceData.dueDate.split('T')[0],
+            items: invoiceData.items,
+            subtotal: invoiceData.subtotal,
+            tax: invoiceData.tax,
+            discount: invoiceData.discount || 0,
+            total: invoiceData.total,
+            status: invoiceData.status === 'pending' ? 'pendente' : invoiceData.status,
+            observations: invoiceData.observations || ''
+        };
+
+        const { data: invData, error: invError } = await supabase.from('invoices').insert([newInvoice]).select().single();
+        if (invError) {
+            console.error('Error creating invoice:', invError);
+            throw invError;
+        }
+
+        const mappedInvoice = {
+            ...invData,
+            invoiceNumber: invData.invoice_number,
+            clientId: invData.client_id,
+            orderId: invData.order_id,
+            issueDate: invData.issue_date,
+            dueDate: invData.due_date,
+            paidDate: invData.paid_date,
+            paymentMethod: invData.payment_method,
+            createdAt: invData.created_at,
+            updatedAt: invData.updated_at
+        };
+
+        setInvoices(prev => [...prev, mappedInvoice]);
+        return mappedInvoice;
+    }, [supabase]);
+
     const updateQuote = React.useCallback(async (id: string, updates: Partial<Quote>) => {
         const dbUpdate = mapQuoteToDB(updates);
         Object.keys(dbUpdate).forEach(key => (dbUpdate as any)[key] === undefined && delete (dbUpdate as any)[key]);
@@ -1272,6 +1311,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateTechnician,
         deleteTechnician,
         authenticateTechnician,
+        checkUsernameAvailability,
 
         // Project operations
         addProject,
@@ -1305,17 +1345,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         generateMonthlyInvoices,
         companyProfile,
         updateCompanyProfile,
-        logAppError
+        logAppError,
+        addInvoice
     }), [
         clients, orders, inventory, quotes, contracts, technicians, projects, projectActivities,
         products, invoices, appointments, conversations, messages,
         addClient, updateClient, deleteClient, authenticateClient, addOrder, updateOrder, deleteOrder, deleteOrders,
         addInventoryItem, updateInventoryItem, deleteInventoryItem, addQuote, updateQuote, deleteQuote, saveQuoteSignature,
         addContract, updateContract, deleteContract, addTechnician, updateTechnician, deleteTechnician,
-        authenticateTechnician, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
+        authenticateTechnician, checkUsernameAvailability, addProject, updateProject, archiveProject, unarchiveProject, deleteProject,
         addProjectActivity, getProjectActivities, linkOrderToProject, unlinkOrderFromProject, setOnNewOrder, setOnNewMessage,
         sendMessage, getOrCreateConversation, uploadChatFile, uploadFile, generateMonthlyInvoices,
-        companyProfile, updateCompanyProfile, addAppointment, updateAppointment, deleteAppointment, mapQuoteFromDB
+        companyProfile, updateCompanyProfile, addAppointment, updateAppointment, deleteAppointment, mapQuoteFromDB,
+        addInvoice
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

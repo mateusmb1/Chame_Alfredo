@@ -16,7 +16,7 @@ interface ProjectFormProps {
 
 const ProjectForm: React.FC<ProjectFormProps> = ({ project, clients, technicians, orders, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
-    title: project?.title || '',
+    name: project?.name || '',
     description: project?.description || '',
     type: project?.type || 'instalacao',
     status: project?.status || 'planejamento',
@@ -26,9 +26,9 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, clients, technicians
     endDate: project?.endDate || '',
     budget: project?.budget || 0,
     progress: project?.progress || 0,
-    managerId: project?.managerId || '',
-    managerName: project?.managerName || '',
-    teamIds: project?.teamIds || [],
+    responsibleId: project?.responsibleId || '',
+    responsibleName: project?.responsibleName || '',
+    teamIds: project?.team?.map(m => m.technicianId) || [] as string[],
     team: project?.team || [],
     relatedOrders: project?.relatedOrders || [],
     documents: project?.documents || [],
@@ -36,7 +36,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, clients, technicians
   });
 
   const [selectedClient, setSelectedClient] = useState<string>(formData.clientId);
-  const [selectedManager, setSelectedManager] = useState<string>(formData.managerId);
+  const [selectedManager, setSelectedManager] = useState<string>(formData.responsibleId);
   const [selectedTeam, setSelectedTeam] = useState<string[]>(formData.teamIds);
 
   useEffect(() => {
@@ -58,20 +58,41 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, clients, technicians
       if (manager) {
         setFormData(prev => ({
           ...prev,
-          managerId: manager.id,
-          managerName: manager.name
+          responsibleId: manager.id,
+          responsibleName: manager.name
         }));
       }
     }
   }, [selectedManager, technicians]);
 
   useEffect(() => {
-    setFormData(prev => ({ ...prev, teamIds: selectedTeam }));
-  }, [selectedTeam]);
+    const updatedTeam = selectedTeam.map(techId => {
+      const existing = project?.team?.find(m => m.technicianId === techId);
+      if (existing) return existing;
+
+      const tech = technicians.find(t => t.id === techId);
+      return {
+        technicianId: techId,
+        name: tech?.name || 'Técnico',
+        role: 'tecnico' as const,
+        allocatedHours: 0,
+        actualHours: 0,
+        status: 'ativo' as const,
+        joinedAt: new Date().toISOString()
+      };
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      teamIds: selectedTeam,
+      team: updatedTeam
+    }));
+  }, [selectedTeam, technicians, project]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    const { teamIds, ...projectData } = formData;
+    onSave(projectData);
   };
 
   const handleInputChange = (field: keyof typeof formData, value: any) => {
@@ -111,8 +132,8 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, clients, technicians
               <input
                 type="text"
                 required
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Ex: Instalação CFTV Condomínio"
               />

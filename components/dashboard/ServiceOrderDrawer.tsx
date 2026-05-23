@@ -212,7 +212,18 @@ const ServiceOrderDrawer: React.FC<ServiceOrderDrawerProps> = ({ open, orderId, 
                             onItemsChange={setOrderItems}
                             inventory={inventory}
                             productsServices={[]}
-                            onAddNewProduct={(p) => addInventoryItem(p)}
+                            onAddNewProduct={(p) => addInventoryItem({
+                                name: p.name || '',
+                                sku: p.sku || '',
+                                quantity: p.quantity ?? 0,
+                                minQuantity: p.minQuantity ?? 0,
+                                unit: p.unit || 'un',
+                                category: p.category || 'Geral',
+                                location: p.location || '',
+                                price: p.price ?? 0,
+                                supplier: p.supplier || '',
+                                lastRestockDate: p.lastRestockDate || new Date().toISOString()
+                            })}
                         />
                     </div>
                 </form>

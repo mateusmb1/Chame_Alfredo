@@ -108,9 +108,7 @@ export default function InvoiceForm() {
         observations
       };
 
-      // In a real scenario, addInvoice would be in AppContext
-      // For this demo, let's pretend and show success
-      // await addInvoice(invoiceData);
+      await addInvoice(invoiceData);
 
       setShowSuccessModal(true);
     } catch (error) {

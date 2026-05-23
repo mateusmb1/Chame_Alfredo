@@ -213,7 +213,7 @@ const ServiceOrderReport: React.FC<ServiceOrderReportProps> = ({ order, client }
                         </tr>
                     </tbody>
                 </table>
-                <div className="mt-2 text-[9px] text-gray-400">{companyProfile?.name || 'Alfredo'}</div>
+                <div className="mt-2 text-[9px] text-gray-400">{companyProfile?.company_name || 'Alfredo'}</div>
             </div>
 
             <style>{`

@@ -7,7 +7,7 @@ interface WidgetCardProps {
     subtitle?: string;
     actions?: ReactNode;
     scroll?: boolean;
-    span?: 4 | 6 | 12;
+    span?: 4 | 6 | 8 | 12;
     children: ReactNode;
 }
 
@@ -22,6 +22,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
     const spanClasses = {
         4: 'lg:col-span-4',
         6: 'lg:col-span-6',
+        8: 'lg:col-span-8',
         12: 'lg:col-span-12',
     };
 

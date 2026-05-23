@@ -6,7 +6,7 @@ export interface Technician {
   username: string;
   password: string;
   specialization: string[];
-  status: 'ativo' | 'inativo';
+  status: 'ativo' | 'inativo' | 'em_servico';
   currentProjects?: string[];
   allocatedHoursThisMonth: number;
   createdAt: string;

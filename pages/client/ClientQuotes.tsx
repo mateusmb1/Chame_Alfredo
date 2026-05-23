@@ -109,7 +109,6 @@ export default function ClientQuotes() {
                     </p>
                     <SignaturePad
                         onSave={onSaveSignature}
-                        onCancel={() => setIsSignatureModalOpen(false)}
                     />
                 </div>
             </Modal>
