@@ -51,33 +51,35 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
     }
 
     return (
-        <div className="group flex flex-col h-full p-8 rounded-2xl bg-white border border-gray-100 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 hover:border-t-4 hover:border-t-[#F97316]">
-            <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#F97316] transition-colors duration-300">
-                <Icon className="w-8 h-8 text-[#F97316] group-hover:text-white transition-colors duration-300" />
+        <div className="group flex flex-col h-full p-8 rounded-3xl bg-white border border-slate-100 shadow-md shadow-slate-100 hover:shadow-xl hover:shadow-slate-200/50 hover:border-[#F97316]/40 transition-all duration-300 transform hover:-translate-y-1.5">
+            <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#F97316] transition-all duration-300 shadow-inner">
+                <Icon className="w-7 h-7 text-[#F97316] group-hover:text-white transition-colors duration-300" />
             </div>
 
-            <h3 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-[#F97316] transition-colors">
+            <h3 className="text-xl font-black text-slate-800 mb-3 group-hover:text-[#F97316] transition-colors leading-tight">
                 {title}
             </h3>
 
-            <p className="text-gray-600 text-sm mb-6 leading-relaxed flex-grow">
+            <p className="text-slate-500 text-sm mb-6 leading-relaxed flex-grow">
                 {description}
             </p>
 
-            <ul className="space-y-3 mb-8">
+            <ul className="space-y-3.5 mb-8 border-t border-slate-50 pt-5">
                 {benefits.map((benefit, index) => (
-                    <li key={index} className="flex items-start text-sm text-gray-700">
-                        <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                        <span>{benefit}</span>
+                    <li key={index} className="flex items-start text-sm text-slate-600">
+                        <div className="mr-3 mt-0.5 bg-emerald-50 rounded-full p-0.5 flex-shrink-0">
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        </div>
+                        <span className="leading-tight font-medium">{benefit}</span>
                     </li>
                 ))}
             </ul>
 
             <button
                 onClick={onCtaClick}
-                className="mt-auto w-full py-3 px-4 rounded-xl border-2 border-slate-100 font-bold text-slate-600 hover:border-[#F97316] hover:text-[#F97316] hover:bg-orange-50 transition-all flex items-center justify-center group-hover:shadow-md"
+                className="mt-auto w-full py-3.5 px-6 rounded-full border border-slate-200 text-slate-700 bg-slate-50 group-hover:bg-[#00A859] group-hover:text-white group-hover:border-transparent font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm"
             >
-                {ctaText} <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                {ctaText} <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </button>
         </div>
     );

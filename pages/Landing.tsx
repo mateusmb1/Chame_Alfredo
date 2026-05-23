@@ -47,9 +47,35 @@ const Landing: React.FC = () => {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const [leadModalOpen, setLeadModalOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>('produtos')
+  const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(null)
   
   // Interactive product browser category state
   const [activeCategory, setActiveCategory] = useState<string>('seguranca')
+
+  const handleMouseEnter = (menu: string) => {
+    if (dropdownTimeout) {
+      clearTimeout(dropdownTimeout)
+      setDropdownTimeout(null)
+    }
+    setActiveDropdown(menu)
+  }
+
+  const handleMouseLeave = () => {
+    if (dropdownTimeout) {
+      clearTimeout(dropdownTimeout)
+    }
+    const timer = setTimeout(() => {
+      setActiveDropdown(null)
+    }, 350)
+    setDropdownTimeout(timer)
+  }
+
+  const handleDropdownMouseEnter = () => {
+    if (dropdownTimeout) {
+      clearTimeout(dropdownTimeout)
+      setDropdownTimeout(null)
+    }
+  }
 
   // Form state
   const [formData, setFormData] = useState({
@@ -221,116 +247,113 @@ const Landing: React.FC = () => {
     switch (activeCategory) {
       case 'seguranca':
         return [
-          { title: 'Acessórios', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=150&q=80', description: 'Cabos, baluns e conectores profissionais para CFTV de alto padrão.' },
-          { title: 'Alarmes', image: 'https://images.unsplash.com/photo-1558089687-f282ffcbd1d5?auto=format&fit=crop&w=150&q=80', description: 'Centrais de alarme de intrusão inteligentes com monitoramento por app.' },
-          { title: 'Armazenamento', image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=150&q=80', description: 'HDs homologados da linha WD Purple para gravação ininterrupta.' },
-          { title: 'Câmeras', image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=150&q=80', description: 'Câmeras analógicas HD, IP e Wi-Fi inteligentes de alta resolução.' },
-          { title: 'Comunicação condominial', image: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=150&q=80', description: 'Centrais de interfonia e terminais dedicados para portarias.' },
-          { title: 'Controles de acesso corporativo', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=150&q=80', description: 'Leitores, controladoras de portas e catracas de alto fluxo.' },
-          { title: 'Fechaduras', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=150&q=80', description: 'Fechaduras digitais, eletromagnéticas, solenoides e elétricas.' },
-          { title: 'Decodificadores de vídeo', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80', description: 'Displays e matrizes profissionais para centrais de monitoramento.' },
-          { title: 'Gravadores digitais de vídeo', image: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=150&q=80', description: 'DVRs e NVRs inteligentes Multi-HD com detecção facial por IA.' },
-          { title: 'Incêndio', image: 'https://images.unsplash.com/photo-1558089687-f282ffcbd1d5?auto=format&fit=crop&w=150&q=80', description: 'Sistemas de detecção e alarme de incêndio endereçáveis de precisão.' },
-          { title: 'Interfonia', image: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=150&q=80', description: 'Videoporteiros e porteiros eletrônicos residenciais e coletivos.' },
-          { title: 'Monitoramento veicular', image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=150&q=80', description: 'Gravadores digitais móveis (MDVR) e câmeras veiculares robustas.' },
-          { title: 'Sensores', image: 'https://images.unsplash.com/photo-1558089687-f282ffcbd1d5?auto=format&fit=crop&w=150&q=80', description: 'Sensores de presença infravermelhos (IVA, IVP) e barreiras.' },
-          { title: 'Sinalização de emergência', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=150&q=80', description: 'Blocos e luminárias autônomas de LED para saídas de emergência.' },
-          { title: 'Softwares e aplicativos', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80', description: 'Aplicativos integrados para visualização de câmeras em tempo real.' }
+          { title: 'Câmeras CFTV', image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=300&q=80', description: 'Câmeras analógicas HD, IP e Wi-Fi inteligentes de alta resolução.' },
+          { title: 'Gravadores DVR/NVR', image: 'https://images.unsplash.com/photo-1531746790731-6c087fecd65a?auto=format&fit=crop&w=300&q=80', description: 'DVRs e NVRs inteligentes Multi-HD com detecção facial por IA.' },
+          { title: 'Alarmes', image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=300&q=80', description: 'Centrais de alarme de intrusão inteligentes com monitoramento por app.' },
+          { title: 'Controle de Acesso', image: 'https://images.unsplash.com/photo-1580983218765-f663bec55b0a?auto=format&fit=crop&w=300&q=80', description: 'Leitores, controladoras de portas e catracas de alto fluxo.' },
+          { title: 'Fechaduras Digitais', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=300&q=80', description: 'Fechaduras digitais, eletromagnéticas e solenoides.' },
+          { title: 'Interfonia', image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=300&q=80', description: 'Videoporteiros e porteiros eletrônicos residenciais e coletivos.' },
+          { title: 'Sensores', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=300&q=80', description: 'Sensores de presença infravermelhos (IVA, IVP) e barreiras.' },
+          { title: 'Detecção de Incêndio', image: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=300&q=80', description: 'Sistemas de detecção e alarme de incêndio endereçáveis.' },
+          { title: 'Monitoramento Veicular', image: 'https://images.unsplash.com/photo-1611516491426-03025e6043c8?auto=format&fit=crop&w=300&q=80', description: 'Gravadores digitais móveis (MDVR) e câmeras veiculares robustas.' },
+          { title: 'Armazenamento', image: 'https://images.unsplash.com/photo-1591405351990-4726e331f141?auto=format&fit=crop&w=300&q=80', description: 'HDs da linha WD Purple para gravação ininterrupta 24/7.' },
+          { title: 'Sinalização Emergência', image: 'https://images.unsplash.com/photo-1567449303078-57ad995bd329?auto=format&fit=crop&w=300&q=80', description: 'Blocos e luminárias autônomas de LED para saídas de emergência.' },
+          { title: 'Softwares e Apps', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=300&q=80', description: 'Apps integrados para visualização de câmeras em tempo real.' }
         ]
       case 'redes':
         return [
-          { title: 'Roteadores', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=150&q=80', description: 'Roteadores Wi-Fi 5/6 residenciais e sistemas Twibi Mesh velozes.' },
-          { title: 'Switches', image: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=150&q=80', description: 'Switches gerenciáveis e não-gerenciáveis PoE de alta performance.' },
-          { title: 'Wireless', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80', description: 'Access points corporativos, repetidores e adaptadores de sinal estáveis.' },
-          { title: 'Soluções Ópticas', image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=150&q=80', description: 'Equipamentos GPON/EPON de fibra óptica e ONUs de alta velocidade.' },
-          { title: 'Injetores PoE', image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=150&q=80', description: 'Fontes e injetores PoE para alimentação ativa de câmeras e rádios.' },
-          { title: 'Cabos de Rede', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=150&q=80', description: 'Cabeamento estruturado CAT5e e CAT6 homologado de alta blindagem.' },
-          { title: 'Rádios Outdoor', image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=150&q=80', description: 'Rádios de alta potência para enlaces ponto a ponto de longa distância.' }
+          { title: 'Roteadores Wi-Fi', image: 'https://images.unsplash.com/photo-1606904825846-647eb07f5be2?auto=format&fit=crop&w=300&q=80', description: 'Roteadores Wi-Fi 5/6 residenciais e sistemas Mesh velozes.' },
+          { title: 'Switches PoE', image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=300&q=80', description: 'Switches gerenciáveis e não-gerenciáveis PoE de alta performance.' },
+          { title: 'Access Points', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=300&q=80', description: 'Access points corporativos, repetidores e adaptadores de sinal.' },
+          { title: 'Fibra Óptica GPON', image: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=300&q=80', description: 'Equipamentos GPON/EPON de fibra óptica e ONUs de alta velocidade.' },
+          { title: 'Injetores PoE', image: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=300&q=80', description: 'Fontes e injetores PoE para alimentação de câmeras e rádios.' },
+          { title: 'Cabos de Rede', image: 'https://images.unsplash.com/photo-1601524909162-be87252be298?auto=format&fit=crop&w=300&q=80', description: 'Cabeamento estruturado CAT5e e CAT6 homologado de alta blindagem.' },
+          { title: 'Rádios Outdoor', image: 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?auto=format&fit=crop&w=300&q=80', description: 'Rádios de alta potência para enlaces ponto a ponto de longa distância.' }
         ]
       case 'comunicacao':
         return [
-          { title: 'Central Telefônica', image: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=150&q=80', description: 'Centrais PABX analógicas, digitais e IP para integração em escritórios.' },
-          { title: 'Telefones', image: 'https://images.unsplash.com/photo-1522009031230-c5e378dad548?auto=format&fit=crop&w=150&q=80', description: 'Aparelhos com fio, sem fio (DECT), telefones IP e headsets.' },
-          { title: 'Porteiros Residenciais', image: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=150&q=80', description: 'Interfones clássicos e porteiros eletrônicos residenciais duráveis.' },
-          { title: 'Radiocomunicação', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=150&q=80', description: 'Rádios analógicos e digitais de longo alcance para equipes e eventos.' },
-          { title: 'Acessórios Telefônicos', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80', description: 'Placas de ramais adicionais, interfaces GSM e protetores de linha.' }
+          { title: 'Central Telefônica', image: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=300&q=80', description: 'Centrais PABX analógicas, digitais e IP para integração em escritórios.' },
+          { title: 'Telefones', image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=300&q=80', description: 'Aparelhos com fio, sem fio (DECT), telefones IP e headsets.' },
+          { title: 'Porteiros Residenciais', image: 'https://images.unsplash.com/photo-1562408590-e32931084e23?auto=format&fit=crop&w=300&q=80', description: 'Interfones clássicos e porteiros eletrônicos residenciais duráveis.' },
+          { title: 'Radiocomunicação', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=300&q=80', description: 'Rádios analógicos e digitais de longo alcance para equipes e eventos.' },
+          { title: 'Acessórios Telefônicos', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=300&q=80', description: 'Placas de ramais adicionais, interfaces GSM e protetores de linha.' }
         ]
       case 'acesso':
         return [
-          { title: 'Controladores Biométricos', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=150&q=80', description: 'Controladores autônomos por impressão digital, senha e proximidade.' },
-          { title: 'Fechaduras Digitais', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=150&q=80', description: 'Fechaduras de sobrepor e embutir com senha, tag, biometria e app.' },
-          { title: 'Leitores Faciais', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=150&q=80', description: 'Terminais de reconhecimento facial de alta precisão com inteligência artificial.' },
-          { title: 'Catracas e Barreiras', image: 'https://images.unsplash.com/photo-1590674899484-d5640e854abe?auto=format&fit=crop&w=150&q=80', description: 'Catracas de acesso robustas e cancelas para recepções e garagens.' },
-          { title: 'Tags e Cartões', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=150&q=80', description: 'Chaveiros e cartões de proximidade RFID 125kHz e Mifare 13.56MHz.' },
-          { title: 'Fechaduras Eletroímã', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=150&q=80', description: 'Eletroímãs de alta força (150kg, 300kg, 500kg) e suportes em alumínio.' },
-          { title: 'Molas Aéreas', image: 'https://images.unsplash.com/photo-1530026405186-ed1ea0ac7a63?auto=format&fit=crop&w=150&q=80', description: 'Molas hidráulicas aéreas de fechamento controlado para portas.' },
-          { title: 'Botoeiras e Saídas', image: 'https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?auto=format&fit=crop&w=150&q=80', description: 'Botões de saída em inox com acionamento mecânico, touch ou sem toque.' }
+          { title: 'Controladores Biométricos', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80', description: 'Controladores autônomos por impressão digital, senha e proximidade.' },
+          { title: 'Fechaduras Digitais', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=300&q=80', description: 'Fechaduras de sobrepor e embutir com senha, tag, biometria e app.' },
+          { title: 'Leitores Faciais', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80', description: 'Terminais de reconhecimento facial de alta precisão com inteligência artificial.' },
+          { title: 'Catracas e Barreiras', image: 'https://images.unsplash.com/photo-1590674899484-d5640e854abe?auto=format&fit=crop&w=300&q=80', description: 'Catracas de acesso robustas e cancelas para recepções e garagens.' },
+          { title: 'Tags e Cartões', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=300&q=80', description: 'Chaveiros e cartões de proximidade RFID 125kHz e Mifare 13.56MHz.' },
+          { title: 'Fechaduras Eletroímã', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=300&q=80', description: 'Eletroímãs de alta força (150kg, 300kg, 500kg) e suportes em alumínio.' },
+          { title: 'Molas Aéreas', image: 'https://images.unsplash.com/photo-1530026405186-ed1ea0ac7a63?auto=format&fit=crop&w=300&q=80', description: 'Molas hidráulicas aéreas de fechamento controlado para portas.' },
+          { title: 'Botoeiras e Saídas', image: 'https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?auto=format&fit=crop&w=300&q=80', description: 'Botões de saída em inox com acionamento mecânico, touch ou sem toque.' }
         ]
       case 'energia':
         return [
-          { title: 'Nobreaks', image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=150&q=80', description: 'Fontes ininterruptas de energia para servidores, portões e CFTV.' },
-          { title: 'Protetores de Surto', image: 'https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?auto=format&fit=crop&w=150&q=80', description: 'Dispositivos de proteção contra surtos elétricos induzidos por raios.' },
-          { title: 'Fontes de Alimentação', image: 'https://images.unsplash.com/photo-1530026405186-ed1ea0ac7a63?auto=format&fit=crop&w=150&q=80', description: 'Fontes colmeia reguladas de 12V e 24V para câmeras e fechaduras.' },
-          { title: 'Baterias Estacionárias', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=150&q=80', description: 'Baterias estacionárias seladas de chumbo-ácido de alta durabilidade.' },
-          { title: 'Carregadores Inteligentes', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=150&q=80', description: 'Carregadores de bateria automáticos e fontes nobreak inteligentes.' }
+          { title: 'Nobreaks UPS', image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80', description: 'Fontes ininterruptas de energia para servidores, portões e CFTV.' },
+          { title: 'Protetores de Surto', image: 'https://images.unsplash.com/photo-1473968512647-3e447244af8f?auto=format&fit=crop&w=300&q=80', description: 'Proteção contra surtos elétricos induzidos por raios e descargas.' },
+          { title: 'Fontes de Alimentação', image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=300&q=80', description: 'Fontes colmeia reguladas de 12V e 24V para câmeras e fechaduras.' },
+          { title: 'Baterias Estacionárias', image: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=300&q=80', description: 'Baterias seladas de chumbo-ácido VRLA de alta durabilidade.' },
+          { title: 'Carregadores Inteligentes', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=300&q=80', description: 'Carregadores automáticos de bateria e fontes nobreak inteligentes.' }
         ]
       case 'energia_solar':
         return [
-          { title: 'Painéis Solares', image: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=150&q=80', description: 'Módulos fotovoltaicos de silício monocristalino de alta eficiência.' },
-          { title: 'Inversores Off-Grid', image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&w=150&q=80', description: 'Inversores senoidais puros para sistemas isolados de energia solar.' },
-          { title: 'Inversores Grid-Tie', image: 'https://images.unsplash.com/photo-1613665813446-82a78c468a1d?auto=format&fit=crop&w=150&q=80', description: 'Inversores para conexão e sincronização com a rede elétrica da concessionária.' },
-          { title: 'Controladores de Carga', image: 'https://images.unsplash.com/photo-1548613053-220a29df10d1?auto=format&fit=crop&w=150&q=80', description: 'Gerenciadores inteligentes de carga PWM e MPPT para baterias.' },
-          { title: 'Bombas Solares', image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=150&q=80', description: 'Bombas d\'água alimentadas diretamente por energia solar fotovoltaica.' },
-          { title: 'Estruturas de Fixação', image: 'https://images.unsplash.com/photo-1530026405186-ed1ea0ac7a63?auto=format&fit=crop&w=150&q=80', description: 'Suportes de alumínio e fixadores de alta resistência para telhados e solo.' }
+          { title: 'Painéis Solares', image: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=300&q=80', description: 'Módulos fotovoltaicos monocristalinos de alta eficiência energética.' },
+          { title: 'Inversores Off-Grid', image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&w=300&q=80', description: 'Inversores senoidais puros para sistemas isolados de energia solar.' },
+          { title: 'Inversores Grid-Tie', image: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=300&q=80', description: 'Inversores para conexão com a rede elétrica da concessionária.' },
+          { title: 'Controladores MPPT', image: 'https://images.unsplash.com/photo-1548613053-220a29df10d1?auto=format&fit=crop&w=300&q=80', description: 'Gerenciadores inteligentes de carga PWM e MPPT para baterias.' },
+          { title: 'Bombas Solares', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=300&q=80', description: 'Bombas d\'água alimentadas diretamente por energia solar fotovoltaica.' },
+          { title: 'Estruturas de Fixação', image: 'https://images.unsplash.com/photo-1608526689788-e4a6d9082dbe?auto=format&fit=crop&w=300&q=80', description: 'Suportes em alumínio e fixadores de alta resistência para telhados.' }
         ]
       case 'casa_inteligente':
         return [
-          { title: 'Lâmpadas Smart', image: 'https://images.unsplash.com/photo-1550525261-267952ad40d9?auto=format&fit=crop&w=150&q=80', description: 'Lâmpadas LED RGB inteligentes controladas por aplicativo ou voz.' },
-          { title: 'Interruptores Smart', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=150&q=80', description: 'Interruptores touch Wi-Fi para automação flexível de iluminação.' },
-          { title: 'Plugues e Tomadas', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=150&q=80', description: 'Plugues de tomada inteligentes para agendamentos e monitoramento de consumo.' },
-          { title: 'Sensores Wi-Fi', image: 'https://images.unsplash.com/photo-1558089687-f282ffcbd1d5?auto=format&fit=crop&w=150&q=80', description: 'Sensores de abertura de portas e janelas sem fio integrados por app.' },
-          { title: 'Fechaduras Inteligentes', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=150&q=80', description: 'Fechaduras digitais Wi-Fi com gerenciamento de acessos remoto.' },
-          { title: 'Controles Universais', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80', description: 'Centrais de controle infravermelho Wi-Fi para automatizar ar e TV.' }
+          { title: 'Lâmpadas Smart', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80', description: 'Lâmpadas LED RGB inteligentes controladas por aplicativo ou voz.' },
+          { title: 'Interruptores Smart', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=300&q=80', description: 'Interruptores touch Wi-Fi para automação flexível de iluminação.' },
+          { title: 'Plugues Inteligentes', image: 'https://images.unsplash.com/photo-1556075798-4825dfaaf498?auto=format&fit=crop&w=300&q=80', description: 'Plugues de tomada smart para agendamentos e monitoramento de energia.' },
+          { title: 'Sensores de Abertura', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=300&q=80', description: 'Sensores de abertura de portas e janelas sem fio integrados por app.' },
+          { title: 'Fechaduras Smart', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=300&q=80', description: 'Fechaduras digitais Wi-Fi com gerenciamento de acessos remoto.' },
+          { title: 'Controles Universais', image: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=300&q=80', description: 'Centrais de controle infravermelho Wi-Fi para automatizar ar e TV.' }
         ]
       case 'residenciais':
         return [
-          { title: 'Videoporteiro Wi-Fi', image: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=150&q=80', description: 'Atendimento de chamadas da entrada e liberação de portão pelo celular.' },
-          { title: 'Porteiro Eletrônico', image: 'https://images.unsplash.com/photo-1522009031230-c5e378dad548?auto=format&fit=crop&w=150&q=80', description: 'Interfones clássicos e robustos para comunicação residencial rápida.' },
-          { title: 'Motores para Portão', image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=150&q=80', description: 'Motores rápidos e seguros de marcas líderes como Garen, Rossi e PPA.' },
-          { title: 'Câmeras Wi-Fi Internas', image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=150&q=80', description: 'Monitoramento prático de pets, crianças ou ambientes internos com áudio.' },
-          { title: 'Fechaduras de Embutir', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=150&q=80', description: 'Fechaduras mecânicas de segurança e linguetas reforçadas para portas.' }
+          { title: 'Videoporteiro Wi-Fi', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=300&q=80', description: 'Atendimento de chamadas e liberação de portão pelo celular.' },
+          { title: 'Porteiro Eletrônico', image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=300&q=80', description: 'Interfones clássicos e robustos para comunicação residencial.' },
+          { title: 'Motores para Portão', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=300&q=80', description: 'Motores rápidos e seguros de marcas como Garen, Rossi e PPA.' },
+          { title: 'Câmeras Wi-Fi', image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=300&q=80', description: 'Monitoramento de pets, crianças ou ambientes internos com áudio.' },
+          { title: 'Fechaduras de Embutir', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=300&q=80', description: 'Fechaduras mecânicas de segurança e linguetas reforçadas.' }
         ]
       case 'pme':
         return [
-          { title: 'Sistemas de Câmeras', image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=150&q=80', description: 'CFTV completo com alta resolução e acesso remoto para lojas e escritórios.' },
-          { title: 'Controle de Ponto', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=150&q=80', description: 'Terminais de ponto homologados por biometria e tag para funcionários.' },
-          { title: 'Centrais PABX', image: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=150&q=80', description: 'Soluções de telefonia integrada para comunicação fluida entre ramais.' },
-          { title: 'Switches Comerciais', image: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=150&q=80', description: 'Switches PoE robustos para alimentação estável de telefones IP e CFTV.' },
-          { title: 'Alarmes de Intrusão', image: 'https://images.unsplash.com/photo-1558089687-f282ffcbd1d5?auto=format&fit=crop&w=150&q=80', description: 'Centrais monitoráveis com sirene externa de alto impacto sonoro.' }
+          { title: 'Sistemas de Câmeras', image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=300&q=80', description: 'CFTV completo com alta resolução e acesso remoto para lojas e escritórios.' },
+          { title: 'Controle de Ponto', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80', description: 'Terminais de ponto homologados por biometria e tag para funcionários.' },
+          { title: 'Centrais PABX', image: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=300&q=80', description: 'Soluções de telefonia integrada para comunicação fluida entre ramais.' },
+          { title: 'Switches Comerciais', image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=300&q=80', description: 'Switches PoE robustos para alimentação estável de telefones IP e CFTV.' },
+          { title: 'Alarmes de Intrusão', image: 'https://images.unsplash.com/photo-1558089687-f282ffcbd1d5?auto=format&fit=crop&w=300&q=80', description: 'Centrais monitoráveis com sirene externa de alto impacto sonoro.' }
         ]
       case 'grandes_empresas':
         return [
-          { title: 'Controladoras IP', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=150&q=80', description: 'Sistemas integrados para gerenciar acessos de milhares de usuários em tempo real.' },
-          { title: 'Câmeras LPR', image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=150&q=80', description: 'Leitura de placas automática por IA (OCR) para frotas e condomínios.' },
-          { title: 'Servidores de Vídeo', image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=150&q=80', description: 'Servidores dedicados e NVRs de grande capacidade para videomonitoramento.' },
-          { title: 'Sistemas de Incêndio', image: 'https://images.unsplash.com/photo-1558089687-f282ffcbd1d5?auto=format&fit=crop&w=150&q=80', description: 'Centrais de incêndio endereçáveis de alta tecnologia para galpões e edifícios.' },
-          { title: 'Switches Core L3', image: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=150&q=80', description: 'Infraestrutura de rede core de altíssima velocidade e gerência avançada.' }
+          { title: 'Controladoras IP', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80', description: 'Sistemas integrados para gerenciar acessos de milhares de usuários em tempo real.' },
+          { title: 'Câmeras LPR', image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80', description: 'Leitura de placas automática por IA (OCR) para frotas e condomínios.' },
+          { title: 'Servidores de Vídeo', image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=300&q=80', description: 'Servidores dedicados e NVRs de grande capacidade para videomonitoramento.' },
+          { title: 'Sistemas de Incêndio', image: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=300&q=80', description: 'Centrais de incêndio endereçáveis de alta tecnologia para galpões e edifícios.' },
+          { title: 'Switches Core L3', image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=300&q=80', description: 'Infraestrutura de rede core de altíssima velocidade e gerência avançada.' }
         ]
       case 'provedores':
         return [
-          { title: 'ONUs GPON', image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=150&q=80', description: 'Terminais ópticos Gigabit de cliente final para internet ultra veloz.' },
-          { title: 'OLTs Industriais', image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=150&q=80', description: 'Concentradores ópticos para gerência avançada de centenas de portas de fibra.' },
-          { title: 'Roteadores Gigabit', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=150&q=80', description: 'Roteadores corporativos de alta throughput e Wi-Fi dual-band robustos.' },
-          { title: 'Cabos de Fibra', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=150&q=80', description: 'Cabos aéreos ópticos AS/ASU homologados com alma de aço de sustentação.' },
-          { title: 'Ferragens e Alças', image: 'https://images.unsplash.com/photo-1530026405186-ed1ea0ac7a63?auto=format&fit=crop&w=150&q=80', description: 'Ferragens de fixação em postes, alças de ancoragem e roldanas.' }
+          { title: 'ONUs GPON', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=300&q=80', description: 'Terminais ópticos Gigabit de cliente final para internet ultra veloz.' },
+          { title: 'OLTs Industriais', image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=300&q=80', description: 'Concentradores ópticos para gerência avançada de centenas de portas de fibra.' },
+          { title: 'Roteadores Gigabit', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=300&q=80', description: 'Roteadores corporativos de alta throughput e Wi-Fi dual-band robustos.' },
+          { title: 'Cabos de Fibra', image: 'https://images.unsplash.com/photo-1601524909162-be87252be298?auto=format&fit=crop&w=300&q=80', description: 'Cabos aéreos ópticos AS/ASU homologados com alma de aço de sustentação.' },
+          { title: 'Ferragens e Alças', image: 'https://images.unsplash.com/photo-1530026405186-ed1ea0ac7a63?auto=format&fit=crop&w=300&q=80', description: 'Ferragens de fixação em postes, alças de ancoragem e roldanas.' }
         ]
       case 'transportes':
         return [
-          { title: 'MDVR Automotivo', image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=150&q=80', description: 'Gravador de vídeo automotivo blindado contra alta vibração e poeira.' },
-          { title: 'Câmeras de Fadiga', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=150&q=80', description: 'Algoritmos de IA integrados para alertar sobre sono e distração de motoristas.' },
-          { title: 'Câmeras de Ré Rugosas', image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=150&q=80', description: 'Câmeras de alta vedação IP67/IP69K contra água e poeira para caminhões.' },
-          { title: 'Monitores de Cabine', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80', description: 'Telas robustas coloridas de alta resolução para visualização do painel.' },
-          { title: 'Cabos de Aviação M12', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=150&q=80', description: 'Conectores circulares blindados com trava rosqueável contra trepidação severa.' }
+          { title: 'MDVR Automotivo', image: 'https://images.unsplash.com/photo-1508974239320-0a029497e820?auto=format&fit=crop&w=300&q=80', description: 'Gravador de vídeo automotivo blindado contra alta vibração e poeira.' },
+          { title: 'Câmeras de Fadiga', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80', description: 'Algoritmos de IA integrados para alertar sobre sono e distração de motoristas.' },
+          { title: 'Câmeras de Ré Rugosas', image: 'https://images.unsplash.com/photo-1508974239320-0a029497e820?auto=format&fit=crop&w=300&q=80', description: 'Câmeras de alta vedação IP67/IP69K contra água e poeira para caminhões.' },
+          { title: 'Monitores de Cabine', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=300&q=80', description: 'Telas robustas coloridas de alta resolução para visualização do painel.' },
+          { title: 'Cabos de Aviação M12', image: 'https://images.unsplash.com/photo-1601524909162-be87252be298?auto=format&fit=crop&w=300&q=80', description: 'Conectores circulares blindados com trava rosqueável contra trepidação severa.' }
         ]
       default:
         return []
@@ -370,15 +393,21 @@ const Landing: React.FC = () => {
           <nav className="hidden md:flex space-x-6 font-semibold text-slate-600 text-sm">
             {/* 1. Produtos e Soluções - REBUILT TO MATCH PORTAL MOCKUP EXACTLY */}
             <div 
-              className="py-2"
-              onMouseEnter={() => setActiveDropdown('produtos')}
-              onMouseLeave={() => setActiveDropdown(null)}
+              className="relative py-2"
+              onMouseEnter={() => handleMouseEnter('produtos')}
+              onMouseLeave={handleMouseLeave}
             >
-              <button className="flex items-center gap-1 hover:text-[#F97316] transition-colors font-semibold text-slate-700 text-sm focus:outline-none">
-                Produtos e Soluções <ChevronDown className="w-3.5 h-3.5 animate-pulse" />
+              <button className={`flex items-center gap-1 transition-colors font-semibold text-sm focus:outline-none ${activeDropdown === 'produtos' ? 'text-[#F97316]' : 'text-slate-700 hover:text-[#F97316]'}`}>
+                Produtos e Soluções <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'produtos' ? 'rotate-180' : ''}`} />
               </button>
               {activeDropdown === 'produtos' && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50">
+                <div 
+                  className="absolute top-full left-1/2 -translate-x-1/2 z-50"
+                  onMouseEnter={handleDropdownMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  {/* Invisible bridge to prevent gap between button and dropdown */}
+                  <div className="h-2 w-full" />
                   <div className="w-[980px] bg-white rounded-[32px] shadow-2xl shadow-slate-200/80 border border-slate-150 animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden flex">
                     {/* Left Sidebar Category panel identical to mockup */}
                     <div className="w-1/4 bg-slate-50/80 border-r border-slate-100 p-6 flex flex-col justify-between max-h-[640px] overflow-y-auto custom-scrollbar">
@@ -472,15 +501,20 @@ const Landing: React.FC = () => {
 
             {/* 2. Destaques */}
             <div 
-              className="py-2"
-              onMouseEnter={() => setActiveDropdown('destaques')}
-              onMouseLeave={() => setActiveDropdown(null)}
+              className="relative py-2"
+              onMouseEnter={() => handleMouseEnter('destaques')}
+              onMouseLeave={handleMouseLeave}
             >
-              <button className="flex items-center gap-1 hover:text-[#F97316] transition-colors font-semibold text-slate-700 text-sm focus:outline-none">
-                Destaques <ChevronDown className="w-3.5 h-3.5" />
+              <button className={`flex items-center gap-1 transition-colors font-semibold text-sm focus:outline-none ${activeDropdown === 'destaques' ? 'text-[#F97316]' : 'text-slate-700 hover:text-[#F97316]'}`}>
+                Destaques <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'destaques' ? 'rotate-180' : ''}`} />
               </button>
               {activeDropdown === 'destaques' && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50">
+                <div 
+                  className="absolute top-full left-1/2 -translate-x-1/2 z-50"
+                  onMouseEnter={handleDropdownMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <div className="h-2 w-full" />
                   <div className="w-[760px] bg-white rounded-[32px] shadow-2xl shadow-slate-200/80 border border-slate-100 p-7 animate-in fade-in slide-in-from-top-2 duration-150 grid grid-cols-3 gap-6">
                     <div>
                       <h4 className="font-extrabold text-xs text-[#F97316] uppercase tracking-wider mb-3 pb-1.5 border-b border-orange-50">Urgência & Atendimento</h4>
@@ -538,15 +572,20 @@ const Landing: React.FC = () => {
 
             {/* 3. Onde Encontrar */}
             <div 
-              className="py-2"
-              onMouseEnter={() => setActiveDropdown('onde')}
-              onMouseLeave={() => setActiveDropdown(null)}
+              className="relative py-2"
+              onMouseEnter={() => handleMouseEnter('onde')}
+              onMouseLeave={handleMouseLeave}
             >
-              <button className="flex items-center gap-1 hover:text-[#F97316] transition-colors font-semibold text-slate-700 text-sm focus:outline-none">
-                Onde Encontrar <ChevronDown className="w-3.5 h-3.5" />
+              <button className={`flex items-center gap-1 transition-colors font-semibold text-sm focus:outline-none ${activeDropdown === 'onde' ? 'text-[#F97316]' : 'text-slate-700 hover:text-[#F97316]'}`}>
+                Onde Encontrar <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'onde' ? 'rotate-180' : ''}`} />
               </button>
               {activeDropdown === 'onde' && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50">
+                <div 
+                  className="absolute top-full left-1/2 -translate-x-1/2 z-50"
+                  onMouseEnter={handleDropdownMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <div className="h-2 w-full" />
                   <div className="w-[520px] bg-white rounded-[32px] shadow-2xl shadow-slate-200/80 border border-slate-100 p-6 animate-in fade-in slide-in-from-top-2 duration-150 grid grid-cols-2 gap-6">
                     <div>
                       <h4 className="font-extrabold text-xs text-[#F97316] uppercase tracking-wider mb-3 pb-1 border-b border-orange-50">Recife (Bairros)</h4>
@@ -573,15 +612,20 @@ const Landing: React.FC = () => {
 
             {/* 4. Suporte */}
             <div 
-              className="py-2"
-              onMouseEnter={() => setActiveDropdown('suporte')}
-              onMouseLeave={() => setActiveDropdown(null)}
+              className="relative py-2"
+              onMouseEnter={() => handleMouseEnter('suporte')}
+              onMouseLeave={handleMouseLeave}
             >
-              <button className="flex items-center gap-1 hover:text-[#F97316] transition-colors font-semibold text-slate-700 text-sm focus:outline-none">
-                Suporte <ChevronDown className="w-3.5 h-3.5" />
+              <button className={`flex items-center gap-1 transition-colors font-semibold text-sm focus:outline-none ${activeDropdown === 'suporte' ? 'text-[#F97316]' : 'text-slate-700 hover:text-[#F97316]'}`}>
+                Suporte <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'suporte' ? 'rotate-180' : ''}`} />
               </button>
               {activeDropdown === 'suporte' && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50">
+                <div 
+                  className="absolute top-full left-1/2 -translate-x-1/2 z-50"
+                  onMouseEnter={handleDropdownMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <div className="h-2 w-full" />
                   <div className="w-[460px] bg-white rounded-[32px] shadow-2xl shadow-slate-200/80 border border-slate-100 p-6 animate-in fade-in slide-in-from-top-2 duration-150 grid grid-cols-2 gap-6">
                     <div>
                       <h4 className="font-extrabold text-xs text-[#00A859] uppercase tracking-wider mb-3 pb-1 border-b border-emerald-50">Urgência de Suporte</h4>
@@ -605,15 +649,20 @@ const Landing: React.FC = () => {
 
             {/* 5. Contato */}
             <div 
-              className="py-2"
-              onMouseEnter={() => setActiveDropdown('contato')}
-              onMouseLeave={() => setActiveDropdown(null)}
+              className="relative py-2"
+              onMouseEnter={() => handleMouseEnter('contato')}
+              onMouseLeave={handleMouseLeave}
             >
-              <button className="flex items-center gap-1 hover:text-[#F97316] transition-colors font-semibold text-slate-700 text-sm focus:outline-none">
-                Contato <ChevronDown className="w-3.5 h-3.5" />
+              <button className={`flex items-center gap-1 transition-colors font-semibold text-sm focus:outline-none ${activeDropdown === 'contato' ? 'text-[#F97316]' : 'text-slate-700 hover:text-[#F97316]'}`}>
+                Contato <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'contato' ? 'rotate-180' : ''}`} />
               </button>
               {activeDropdown === 'contato' && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50">
+                <div 
+                  className="absolute top-full left-1/2 -translate-x-1/2 z-50"
+                  onMouseEnter={handleDropdownMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <div className="h-2 w-full" />
                   <div className="w-[440px] bg-white rounded-[32px] shadow-2xl shadow-slate-200/80 border border-slate-100 p-6 animate-in fade-in slide-in-from-top-2 duration-150 grid grid-cols-2 gap-6">
                     <div>
                       <h4 className="font-extrabold text-xs text-[#F97316] uppercase tracking-wider mb-3 pb-1 border-b border-orange-50">Canais de Contato</h4>
@@ -642,15 +691,20 @@ const Landing: React.FC = () => {
 
             {/* 6. Sobre Nós */}
             <div 
-              className="py-2"
-              onMouseEnter={() => setActiveDropdown('sobre')}
-              onMouseLeave={() => setActiveDropdown(null)}
+              className="relative py-2"
+              onMouseEnter={() => handleMouseEnter('sobre')}
+              onMouseLeave={handleMouseLeave}
             >
-              <button className="flex items-center gap-1 hover:text-[#F97316] transition-colors font-semibold text-slate-700 text-sm focus:outline-none">
-                Sobre Nós <ChevronDown className="w-3.5 h-3.5" />
+              <button className={`flex items-center gap-1 transition-colors font-semibold text-sm focus:outline-none ${activeDropdown === 'sobre' ? 'text-[#F97316]' : 'text-slate-700 hover:text-[#F97316]'}`}>
+                Sobre Nós <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'sobre' ? 'rotate-180' : ''}`} />
               </button>
               {activeDropdown === 'sobre' && (
-                <div className="absolute top-full right-0 pt-2 z-50">
+                <div 
+                  className="absolute top-full right-0 z-50"
+                  onMouseEnter={handleDropdownMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <div className="h-2 w-full" />
                   <div className="w-[420px] bg-white rounded-[32px] shadow-2xl shadow-slate-200/80 border border-slate-100 p-6 animate-in fade-in slide-in-from-top-2 duration-150 grid grid-cols-2 gap-6">
                     <div>
                       <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider mb-2.5">Quem é Alfredo?</h4>
